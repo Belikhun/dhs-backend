@@ -1,0 +1,7 @@
+{
+    "name": "Shopee",
+    "description": "Tự động mua hàng cho Shopee",
+    "site": "shopee.vn/",
+    "match": "shopee\\.vn.*",
+    "version": 7
+}

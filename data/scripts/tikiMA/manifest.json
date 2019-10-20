@@ -1,0 +1,7 @@
+{
+    "name": "Tiki Multiple Account",
+    "description": "Tự động mua hàng nhiều tài khoản cho Tiki",
+    "site": "tiki.vn/",
+    "match": "tiki\\.vn.*",
+    "version": 1
+}

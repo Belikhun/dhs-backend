@@ -1,0 +1,7 @@
+{
+    "name": "Tiki",
+    "description": "Tự động mua hàng cho Tiki",
+    "site": "tiki.vn/",
+    "match": "tiki\\.vn.*",
+    "version": 7
+}

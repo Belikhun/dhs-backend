@@ -1,0 +1,239 @@
+/* 
+? |-----------------------------------------------------------------------------------------------|
+? |  /assets/css/accountPage.css                                                                  |
+? |                                                                                               |
+? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
+? |-----------------------------------------------------------------------------------------------|
+*/
+
+body:not(.embeded) {
+    background-color: gray;
+}
+
+#keysContainer {
+    position: relative;
+    display: contents;
+}
+
+#keysContainer .storedKeyList {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+
+    transition: background-color 0.3s ease;
+}
+
+#keysContainer .group.showEditor .storedKeyList {
+    background-color: rgba(128, 128, 128, 0.1);
+}
+
+#keysContainer .storedKeyList.expired {
+    background-color: rgba(255, 170, 170, 0.2);
+}
+
+#keysContainer .storedKeyList .id {
+    position: relative;
+    font-size: 13px;
+    font-weight: bold;
+    color: #676f79;
+    width: 30px;
+}
+
+#keysContainer .storedKeyList .id::before {
+    content: "#";
+}
+
+#keysContainer .storedKeyList .info {
+    position: relative;
+    flex-grow: 1;
+    list-style: none;
+    margin: unset;
+    padding: 0 20px;
+    overflow: hidden;
+}
+
+#keysContainer .storedKeyList .info .keyName {
+    position: relative;
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+    color: #425161;
+
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+#keysContainer .storedKeyList.expired .info .keyName {
+    color: rgb(221, 52, 52);
+}
+
+#keysContainer .storedKeyList .info .key {
+    position: relative;
+    font-size: 12px;
+    font-weight: lighter;
+    color: #676f79;
+
+    word-wrap: break-word;
+    -webkit-user-select: text;
+}
+
+#keysContainer .storedKeyList .info .allow {
+    position: relative;
+    font-size: 13px;
+    color: #4c545f;
+    margin-top: 10px;
+}
+
+#keysContainer .storedKeyList .detail {
+    position: relative;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin: unset;
+    padding: 0 20px;
+    list-style: none;
+
+    font-size: 13px;
+    text-align: right;
+    color: rgb(75, 75, 75);
+}
+
+#keysContainer .storedKeyList .detail > li::after {
+    content: "\f111";
+    position: relative;
+    display: inline-block;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 13px;
+    margin-left: 10px;
+    color: rgb(124, 124, 124);
+    transition: color 0.1s ease;
+}
+
+#keysContainer .storedKeyList .detail > .create::after {
+    content: "\f055";
+}
+
+#keysContainer .storedKeyList .detail > .lastUsed::after {
+    content: "\f144";
+}
+
+#keysContainer .storedKeyList .detail > .expire::after {
+    content: "\f017";
+}
+
+#keysContainer .storedKeyList .button {
+    position: relative;
+    flex-grow: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#keysContainer .storedKeyList .button span {
+    position: relative;
+    padding: 0 8px;
+    cursor: pointer;
+}
+
+#keysContainer .storedKeyList .button span::before {
+    content: "\f111";
+    position: relative;
+    display: inline-block;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 22px;
+    color: rgba(132, 132, 132, 0.6);
+    transition: color 0.1s ease;
+}
+
+#keysContainer .storedKeyList .button span.delete::before {
+    content: "\f1f8";
+}
+
+#keysContainer .storedKeyList .button span.delete:hover::before {
+    color: #e74c3c;
+}
+
+#keysContainer .storedKeyList .button span.edit::before {
+    content: "\f304";
+}
+
+#keysContainer .storedKeyList .button span.edit:hover::before {
+    color: #3498db;
+}
+
+#keysContainer .group.showEditor .storedKeyList .button .edit {
+    display: none;
+}
+
+.keyEditor {
+    position: relative;
+    display: block;
+
+    height: 0;
+    overflow: hidden;
+    transition: height 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.keyEditor.showEditor,
+#keysContainer .group.showEditor .keyEditor {
+    height: 200px;
+}
+
+.keyEditor .editor {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.keyEditor .editor .column {
+    position: relative;
+    display: flex;
+    flex-shrink: 1;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 20px;
+}
+
+.keyEditor .editor .column.grow {
+    flex-grow: 1;
+}
+
+.keyEditor .editor .row {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.keyEditor .editor .column .row .small {
+    flex-grow: 0;
+    margin: 0 10px;
+}
+
+.keyEditor .editor .column .row .large {
+    flex-grow: 1;
+    margin: 0 10px;
+}
+
+/* Dark */
+
+body.dark #keysContainer .storedKeyList .info .keyName {
+    color: rgb(182, 182, 182);
+}
+
+body.dark #keysContainer .storedKeyList .info .key {
+    color: rgb(218, 218, 218);
+}
+
+body.dark .formGroup.blue .formField {
+    color: rgb(204, 204, 204);
+}

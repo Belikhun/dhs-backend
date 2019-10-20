@@ -1,0 +1,15 @@
+{
+    "project": {
+        "name": "Deal Hunter Suite",
+        "description": "Deal Hunter Suite Authorize Server (Backend)"
+    },
+    "time": {
+        "zone": "Asia\/Ho_Chi_Minh"
+    },
+    "ratelimit": {
+        "maxRequest": 40,
+        "time": 10,
+        "banTime": 30
+    },
+    "pageTitle": "%contestName%"
+}
