@@ -229,7 +229,7 @@
                 checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
             })
 
-            heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 60) ? "yellow" : "green") });
+            heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
 
             if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && stock > 0) {
                 log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);

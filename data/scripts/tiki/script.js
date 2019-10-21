@@ -14,9 +14,9 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|       Tiki Auto v007      |`);
+		log(`|       Tiki Auto v008      |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:32:13 15/10/2019  |`);
+		log(`|  LU: 23:15:23 21/10/2019  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -92,15 +92,17 @@
 		// Wait for settings
 		const settings = await setup({
 			note: { type: "note", level: "warning", text: "Chọn loại hàng trên trang sản phẩm. Tool sẽ tự động làm mới loại hàng và giá" },
+			orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
 			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
-			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
+			reCheckPrice: { type: "number", label: "Kiểm tra lại giá", value: 5, depend: "orderBy:orderByPrice" },
+			orderByCoupon: { type: "switch", label: "Mua theo áp mã giảm giá", name: "orderBy" },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
+			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
 			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false },
 			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
-			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "pink" },
+			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "pink", depend: "orderBy:orderByPrice" },
 			autoReOrderTimes: { type: "number", label: "Số lần tự động mua lại", value: 2, depend: "autoReOrder" },
-			reCheckPrice: { type: "number", label: "Kiểm tra lại giá", value: 5 }
 		});
 	
 		log("CÀI ĐẶT:");
@@ -116,161 +118,275 @@
 		var checkNth = 0;
 		var start = time();
 	
-		runInfo({
-			end: settings.checkInterval + "ms",
-			target: settings.orderPrice
-		});
-	
-		const checker = async () => {
-			checkNth++;
-	
-			let reqStart = time();
-			let data = {}
-			try {
-				data = await command("ajax", {
-					url: `/api/v2/products/${ID}/info`,
-					method: "GET"
-				});
-			} catch(e) {
-				heartbeat({ color: "red" });
-				log(" + Lỗi đã xảy ra khi lấy thông tin Item");
-				log(`    + Code: ${e.code}`);
-				log(`    + MSG : ${e.description || "Không Rõ"}`);
-				log(`    + Bỏ qua lỗi: true`);
+		switch (settings.orderBy) {
 
-				let reqTime = ((time() - reqStart) * 1000);
-				let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+			//! |==========================|
+			//! |   Order By Price Check   |
+			//! |==========================|
+
+			case "orderByPrice":
 				runInfo({
-					progress: reqTimeAT,
-					now: reqTime.toFixed(2) + "ms",
-					itemStatus: "LỖI ĐÃ XẢY RA",
-					itemStatusColor: "red",
-					checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+					end: settings.checkInterval + "ms",
+					target: settings.orderPrice
 				});
+			
+				var checker = async () => {
+					checkNth++;
+			
+					let reqStart = time();
+					let data = {}
+					try {
+						data = await command("ajax", {
+							url: `/api/v2/products/${ID}/info`,
+							method: "GET"
+						});
+					} catch(e) {
+						heartbeat({ color: "red" });
+						log(" + Lỗi đã xảy ra khi lấy thông tin Item");
+						log(`    + Code: ${e.code}`);
+						log(`    + MSG : ${e.description || "Không Rõ"}`);
+						log(`    + Bỏ qua lỗi: true`);
 
-				return;
-			}
-	
-			var currentPrice = data ? data.price : null;
-			let reqTime = ((time() - reqStart) * 1000);
-			let reqTimeAT = (reqTime / settings.checkInterval) * 100;
-			let successCount = 0;
-			let itemLeft = (data.qty - data.qty_ordered) || "?"
-	
-			runInfo({
-				progress: reqTimeAT,
-				now: reqTime.toFixed(2) + "ms",
-				current: currentPrice ? currentPrice : "Không Rõ",
-				saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
-				itemStatus: (data.inventory_status === "available") ? `CÓ HÀNG (${itemLeft})` : `KHÔNG CÒN HÀNG (${itemLeft})`,
-				itemStatusColor: (data.inventory_status === "available") ? "green" : "red",
-				checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
-			})
+						let reqTime = ((time() - reqStart) * 1000);
+						let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+						runInfo({
+							progress: reqTimeAT,
+							now: reqTime.toFixed(2) + "ms",
+							itemStatus: "LỖI ĐÃ XẢY RA",
+							itemStatusColor: "red",
+							checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+						});
 
-			heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 60) ? "yellow" : "green") });
+						return;
+					}
+			
+					var currentPrice = data ? data.price : null;
+					let reqTime = ((time() - reqStart) * 1000);
+					let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+					let successCount = 0;
+					let itemLeft = (data.qty - data.qty_ordered) || "?"
+			
+					runInfo({
+						progress: reqTimeAT,
+						now: reqTime.toFixed(2) + "ms",
+						current: currentPrice ? currentPrice : "Không Rõ",
+						saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
+						itemStatus: (data.inventory_status === "available") ? `CÓ HÀNG (${itemLeft})` : `KHÔNG CÒN HÀNG (${itemLeft})`,
+						itemStatusColor: (data.inventory_status === "available") ? "green" : "red",
+						checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
+					})
 
-			if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && data.inventory_status === "available") {
-				log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
-				doCheck = false;
-				order();
-	
-				if (settings.autoReOrder)
-					for (var orderNth = 1; orderNth <= settings.autoReOrderTimes; orderNth++) {
-						runInfo({ itemStatus: `Lần Mua ${orderNth}/${settings.autoReOrderTimes}`, itemStatusColor: "yellow" });
-						heartbeat();
-						log(`========== ITEM ${orderNth}/${settings.autoReOrderTimes} ==========`);
+					heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
 
-						if (orderNth % settings.reCheckPrice === 0) {
-							log("Đang kiểm tra giá hiện tại");
-							heartbeat({ color: "yellow" });
-							var _cp = {};
+					if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && data.inventory_status === "available") {
+						log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
+						doCheck = false;
+						order();
+			
+						if (settings.autoReOrder)
+							for (var orderNth = 1; orderNth <= settings.autoReOrderTimes; orderNth++) {
+								runInfo({ itemStatus: `Lần Mua ${orderNth}/${settings.autoReOrderTimes}`, itemStatusColor: "yellow" });
+								heartbeat();
+								log(`========== ITEM ${orderNth}/${settings.autoReOrderTimes} ==========`);
 
-							try {
-								_cp = await command("ajax", {
-									url: `/api/v2/products/${ID}/info`,
-									method: "GET"
-								});
+								if (orderNth % settings.reCheckPrice === 0) {
+									log("Đang kiểm tra giá hiện tại");
+									heartbeat({ color: "yellow" });
+									var _cp = {};
 
-								runInfo({
-									current: _cp.price,
-									saved: ((_cp.price - itemInitPrice) / itemInitPrice) * 100,
-								});
-							} catch(e) {
-								log(" + Lỗi đã xảy ra khi lấy thông tin Item");
-								log(`    + Code: -1`);
-								log(`    + Bỏ qua lỗi: true`);
-							} finally {
-								if (_cp.price >= settings.orderPrice) {
-									await errored(`Giá đã thay đổi`);
-									log(" + Giá đã bị thay đổi");
-									log(`    + Code: -1`);
-									log(`    + NP  : ${priceFormat(_cp.price)}`);
-									log(`    + Đang dừng chạy`);
-									break;
+									try {
+										_cp = await command("ajax", {
+											url: `/api/v2/products/${ID}/info`,
+											method: "GET"
+										});
+
+										runInfo({
+											current: _cp.price,
+											saved: ((_cp.price - itemInitPrice) / itemInitPrice) * 100,
+										});
+									} catch(e) {
+										log(" + Lỗi đã xảy ra khi lấy thông tin Item");
+										log(`    + Code: -1`);
+										log(`    + Bỏ qua lỗi: true`);
+									} finally {
+										if (_cp.price >= settings.orderPrice) {
+											await errored(`Giá đã thay đổi`);
+											log(" + Giá đã bị thay đổi");
+											log(`    + Code: -1`);
+											log(`    + NP  : ${priceFormat(_cp.price)}`);
+											log(`    + Đang dừng chạy`);
+											break;
+										}
+
+										log(` + Giá chưa thay đổi. Tiếp tục chạy`);
+									}
 								}
 
-								log(` + Giá chưa thay đổi. Tiếp tục chạy`);
-							}
-						}
+								try {
+									await __doOrder({
+										id: ID,
+										count: settings.orderCount
+									});
+								} finally {
+									successCount++;
+								}
 
-						try {
+								heartbeat();
+								log(`Mua thành công item thứ ${orderNth}!`);
+							}
+						else
 							await __doOrder({
 								id: ID,
-								count: settings.orderCount
+								count: settings.orderCount,
+								coupon: settings.coupon
 							});
-						} finally {
-							successCount++;
-						}
+			
+						complete();
+						runInfo({
+							itemStatus: `ĐÃ ĐẶT ${settings.autoReOrder ? successCount : settings.orderCount} items`,
+							itemStatusColor: settings.autoReOrder ? (successCount === settings.autoReOrderTimes ? "green" : "yellow") : "green",
+							progress: 100,
+							progWarn: false,
+							checkDetail: "Đặt hàng thành công"
+						});
 
-						heartbeat();
-						log(`Mua thành công item thứ ${orderNth}!`);
+						await command("changeLocation", { href: "/sales/order/history" });
+						log("CHẠY KẾT THÚC");
+						return;
 					}
-				else
-					await __doOrder({
-						id: ID,
-						count: settings.orderCount,
-						coupon: settings.coupon
-					});
-	
-				complete();
-				runInfo({
-					itemStatus: `ĐÃ ĐẶT ${settings.autoReOrder ? successCount : settings.orderCount} items`,
-					itemStatusColor: settings.autoReOrder ? (successCount === settings.autoReOrderTimes ? "green" : "yellow") : "green",
-					progress: 100,
-					progWarn: false,
-					checkDetail: "Đặt hàng thành công"
-				});
+				}
+			
+				var __checkHandler = async () => {
+					if (!doCheck)
+						return;
+			
+					let timeStart = time();
+					await checker();
+					setTimeout(() => __checkHandler(), settings.checkInterval - ((time() - timeStart) * 1000));
+				}
+			
+				infoUpdateInterval = setInterval(() => {
+					let runTime = time() - start;
+					runInfo({ time: runTime });
+				}, 60);
+				break;
 
-				await command("changeLocation", { href: "/sales/order/history" });
-				log("CHẠY KẾT THÚC");
-				return;
-			}
+			//! |==========================|
+			//! |   Order By Coupon Check  |
+			//! |==========================|
+
+			case "orderByCoupon":
+
+				runInfo({
+					end: settings.checkInterval + "ms",
+					target: settings.orderPrice
+				});
+			
+				var checker = async () => {
+					checkNth++;
+			
+					let reqStart = time();
+					var currentPrice = null;
+
+					try {
+						await command("ajax", {
+							url: "/checkout/cart/ajaxCoupon",
+							method: "POST",
+							form: {
+								coupon_code: settings.coupon
+							}
+						})
+
+						let checkoutHTML = await command("ajax", {
+							url: "/checkout/cart",
+							method: "GET",
+							type: "text"
+						})
+
+						let checkoutDOM = (new DOMParser()).parseFromString(checkoutHTML, "text/html");
+						let priceBox = checkoutDOM.querySelector("#right-affix > div.each-row > div:nth-child(2) > div > div > p:nth-child(1) > strong");
+
+						currentPrice = parseInt(priceBox.innerText.match(/\d/g).join(""));
+					} catch(e) {
+						heartbeat({ color: "red" });
+						log(" + Lỗi đã xảy ra khi lấy thông tin Item");
+						log(`    + Code: ${e.code}`);
+						log(`    + MSG : ${e.description || "Không Rõ"}`);
+						log(`    + Bỏ qua lỗi: true`);
+
+						let reqTime = ((time() - reqStart) * 1000);
+						let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+						runInfo({
+							progress: reqTimeAT,
+							now: reqTime.toFixed(2) + "ms",
+							itemStatus: "LỖI ĐÃ XẢY RA",
+							itemStatusColor: "red",
+							checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+						});
+
+						return;
+					}
+			
+					let reqTime = ((time() - reqStart) * 1000);
+					let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+			
+					runInfo({
+						progress: reqTimeAT,
+						now: reqTime.toFixed(2) + "ms",
+						current: currentPrice ? currentPrice : "Không Rõ",
+						saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
+						itemStatus: settings.coupon,
+						itemStatusColor: "gray",
+						checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
+					})
+
+					heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
+
+					if (typeof currentPrice === "number" && currentPrice < settings.orderPrice) {
+						log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
+						doCheck = false;
+						order();
+						await __doOrder({ skipPre: true });
+						complete();
+						runInfo({
+							itemStatus: `ĐÃ ĐẶT ${settings.orderCount} items`,
+							itemStatusColor: "green",
+							progress: 100,
+							progWarn: false,
+							checkDetail: "Đặt hàng thành công"
+						});
+
+						await command("changeLocation", { href: "/sales/order/history" });
+						log("CHẠY KẾT THÚC");
+						return;
+					}
+				}
+			
+				var __checkHandler = async () => {
+					if (!doCheck)
+						return;
+			
+					let timeStart = time();
+					await checker();
+					setTimeout(() => __checkHandler(), settings.checkInterval - ((time() - timeStart) * 1000));
+				}
+			
+				infoUpdateInterval = setInterval(() => {
+					let runTime = time() - start;
+					runInfo({ time: runTime });
+				}, 60);
+				break;
 		}
-	
-		const __checkHandler = async () => {
-			if (!doCheck)
-				return;
-	
-			let timeStart = time();
-			await checker();
-			setTimeout(() => __checkHandler(), settings.checkInterval - ((time() - timeStart) * 1000));
-		}
-	
-		infoUpdateInterval = setInterval(() => {
-			let runTime = time() - start;
-			runInfo({ time: runTime });
-		}, 60)
-		
-		const __doOrder = async ({
+
+		//! |==========================|
+		//! |       ADD TO CART        |
+		//! |==========================|
+
+		const addIntoCart = async ({
 			id = 0,
 			count = 0,
-			coupon = ""
-		}) => {
-			sounds.notification();
-			let orderTimer = new stopClock();
-			log("Đang thêm Item vào Giỏ Hàng");
-			runInfo({ now: `Bước 1`, end: `Bước 4`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
-			heartbeat();
+		} = {}) => {
+			log(`Đang thêm Item ${id} C:${count} vào Giỏ Hàng`);
 
 			try {
 				data = await command("ajax", {
@@ -291,25 +407,46 @@
 				log(" + Không thể thêm Item vào Giỏ");
 				log(`    + Code: -1`);
 				log(`    + MSG : ${data.error.message || "Không rõ"}`);
-				throw { code: -1, description: "Không thể thêm Item vào Giỏ", data: data.error }
+				throw { code: -1, description: "Không thể thêm Item vào Giỏ: " + data.error.message, data: data.error }
 			}
 
-			heartbeat();
 			log(" + Thêm vào giỏ thành công!");
+		}
 
-			if (coupon !== "") {
-				runInfo({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
+		//! |==========================|
+		//! |  DO ORDER MAIN FUNCTION  |
+		//! |==========================|
+		
+		const __doOrder = async ({
+			id = 0,
+			count = 0,
+			coupon = "",
+			skipPre = false,
+		}) => {
+			sounds.notification();
+			let orderTimer = new stopClock();
+			runInfo({ now: `Bước 0`, end: `Bước 4`, progress: 0, checkDetail: "Đang Chờ" });
 
-				log(` + Đang áp dụng Coupon: ${coupon}`)
-				await command("ajax", {
-					url: "/checkout/cart/ajaxCoupon",
-					method: "POST",
-					form: {
-						coupon_code: coupon
-					}
-				})
-
-				log(` + Áp dụng Coupon thành công!`);
+			if (!skipPre) {
+				runInfo({ now: `Bước 1`, end: `Bước 4`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
+				heartbeat();
+				await addIntoCart({ id: id, count: count });
+				heartbeat();
+	
+				if (coupon !== "") {
+					runInfo({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
+	
+					log(` + Đang áp dụng Coupon: ${coupon}`)
+					await command("ajax", {
+						url: "/checkout/cart/ajaxCoupon",
+						method: "POST",
+						form: {
+							coupon_code: coupon
+						}
+					})
+	
+					log(` + Áp dụng Coupon thành công!`);
+				}
 			}
 			
 			heartbeat();
@@ -343,6 +480,8 @@
 					TIKI_CSRF_TOKEN: CSRF_SHIPPING
 				}
 			})
+
+			log(` + Chọn địa chỉ thành công!`);
 
 			runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Đang lấy thông tin thanh toán" });
 			log(`Đang lấy thông tin Thanh Toán`);
@@ -434,7 +573,17 @@
 			log("=========== KẾT QUẢ ===========");
 			log(` + Thời gian   : ${orderTimer.stop}s`);
 		}
+
+		//? Order By Coupon Init
 	
+		if (settings.orderBy === "orderByCoupon") {
+			runInfo({ now: `Bước 1`, end: `Bước 1`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
+			heartbeat();
+			await addIntoCart({ id: ID, count: settings.orderCount });
+			heartbeat();
+			runInfo({ now: `Bước 1`, end: `Bước 1`, progress: 100, checkDetail: "Thêm vào Giỏ Hàng thành công!" });
+		}
+
 		__checkHandler();
 		log("Bắt đầu kiểm tra giá");
 	} catch(e) {

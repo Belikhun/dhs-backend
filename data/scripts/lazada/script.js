@@ -16,9 +16,9 @@
 
     try {
         log(`|===========================|`);
-        log(`|      Lazada Auto v004     |`);
+        log(`|      Lazada Auto v005     |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 00:07:22 16/10/2019  |`);
+        log(`|  LU: 23:15:44 21/10/2019  |`);
         log(`|===========================|`);
     
         const __fetchItemData = async () => {
@@ -98,15 +98,15 @@
         // Wait for settings
         const settings = await setup({
             preRunNote: { type: "note", level: "warning", text: `<b>Lưu Ý:</b> Lựa chọn loại hàng và số lượng trước khi chạy!` },
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true },
-            checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
-            orderByTime: { type: "checkbox", label: "Mua theo thời gian (Bỏ qua kiểm tra giá)", value: false, color: "blue" },
-            orderDate: { type: "date", label: "Ngày mua", depend: "orderByTime" },
-            orderTime: { type: "time", label: "Giờ mua", depend: "orderByTime" },
-            timeCheckInterval: { type: "number", label: "Khoảng kiểm tra", depend: "orderByTime", value: 60 },
+            orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, depend: "orderBy:orderByPrice" },
+            checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true, depend: "orderBy:orderByPrice" },
+            orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
+            orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
+            orderTime: { type: "time", label: "Giờ mua", depend: "orderBy:orderByTime" },
+            timeCheckInterval: { type: "number", label: "Khoảng kiểm tra", depend: "orderBy:orderByTime", value: 60 },
             stepSleep: { type: "number", label: "STEP SLEEP", value: STEP_SLEEP },
             maxRetry: { type: "number", label: "RETRY", value: RETRY },
-            reCheckPrice: { type: "number", label: "Kiểm tra lại giá", value: 5 }
         });
 
         STEP_SLEEP = settings.stepSleep;
@@ -123,134 +123,143 @@
         // Start
         var checkNth = 0;
         var start = time();
-        var checkPer = (settings.orderByTime) ? settings.timeCheckInterval : settings.checkInterval;
+        var checkPer = (settings.orderBy === "orderByTime") ? settings.timeCheckInterval : settings.checkInterval;
 
-        if (settings.orderByTime) {
-            var end = (settings.orderByTime) ? time(new Date(`${settings.orderDate} ${settings.orderTime}`)) : 0;
-            log(`RUN: ${start} -> ${end}`);
+        switch (settings.orderBy) {
 
-            runInfo({
-                current: start,
-                target: end,
-                end: parseInt(end - start),
-                dataType: "time",
-                itemStatus: `Không Rõ`,
-                itemStatusColor: "gray"
-            });
+            //! |==========================|
+			//! |      Order By Time       |
+			//! |==========================|
 
-            var checker = async () => {
-                checkNth++;
-
-                let curTime = time();
-                let runTime = end - curTime;
-                let progress = (curTime - start) / (end - start);
-                
+            case "orderByTime":
+                var end = time(new Date(`${settings.orderDate} ${settings.orderTime}`));
+                log(`RUN: ${start} -> ${end}`);
+    
                 runInfo({
-                    time: runTime,
-                    progress: progress * 100,
-                    saved: progress * 100,
-                    now: parseInt((end - start) - runTime),
-                    dataType: "time"
-                })
-
-                if (runTime <= 0) {
-                    doCheck = false;
-                    order();
-        
-                    await __doOrder();
-        
-                    complete();
+                    current: start,
+                    target: end,
+                    end: parseInt(end - start),
+                    dataType: "time",
+                    itemStatus: `Không Rõ`,
+                    itemStatusColor: "gray"
+                });
+    
+                var checker = async () => {
+                    checkNth++;
+    
+                    let curTime = time();
+                    let runTime = end - curTime;
+                    let progress = (curTime - start) / (end - start);
+                    
                     runInfo({
-                        itemStatus: `ĐÃ ĐẶT THÀNH CÔNG!`,
-                        itemStatusColor: "green",
-                        progress: 100,
-                        progWarn: false,
-                        checkDetail: "Đặt hàng thành công",
+                        time: runTime,
+                        progress: progress * 100,
+                        saved: progress * 100,
+                        now: parseInt((end - start) - runTime),
                         dataType: "time"
-                    });
-                    log("CHẠY KẾT THÚC");
-                    return;
+                    })
+    
+                    if (runTime <= 0) {
+                        doCheck = false;
+                        order();
+            
+                        await __doOrder();
+            
+                        complete();
+                        runInfo({
+                            itemStatus: `ĐÃ ĐẶT THÀNH CÔNG!`,
+                            itemStatusColor: "green",
+                            progress: 100,
+                            progWarn: false,
+                            checkDetail: "Đặt hàng thành công",
+                            dataType: "time"
+                        });
+                        log("CHẠY KẾT THÚC");
+                        return;
+                    }
                 }
-            }
-
-            infoUpdateInterval = setInterval(() => {
-                heartbeat({ color: "blue" });
-                runInfo({ checkDetail: `TPS: ${checkNth}`, dataType: "time" });
-                checkNth = 0;
-            }, 1000)
-        } else {
-            runInfo({
-                end: settings.checkInterval + "ms",
-                target: settings.orderPrice
-            });
-
-            var checker = async () => {
-                checkNth++;
-        
-                let reqStart = time();
-                let data = {}
-                try {
-                    data = await __fetchItemData();
-                } catch(e) {
-                    heartbeat({ color: "red" });
-                    log(" + Lỗi đã xảy ra khi lấy thông tin Item");
-                    log(`    + Code: ${e.code}`);
-                    log(`    + MSG : ${e.description || "Không Rõ"}`);
-                    log(`    + Bỏ qua lỗi: true`);
-
+    
+                infoUpdateInterval = setInterval(() => {
+                    heartbeat({ color: "blue" });
+                    runInfo({ checkDetail: `TPS: ${checkNth}`, dataType: "time" });
+                    checkNth = 0;
+                }, 1000)
+                break;
+            
+            case "orderByPrice":
+                runInfo({
+                    end: settings.checkInterval + "ms",
+                    target: settings.orderPrice
+                });
+    
+                var checker = async () => {
+                    checkNth++;
+            
+                    let reqStart = time();
+                    let data = {}
+                    try {
+                        data = await __fetchItemData();
+                    } catch(e) {
+                        heartbeat({ color: "red" });
+                        log(" + Lỗi đã xảy ra khi lấy thông tin Item");
+                        log(`    + Code: ${e.code}`);
+                        log(`    + MSG : ${e.description || "Không Rõ"}`);
+                        log(`    + Bỏ qua lỗi: true`);
+    
+                        let reqTime = ((time() - reqStart) * 1000);
+                        let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+                        runInfo({
+                            progress: reqTimeAT,
+                            now: reqTime.toFixed(2) + "ms",
+                            itemStatus: "LỖI ĐÃ XẢY RA",
+                            itemStatusColor: "red",
+                            checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+                        });
+    
+                        return;
+                    }
+            
+                    var currentPrice = data.offers.price;
                     let reqTime = ((time() - reqStart) * 1000);
                     let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+            
                     runInfo({
                         progress: reqTimeAT,
                         now: reqTime.toFixed(2) + "ms",
-                        itemStatus: "LỖI ĐÃ XẢY RA",
-                        itemStatusColor: "red",
-                        checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
-                    });
-
-                    return;
+                        current:currentPrice ? currentPrice : "Không Rõ",
+                        saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
+                        itemStatus: (data.offers.status === "InStock") ? "CÓ HÀNG" : `KHÔNG CÒN HÀNG [${data.offers.status}]`,
+                        itemStatusColor: (data.offers.status === "InStock") ? "green" : "red",
+                        checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
+                    })
+    
+                    heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
+    
+                    if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && data.offers.status === "InStock") {
+                        log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
+                        doCheck = false;
+                        order();
+            
+                        await __doOrder();
+            
+                        complete();
+                        runInfo({
+                            itemStatus: `ĐÃ ĐẶT THÀNH CÔNG!`,
+                            itemStatusColor: "green",
+                            progress: 100,
+                            progWarn: false,
+                            checkDetail: "Đặt hàng thành công"
+                        });
+                        log("CHẠY KẾT THÚC");
+                        return;
+                    }
                 }
-        
-                var currentPrice = data.offers.price;
-                let reqTime = ((time() - reqStart) * 1000);
-                let reqTimeAT = (reqTime / settings.checkInterval) * 100;
-        
-                runInfo({
-                    progress: reqTimeAT,
-                    now: reqTime.toFixed(2) + "ms",
-                    current:currentPrice ? currentPrice : "Không Rõ",
-                    saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
-                    itemStatus: (data.offers.status === "InStock") ? "CÓ HÀNG" : `KHÔNG CÒN HÀNG [${data.offers.status}]`,
-                    itemStatusColor: (data.offers.status === "InStock") ? "green" : "red",
-                    checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
-                })
-
-                heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 60) ? "yellow" : "green") });
-
-                if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && data.offers.status === "InStock") {
-                    log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
-                    doCheck = false;
-                    order();
-        
-                    await __doOrder();
-        
-                    complete();
-                    runInfo({
-                        itemStatus: `ĐÃ ĐẶT THÀNH CÔNG!`,
-                        itemStatusColor: "green",
-                        progress: 100,
-                        progWarn: false,
-                        checkDetail: "Đặt hàng thành công"
-                    });
-                    log("CHẠY KẾT THÚC");
-                    return;
-                }
-            }
-
-            infoUpdateInterval = setInterval(() => {
-                let runTime = time() - start;
-                runInfo({ time: runTime });
-            }, 60)
+    
+                infoUpdateInterval = setInterval(() => {
+                    let runTime = time() - start;
+                    runInfo({ time: runTime });
+                }, 60)
+                break;
         }
     
         const __checkHandler = async () => {
