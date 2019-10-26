@@ -16,7 +16,7 @@
         log(`|===========================|`);
         log(`|      Sendo Auto v003      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 21:38:05 13/10/2019  |`);
+        log(`|  LU: 22:26:23 25/10/2019  |`);
         log(`|===========================|`);
 
         // Get itemName
@@ -151,6 +151,7 @@
             orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true },
             orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
+            orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: 200, required: true },
             coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
             stepSleep: { type: "number", label: "STEP SLEEP", value: STEP_SLEEP },
             maxRetry: { type: "number", label: "RETRY", value: RETRY }
@@ -238,7 +239,8 @@
 
                 await __doOrder({
                     shopId: SHOPID,
-                    coupon: settings.coupon
+                    coupon: settings.coupon,
+                    delay: settings.orderDelay
                 });
     
                 complete();
@@ -360,7 +362,8 @@
         
         const __doOrder = async ({
             shopId = 0,
-            coupon = ""
+            coupon = "",
+            delay = 200
         }) => {
             sounds.notification();
             let orderTimer = new stopClock();
@@ -403,17 +406,21 @@
                 runInfo({ progress: 75, progWarn: false });
                 
                 if (info.data.voucher_info.error) {
-                    log(` + Lỗi khi áp dụng mã giảm giá`);
+                    log(` + Mã giảm giá không hợp lệ`);
                     log(`    + MSG: ${info.data.voucher_info.error}`);
                     log(`    + Bỏ qua lỗi: true`);
 
                     info.data.voucher_info = { "enable_suggest_voucher": true };
                 }
+
+                log(` + Mã giảm giá hợp lệ`);
             }
 
             runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang đặt hàng" });
             heartbeat();
             log(`Bắt đầu đặt hàng`);
+
+            await delayAsync(delay);
 
             let placeOrder = await command("ajax", {
                 url: "/api/checkout/save-order",

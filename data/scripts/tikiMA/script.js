@@ -16,7 +16,7 @@
 		log(`|===========================|`);
 		log(`|   Tiki Multiple Account   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 22:53:13 17/10/2019  |`);
+		log(`|  LU: 22:28:49 22/10/2019  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -89,12 +89,18 @@
 		}, 1000);
 	
 		log("Đang chờ cài đặt từ người dùng");
+		let prevAccountList = (await this.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
 
 		// Wait for Account List
-		const accountList = await setup({
+		const account = await setup({
 			note: { type: "note", level: "info", text: "Mỗi tài khoản một dòng, ngăn cách tên tài khoản và mật khẩu bằng <b>:</b> (ex: \"username:password\")" },
-			list: { type: "textarea", label: "Danh sách tài khoản", height: "180px", required: true }
-		})
+			list: { type: "textarea", label: "Danh sách tài khoản", height: "180px", value: prevAccountList, required: true }
+		}, { confirm: "Tiếp" });
+
+		log(" + Đang lưu danh sách tài khoản");
+		await this.dataSave({ "tikiMA.accountList": account.list });
+		var accountList = account.list.split("\n").map(a => { let i = a.split(":"); return { u: i[0], p: i[1] } });
+		await delayAsync(1000);
 
 		// Wait for settings
 		const settings = await setup({
@@ -176,64 +182,34 @@
 				log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
 				doCheck = false;
 				order();
-	
-				if (settings.autoReOrder)
-					for (var orderNth = 1; orderNth <= settings.autoReOrderTimes; orderNth++) {
-						runInfo({ itemStatus: `Lần Mua ${orderNth}/${settings.autoReOrderTimes}`, itemStatusColor: "yellow" });
-						heartbeat();
-						log(`========== ITEM ${orderNth}/${settings.autoReOrderTimes} ==========`);
 
-						if (orderNth % settings.reCheckPrice === 0) {
-							log("Đang kiểm tra giá hiện tại");
-							heartbeat({ color: "yellow" });
-							var _cp = {};
+				for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
+					let item = accountList[orderNth];
 
-							try {
-								_cp = await command("ajax", {
-									url: `/api/v2/products/${ID}/info`,
-									method: "GET"
-								});
-							} catch(e) {
-								log(" + Lỗi đã xảy ra khi lấy thông tin Item");
-								log(`    + Code: -1`);
-								log(`    + Bỏ qua lỗi: true`);
-							} finally {
-								if (_cp.price >= settings.orderPrice) {
-									await errored(`Giá đã thay đổi`);
-									log(" + Giá đã bị thay đổi");
-									log(`    + Code: -1`);
-									log(`    + NP  : ${priceFormat(data.price)}`);
-									log(`    + Đang dừng chạy`);
-									break;
-								}
+					runInfo({ itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`, itemStatusColor: "yellow" });
+					heartbeat();
+					log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
 
-								log(` + Giá chưa thay đổi. Tiếp tục chạy`);
-							}
-						}
-
-						try {
-							await __doOrder({
-								id: ID,
-								count: settings.orderCount
-							});
-						} finally {
-							successCount++;
-						}
-
-						heartbeat();
-						log(`Mua thành công item thứ ${orderNth}!`);
+					try {
+						await __doOrder({
+							id: ID,
+							count: settings.orderCount,
+							coupon: settings.coupon,
+							username: item.u,
+							password: item.p
+						});
+					} finally {
+						successCount++;
 					}
-				else
-					await __doOrder({
-						id: ID,
-						count: settings.orderCount,
-						coupon: settings.coupon
-					});
+
+					heartbeat();
+					log(`Mua thành công cho tài khoản ${item.u}! (${orderNth + 1}Nth)`);
+				}
 	
 				complete();
 				runInfo({
-					itemStatus: `ĐÃ ĐẶT ${settings.autoReOrder ? successCount : settings.orderCount} items`,
-					itemStatusColor: settings.autoReOrder ? (successCount === settings.autoReOrderTimes ? "green" : "yellow") : "green",
+					itemStatus: `ĐÃ ĐẶT ${successCount} items`,
+					itemStatusColor: (successCount === settings.autoReOrderTimes ? "green" : "yellow"),
 					progress: 100,
 					progWarn: false,
 					checkDetail: "Đặt hàng thành công"
@@ -262,17 +238,50 @@
 		const __doOrder = async ({
 			id = 0,
 			count = 0,
-			coupon = ""
+			coupon = "",
+			username = "",
+			password = ""
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
-			log("Đang thêm Item vào Giỏ Hàng");
-			runInfo({ now: `Bước 1`, end: `Bước 4`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
-			heartbeat();
+
+			log(`Đang đăng nhập vào tài khoản \"${username}\"`);
+			runInfo({ now: `Bước 1`, end: `Bước 5`, progress: 0, checkDetail: "Đang đăng nhập" });
+			let loginData = {}
 
 			try {
-				data = await command("ajax", {
-					url: "https://tiki.vn/checkout/cart/ajaxAdd",
+				loginData = await command("ajax", {
+					url: "/api/v2/tokens",
+					method: "POST",
+					json: {
+						grant_type: "password",
+						email: username,
+						password: password
+					}
+				});
+			} catch(e) {
+				await errored("Lỗi khi đăng nhập vào tài khoản");
+				log(" + Không thể đăng nhập vào tài khoản");
+				log(`    + Code: ${e.data.data.error.code}`);
+				log(`    + MSG : ${e.data.data.error.message || "Không rõ"}`);
+				
+				if (e.data.data.error.errors)
+					for (let item of e.data.data.error.errors) {
+						log(`      + FIELD   : ${item.field}`);
+						log(`      + MESSAGE : ${item.message || "Không rõ"}`);
+					}
+
+				throw { code: -1, description: "Thất bại khi đăng nhập vào tài khoản", data: e.data.data }
+			}
+
+			log("Đang thêm Item vào Giỏ Hàng");
+			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
+			heartbeat();
+			let addData = {}
+
+			try {
+				addData = await command("ajax", {
+					url: "/checkout/cart/ajaxAdd",
 					method: "POST",
 					form: {
 						id: id,
@@ -284,12 +293,12 @@
 				return false;
 			}
 	
-			if (data.error) {
+			if (addData.error) {
 				await errored("Lỗi khi thêm Item vào Giỏ");
 				log(" + Không thể thêm Item vào Giỏ");
 				log(`    + Code: -1`);
-				log(`    + MSG : ${data.error.message || "Không rõ"}`);
-				throw { code: -1, description: "Không thể thêm Item vào Giỏ", data: data.error }
+				log(`    + MSG : ${addData.error.message || "Không rõ"}`);
+				throw { code: -1, description: "Không thể thêm Item vào Giỏ", data: addData.error }
 			}
 
 			heartbeat();
@@ -311,7 +320,7 @@
 			}
 			
 			heartbeat();
-			runInfo({ now: `Bước 2`, progress: 30, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
+			runInfo({ now: `Bước 3`, progress: 30, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
 			log(`Đang chọn địa chỉ Giao Hàng`);
 
 			log(` + Đang lấy thông tin địa chỉ`);
@@ -342,7 +351,7 @@
 				}
 			})
 
-			runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Đang lấy thông tin thanh toán" });
+			runInfo({ now: `Bước 4`, progress: 60, progWarn: false, checkDetail: "Đang lấy thông tin thanh toán" });
 			log(`Đang lấy thông tin Thanh Toán`);
 			heartbeat();
 
@@ -400,7 +409,7 @@
 
 			paymentData.is_using_card = 0;
 
-			runInfo({ now: `Bước 4`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
+			runInfo({ now: `Bước 5`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
 			log(`Đang tiến hành đặt hàng`);
 			heartbeat();
 
@@ -409,7 +418,7 @@
 				url: "/checkout/payment/ajax_check_place_order",
 				method: "POST",
 				header: {
-					"x-access-token": await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }),
+					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
 					apikey: null
 				},
 				form: {

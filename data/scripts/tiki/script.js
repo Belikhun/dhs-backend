@@ -39,7 +39,7 @@
 		// Define
 		const fetchItemData = async () => {
 			let data = await command("ajax", {
-				url: `https://tiki.vn/api/v2/products/${ID}/info`,
+				url: `/api/v2/products/${ID}/info`,
 				method: "GET",
 				changeState: false
 			});
@@ -387,10 +387,11 @@
 			count = 0,
 		} = {}) => {
 			log(`Đang thêm Item ${id} C:${count} vào Giỏ Hàng`);
+			let addData = {}
 
 			try {
-				data = await command("ajax", {
-					url: "https://tiki.vn/checkout/cart/ajaxAdd",
+				addData = await command("ajax", {
+					url: "/checkout/cart/ajaxAdd",
 					method: "POST",
 					form: {
 						id: id,
@@ -402,12 +403,12 @@
 				return false;
 			}
 	
-			if (data.error) {
+			if (addData.error) {
 				await errored("Lỗi khi thêm Item vào Giỏ");
 				log(" + Không thể thêm Item vào Giỏ");
 				log(`    + Code: -1`);
-				log(`    + MSG : ${data.error.message || "Không rõ"}`);
-				throw { code: -1, description: "Không thể thêm Item vào Giỏ: " + data.error.message, data: data.error }
+				log(`    + MSG : ${addData.error.message || "Không rõ"}`);
+				throw { code: -1, description: "Không thể thêm Item vào Giỏ: " + addData.error.message, data: addData.error }
 			}
 
 			log(" + Thêm vào giỏ thành công!");
@@ -550,7 +551,7 @@
 				url: "/checkout/payment/ajax_check_place_order",
 				method: "POST",
 				header: {
-					"x-access-token": await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }),
+					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
 					apikey: null
 				},
 				form: {
