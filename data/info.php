@@ -8,7 +8,7 @@
 
 	define("APPNAME", "Deal Hunter Suite");
 	define("AUTHOR", "Team DHS");
-	define("VERSION", "0.5.0");
+	define("VERSION", "0.5.1");
 	define("VERSION_TAG", "release");
 	define("REPO_ADDRESS", "");
 	define("REPORT_ERROR", REPO_ADDRESS . "/issues");
@@ -25,6 +25,17 @@
 	define("HOST_NAME", "dealhunter.000webhostapp.com");
 
 	define("EXTENSION_ID", "eonliieidenfhigoddlmcbjbofleagle");
-	define("EXTENSION_VERSION", "1.2");
+	define("EXTENSION_VERSION", "1.5");
 	define("EXTENSION_ZIP_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.zip");
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
+
+	ob_start(); ?>
+		sample
+	<?php
+	$ANNOUNCEMENT = ob_get_clean();
+
+	define("EXTENSION_ANNOUNCEMENT", Array(
+		"enabled" => true,
+		"level" => "warning",
+		"message" => $ANNOUNCEMENT
+	));

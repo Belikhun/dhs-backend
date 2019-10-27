@@ -23,6 +23,7 @@
         "contact" => CONTACT_LINK,
         "EXTENSION_VERSION" => EXTENSION_VERSION,
         "EXTENSION_UPDATE" => "/api/updates/latest",
+        "EXTENSION_ANNOUNCEMENT" => EXTENSION_ANNOUNCEMENT,
         "API_TOKEN" => isset($_SESSION["apiToken"]) ? $_SESSION["apiToken"] : null,
         "SERVER_LOAD" => function_exists("sys_getloadavg") ? sys_getloadavg()[0] : null,
         "SERVER_SOFTWARE" => $_SERVER["SERVER_SOFTWARE"],

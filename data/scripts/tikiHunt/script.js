@@ -39,9 +39,24 @@
         log(`|  LU: 20:14:36 17/10/2019  |`);
         log(`|===========================|`);
 
+        const getBlackList = async () => {
+            let data = await this.dataLoad("tikiHuntBlackList");
+            return Object.keys(data.tikiHuntBlackList || {});
+        }
+
+        const saveBlackList = async (list) => {
+            let listObj = {}
+            for (let i of list)
+                if (!isNaN(i) && i !== "")
+                    listObj[i] = true;
+
+            await this.dataSave({ tikiHuntBlackList: listObj });
+        }
+
         const scanItem = async (sortBy = "sale", pageCount = 1) => {
             let list = {}
             let sortedList = []
+            let blackList = await getBlackList();
 
             heartbeat();
             log(` + Đang lấy danh sách item`);
@@ -50,12 +65,11 @@
             log("");
 
             for (let item of typeList) {
+                let start = time();
+                log(`   + Đang tải: ${item}`);
+                
                 for (let page = 1; page <= pageCount; page++) {
-                    let start = time();
                     heartbeat({ color: "yellow" });
-                    log(`   + Đang tải (trang ${page}):`);
-                    log(`     ${item}`);
-
                     let result = await myajax({
                         url: HOSTNAME + item,
                         method: "GET",
@@ -68,13 +82,12 @@
                     });
 
                     heartbeat();
-                    log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
         
                     let itemPage = (new DOMParser()).parseFromString(result, "text/html");
                     let itemList = itemPage.querySelectorAll("div.product-item[data-id]");
     
                     for (let item of itemList) {
-                        if (list[item.dataset.id])
+                        if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
                             continue;
 
                         let link = item.querySelector("a[data-id]").href;
@@ -110,6 +123,8 @@
     
                         sortedList.push(list[item.dataset.id]);
                     }
+
+                    log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
                 }
             }
 
@@ -146,9 +161,10 @@
             return { list, sortedList }
         }
 
-        const createItemBox = (itemData) => {
+        const createItemBox = (itemData, onBlacklist = () => {}) => {
             let box = document.createElement("div");
             box.classList.add("item");
+            box.setAttribute("item-id", itemData.id);
             box.dataset.soundhover = "";
             sounds.applySound(box);
 
@@ -196,30 +212,24 @@
                 box.appendChild(couponContainer);
             }
 
+            let blackList = document.createElement("span");
+            blackList.classList.add("blackList");
+            blackList.setAttribute("item-id", itemData.id);
+            blackList.dataset.soundhoversoft = "";
+            blackList.dataset.soundselectsoft = "";
+            sounds.applySound(blackList);
+            blackList.addEventListener("click", e => onBlacklist(e));
+
             priceInfo.append(currentPrice, oldPrice, discount);
-            box.appendChild(priceInfo);
+            box.append(priceInfo, blackList);
 
             return box;
         }
-
-        //<span class="item">
-        //    <div class="lazyload thumbnail">
-        //        <img onload="this.parentNode.dataset.loaded = 1" src="https://salt.tikicdn.com/cache/75x75/ts/product/93/f7/42/2192f6f689d7f5714264228c0fbcdc49.jpg"/>
-        //        <div class="simple-spinner"></div>
-        //    </div>
-        //    <div class="info">
-        //        <t class="name">Tai nghe cho iphone 5/5s/6/6s/6sPlus</t>
-        //        <span class="priceInfo">
-        //            <t class="current price">1000.000</t>
-        //            <t class="old price">1000.000</t>
-        //            <t class="discount">-100%</t>
-        //        </span>
-        //    </div>
-        //</span>
         
-        const createChangedItemBox = (itemData) => {
+        const createChangedItemBox = (itemData, onBlacklist = () => {}) => {
             let box = document.createElement("div");
             box.classList.add("item");
+            box.setAttribute("item-id", itemData.id);
             box.dataset.soundhover = "";
             sounds.applySound(box);
 
@@ -282,14 +292,26 @@
                 infoBox.appendChild(couponContainer);
             }
 
+            let blackList = document.createElement("span");
+            blackList.classList.add("blackList");
+            blackList.setAttribute("item-id", itemData.id);
+            blackList.dataset.soundhoversoft = "";
+            blackList.dataset.soundselectsoft = "";
+            sounds.applySound(blackList);
+            blackList.addEventListener("click", e => onBlacklist(e));
+
             priceInfo.append(currentPrice, oldPrice, discount);
-            infoBox.appendChild(priceInfo);
+            infoBox.append(priceInfo, blackList);
             box.append(thumbnail, infoBox);
 
             return box;
         }
 
-        //* START HERE
+        const deleteNode = (node) => node.parentElement.removeChild(node);
+
+        //* ==============
+        //*   START HERE
+        //* ==============
 
         await info({ hide: true });
 
@@ -358,7 +380,20 @@
         allList.append(allListHeader, allListItem);
         container.appendChild(allList);
 
+        //? BLACK LIST
+        const addToBlackList = async (id) => {
+            let list = await getBlackList();
+            let itemBoxList = document.querySelectorAll(`#subScreen > div.container .item[item-id="${id}"]`);
+            
+            for (let item of itemBoxList)
+                deleteNode(item);
+
+            list.push(id);
+            await saveBlackList(list);
+        }
+
         this.subScreen.show(container, "dealHunt");
+        let blackList = await getBlackList();
 
         var firstScanSetup = await setup({
             sortBy: {
@@ -373,14 +408,18 @@
                     { name: `Giá item (lớn đến nhỏ)`, color: "blue", value: "priceDown" }
                 ]
             },
-            scanPage: { type: "number", label: "Số Trang Quét Mỗi Loại", value: 1 }
+            scanPage: { type: "number", label: "Số Trang Quét Mỗi Loại", value: 1 },
+            blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";") }
         }, { confirm: "Tiếp" })
+
+        // Save BlackList
+        await saveBlackList(firstScanSetup.blackList.split(";"));
 
         // Start Scanning Item
         var itemList = await scanItem(firstScanSetup.sortBy, firstScanSetup.scanPage);
         var CURRENT_PAGE = 1;
 
-        const changeAllListPage = (page, {
+        const changeAllListPage = async (page, {
             showCount = 10
         } = {}) => {
             let total = itemList.sortedList.length;
@@ -392,9 +431,17 @@
                 return;
 
             allListItem.innerHTML = "";
+            let blackList = await getBlackList();
             
             for (let i = from; i < to; i++) {
-                allListItem.appendChild(createItemBox(itemList.sortedList[i]));
+                if (blackList.indexOf(itemList.sortedList[i].id) !== -1) {
+                    if (itemList.list[itemList.sortedList[i].id])
+                        delete itemList.list[itemList.sortedList[i].id];
+
+                    itemList.sortedList.splice(i, 1);
+                }
+
+                allListItem.appendChild(createItemBox(itemList.sortedList[i], e => addToBlackList(e.target.getAttribute("item-id"))));
                 allListHeaderPageCurrent.innerText = `${from + 1}-${to + 1} ${page}/${maxPage}`;
             }
 
@@ -482,27 +529,41 @@
             let changed = 0;
             let changedList = []
 
-            for (let item of list.sortedList)
-                if (!itemList.list[item.id] || itemList.list[item.id].price > item.price || itemList.list[item.id].sale < item.sale) {
-                    changed++;
+            for (let item of list.sortedList) {
+                if (itemList.list[item.id] && itemList.list[item.id].price <= item.price && itemList.list[item.id].sale >= item.sale)
+                    continue;
 
-                    if (itemList.list[item.id]) {
-                        log(` + Tìm thấy Item bị thay đổi: ${item.id} [${changed}]`);
-                        log(`   + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
-                        log(`   + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
-                    } else {
-                        log(` + Tìm thấy Item mới: ${item.id} [${changed}]`);
-                        log(`   + GIÁ:  ${item.price}`);
-                        log(`   + SALE: ${item.sale.toFixed(2)}%`);
-                    }
-
-                    sounds.notification();
-                    changedListItem.appendChild(createChangedItemBox(item));
-                    changedList.push({ title: item.title, message: item.id + "" });
-                    itemList.list[item.id] = item;
+                let blackList = await getBlackList();
+                if (blackList.indexOf(item.id) !== -1) {
+                    log(` + ITEM trong BlackList: ${item.id}`);
+                    continue;
                 }
 
-            if (changed > 0)
+                changed++;
+
+                if (itemList.list[item.id]) {
+                    log(` + ITEM Thay Đổi: ${item.id} [${changed}]`);
+                    log(`   + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
+                    log(`   + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
+                } else {
+                    log(` + ITEM Mới: ${item.id} [${changed}]`);
+                    log(`   + GIÁ:  ${item.price}`);
+                    log(`   + SALE: ${item.sale.toFixed(2)}%`);
+                }
+    
+                //? Remove Old Box If Exist
+                let existBox = changedListItem.querySelectorAll(`.item[item-id="${item.id}"]`);
+                for (let item of existBox)
+                    deleteNode(item);
+                
+                let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
+                changedListItem.prepend(itemBox);
+                changedList.push({ title: item.title, message: item.id + "" });
+                itemList.list[item.id] = item;
+            }
+
+            if (changed > 0) {
+                sounds.notification();
                 chrome.notifications.create({
                     type: "list",
                     title: "Deal Hunter Suite",
@@ -512,6 +573,7 @@
                     items: changedList,
                     requireInteraction: true
                 });
+            }
 
             runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công" });
         }
