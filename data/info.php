@@ -30,12 +30,12 @@
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 
 	ob_start(); ?>
-		sample
+		OK SYSTEM COOL
 	<?php
 	$ANNOUNCEMENT = ob_get_clean();
 
 	define("EXTENSION_ANNOUNCEMENT", Array(
 		"enabled" => true,
-		"level" => "warning",
+		"level" => "okay",
 		"message" => $ANNOUNCEMENT
 	));

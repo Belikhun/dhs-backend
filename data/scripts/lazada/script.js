@@ -156,6 +156,7 @@
                         progress: progress * 100,
                         saved: progress * 100,
                         now: parseInt((end - start) - runTime),
+                        end: parseInt(end - start),
                         dataType: "time"
                     })
     

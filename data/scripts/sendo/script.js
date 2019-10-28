@@ -14,9 +14,9 @@
 
     try {
         log(`|===========================|`);
-        log(`|      Sendo Auto v004      |`);
+        log(`|      Sendo Auto v005      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 10:36:55 27/10/2019  |`);
+        log(`|  LU: 22:03:55 28/10/2019  |`);
         log(`|===========================|`);
 
         // Get itemName
@@ -148,12 +148,17 @@
         
         // Wait for main settings
         const settings = await setup({
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true },
-            orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
-            checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
-            coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
+            orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, depend: "orderBy:orderByPrice" },
+            orderCount: { type: "number", label: "Số lượng", value: 1, required: true, depend: "orderBy:orderByPrice" },
+            orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: 400, required: true, depend: "orderBy:orderByPrice" },
+            checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true, depend: "orderBy:orderByPrice" },
+            orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
+            orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
+            orderTime: { type: "time", label: "Giờ mua", depend: "orderBy:orderByTime" },
+            timeCheckInterval: { type: "number", label: "Khoảng kiểm tra", depend: "orderBy:orderByTime", value: 60 },
             stepSleep: { type: "number", label: "STEP SLEEP", value: STEP_SLEEP },
-            maxRetry: { type: "number", label: "RETRY", value: RETRY }
+            maxRetry: { type: "number", label: "RETRY", value: RETRY },
         });
 
         STEP_SLEEP = settings.stepSleep;
@@ -167,95 +172,180 @@
         log("Đang bắt đầu chạy...");
         run();
         
+        // // Start
+        // var checkNth = 0;
+        // var start = time();
+    
+        // runInfo({
+        //     target: settings.orderPrice
+        // });
+    
+        
+
         // Start
         var checkNth = 0;
         var start = time();
-    
-        runInfo({
-            target: settings.orderPrice
-        });
-    
-        const checker = async () => {
-            checkNth++;
-            let reqStart = time();
-            let data = {}
+        var checkPer = (settings.orderBy === "orderByTime") ? settings.timeCheckInterval : settings.checkInterval;
 
-            try {
-                data = await command("ajax", {
-                    url: `https://sendo.vn/m/wap_v2/full/san-pham/${ITEMURL}`,
-                    method: "GET"
-                });
-            } catch(e) {
-                heartbeat({ color: "red" });
-                log(" + Lỗi đã xảy ra khi lấy thông tin Item");
-                log(`    + Code: ${e.code}`);
-                log(`    + MSG : ${e.description || "Không Rõ"}`);
-                log(`    + Bỏ qua lỗi: true`);
+        switch (settings.orderBy) {
 
-                let reqTime = ((time() - reqStart) * 1000);
-                let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+            //! |==========================|
+			//! |      Order By Time       |
+			//! |==========================|
+
+            case "orderByTime":
+                var end = time(new Date(`${settings.orderDate} ${settings.orderTime}`));
+                log(`RUN: ${start} -> ${end}`);
+    
                 runInfo({
-                    progress: reqTimeAT,
-                    now: reqTime.toFixed(2) + "ms",
+                    current: start,
+                    target: end,
+                    end: parseInt(end - start),
+                    dataType: "time",
+                    itemStatus: `Không Rõ`,
+                    itemStatusColor: "gray"
+                });
+    
+                var checker = async () => {
+                    checkNth++;
+    
+                    let curTime = time();
+                    let runTime = end - curTime;
+                    let progress = (curTime - start) / (end - start);
+                    
+                    runInfo({
+                        time: runTime,
+                        progress: progress * 100,
+                        saved: progress * 100,
+                        now: parseInt((end - start) - runTime),
+                        end: parseInt(end - start),
+                        dataType: "time"
+                    })
+    
+                    if (runTime <= 0) {
+                        doCheck = false;
+                        order();
+            
+                        await __doOrder({
+                            shopId: SHOPID,
+                            coupon: settings.coupon,
+                            delay: 0
+                        });
+            
+                        complete();
+                        runInfo({
+                            itemStatus: `ĐÃ ĐẶT THÀNH CÔNG!`,
+                            itemStatusColor: "green",
+                            progress: 100,
+                            progWarn: false,
+                            checkDetail: "Đặt hàng thành công",
+                            dataType: "time"
+                        });
+                        log("CHẠY KẾT THÚC");
+                        return;
+                    }
+                }
+    
+                infoUpdateInterval = setInterval(() => {
+                    heartbeat({ color: "blue" });
+                    runInfo({ checkDetail: `TPS: ${checkNth}`, dataType: "time" });
+                    checkNth = 0;
+                }, 1000)
+                break;
+            
+            case "orderByPrice":
+                runInfo({
                     end: settings.checkInterval + "ms",
-                    itemStatus: "LỖI ĐÃ XẢY RA",
-                    itemStatusColor: "red",
-                    checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+                    target: settings.orderPrice
                 });
 
-                return;
-            }
-
-            let price = data.result.data.final_price;
-            let stock = data.result.data.quantity;
-
-            if (HAVE_VARIATIONS && VARIANT_KEY) {
-                let i = data.result.data.variants[VARIANT_KEY];
-                price = i.final_price;
-                stock = i.stock;
-            }
+                var checker = async () => {
+                    checkNth++;
+                    let reqStart = time();
+                    let data = {}
+        
+                    try {
+                        data = await command("ajax", {
+                            url: `https://sendo.vn/m/wap_v2/full/san-pham/${ITEMURL}`,
+                            method: "GET"
+                        });
+                    } catch(e) {
+                        heartbeat({ color: "red" });
+                        log(" + Lỗi đã xảy ra khi lấy thông tin Item");
+                        log(`    + Code: ${e.code}`);
+                        log(`    + MSG : ${e.description || "Không Rõ"}`);
+                        log(`    + Bỏ qua lỗi: true`);
+        
+                        let reqTime = ((time() - reqStart) * 1000);
+                        let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+                        runInfo({
+                            progress: reqTimeAT,
+                            now: reqTime.toFixed(2) + "ms",
+                            end: settings.checkInterval + "ms",
+                            itemStatus: "LỖI ĐÃ XẢY RA",
+                            itemStatusColor: "red",
+                            checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+                        });
+        
+                        return;
+                    }
+        
+                    let price = data.result.data.final_price;
+                    let stock = data.result.data.quantity;
+        
+                    if (HAVE_VARIATIONS && VARIANT_KEY) {
+                        let i = data.result.data.variants[VARIANT_KEY];
+                        price = i.final_price;
+                        stock = i.stock;
+                    }
+            
+                    var currentPrice = data.result.data ? price : null;
+                    let reqTime = ((time() - reqStart) * 1000);
+                    let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+            
+                    runInfo({
+                        progress: reqTimeAT,
+                        now: reqTime.toFixed(2) + "ms",
+                        current: currentPrice ? currentPrice : "Không Rõ",
+                        saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
+                        itemStatus: (stock > 0) ? `CÓ HÀNG (${stock})` : `KHÔNG CÒN HÀNG (${stock})`,
+                        itemStatusColor: (stock > 0) ? "green" : "red",
+                        checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
+                    })
+        
+                    heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
+        
+                    if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && stock > 0) {
+                        log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
+                        doCheck = false;
+                        order();
+        
+                        await __doOrder({
+                            shopId: SHOPID,
+                            coupon: settings.coupon,
+                            delay: settings.orderDelay
+                        });
+            
+                        complete();
+                        runInfo({
+                            itemStatus: `Đặt thành công ${settings.orderCount} items`,
+                            itemStatusColor: "green",
+                            progress: 100,
+                            progWarn: false,
+                            checkDetail: "Đặt hàng thành công"
+                        });
+        
+                        log("CHẠY KẾT THÚC");
+                        return;
+                    }
+                }
     
-            var currentPrice = data.result.data ? price : null;
-            let reqTime = ((time() - reqStart) * 1000);
-            let reqTimeAT = (reqTime / settings.checkInterval) * 100;
-    
-            runInfo({
-                progress: reqTimeAT,
-                now: reqTime.toFixed(2) + "ms",
-                current: currentPrice ? currentPrice : "Không Rõ",
-                saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
-                itemStatus: (stock > 0) ? `CÓ HÀNG (${stock})` : `KHÔNG CÒN HÀNG (${stock})`,
-                itemStatusColor: (stock > 0) ? "green" : "red",
-                checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
-            })
+                infoUpdateInterval = setInterval(() => {
+                    let runTime = time() - start;
+                    runInfo({ time: runTime });
+                }, 60)
 
-            heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
-
-            if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && stock > 0) {
-                log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
-                doCheck = false;
-                order();
-
-                await __doOrder({
-                    id: ID,
-                    shopId: SHOPID,
-                    count: settings.orderCount,
-                    coupon: settings.coupon,
-                    productOptions: PRODUCT_OPTIONS
-                });
-    
-                complete();
-                runInfo({
-                    itemStatus: `Đặt thành công ${settings.orderCount} items`,
-                    itemStatusColor: "green",
-                    progress: 100,
-                    progWarn: false,
-                    checkDetail: "Đặt hàng thành công"
-                });
-
-                log("CHẠY KẾT THÚC");
-                return;
-            }
+                break;
         }
     
         const __checkHandler = async () => {
@@ -264,26 +354,17 @@
     
             let timeStart = time();
             await checker();
-            setTimeout(() => __checkHandler(), settings.checkInterval - ((time() - timeStart) * 1000));
+            setTimeout(() => __checkHandler(), checkPer - ((time() - timeStart) * 1000));
         }
-    
-        infoUpdateInterval = setInterval(() => {
-            let runTime = time() - start;
-            runInfo({ time: runTime });
-        }, 60)
-        
-        const __doOrder = async ({
+
+        const __preDoOrder = async ({
             id = 0,
             shopId = 0,
             count = 1,
             productOptions = {},
-            coupon = ""
         }) => {
-            sounds.notification();
-            let orderTimer = new stopClock();
-            heartbeat();
             log("Đang thêm Item vào Giỏ Hàng");
-            runInfo({ now: `Bước 1`, end: `Bước 5`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
+            runInfo({ now: `Bước 1`, end: `Bước 3`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
             heartbeat();
             let addCartData = null;
 
@@ -324,7 +405,7 @@
             }
 
             log(` + Thêm Item vào Giỏ thành công!`);
-            runInfo({ now: `Bước 2`, progress: 20, progWarn: false, checkDetail: "Lấy thông tin item" });
+            runInfo({ now: `Bước 2`, progress: 33, progWarn: false, checkDetail: "Lấy thông tin item" });
             heartbeat();
             
             log("Đang lấy thông tin Item");
@@ -341,7 +422,7 @@
                 return;
             }
 
-            runInfo({ now: `Bước 3`, progress: 40, progWarn: false, checkDetail: "Chuyển Tới Trang Thanh Toán" });
+            runInfo({ now: `Bước 3`, progress: 66, progWarn: false, checkDetail: "Chuyển Tới Trang Thanh Toán" });
             heartbeat();
             log("Đang chuyển tới trang Thanh Toán");
             PRODUCT_HASH = itemData.result.data[0].product_list[0].data[0].hash;
@@ -362,12 +443,22 @@
             );
 
             log(" + Đã tải xong");
-
+            runInfo({ now: `Bước 3`, progress: 100, progWarn: false, checkDetail: "Đã chuyển tới trang thanh toán" });
+        }
+        
+        const __doOrder = async ({
+            shopId = 0,
+            coupon = "",
+            delay = 200
+        }) => {
+            sounds.notification();
+            let orderTimer = new stopClock();
+            heartbeat();
             let voucherJson = { "enable_suggest_voucher": true }
 
             // Set coupon preInit
             if (typeof coupon === "string" && coupon !== "") {
-                runInfo({ now: `Bước 4`, progress: 60, progWarn: false, checkDetail: "Đang áp dụng mã giảm giá" });
+                runInfo({ now: `Bước 1`, end: `Bước 2`, progress: 0, progWarn: false, checkDetail: "Đang áp dụng mã giảm giá" });
                 heartbeat();
                 log(`Đang áp dụng Coupon: ${coupon}`);
 
@@ -411,9 +502,12 @@
                 log(` + Mã giảm giá hợp lệ`);
             }
 
-            runInfo({ now: `Bước 5`, progress: 80, progWarn: false, checkDetail: "Đang đặt hàng" });
+            runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang đặt hàng" });
             heartbeat();
             log(`Bắt đầu đặt hàng`);
+            log(` + Chờ ${delay}ms`);
+
+            await delayAsync(delay);
 
             let placeOrder = await command("ajax", {
                 url: "/api/checkout/save-order",
@@ -446,7 +540,7 @@
             }
 
             heartbeat();
-            runInfo({ now: `Bước 5`, progress: 100, progWarn: false, checkDetail: "Đặt hàng thành công" });
+            runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Đặt hàng thành công" });
             log(" + doOrder đã hoàn thành! Đang chuyển tới chi tiết đơn...");
             log("=========== KẾT QUẢ ===========");
             log(` + CheckoutID  : ${placeOrder.increment_id}`);
@@ -455,6 +549,13 @@
 
             command("changeLocation", { href: `https://profile.sendo.vn/chi-tiet-don-hang/${placeOrder.increment_id}` });
         }
+    
+        await __preDoOrder({
+            id: ID,
+            shopId: SHOPID,
+            count: settings.orderCount,
+            productOptions: PRODUCT_OPTIONS
+        });
 
         __checkHandler();
         log("Bắt đầu kiểm tra giá");
