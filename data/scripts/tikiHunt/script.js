@@ -96,7 +96,7 @@
 						let price = parseInt(item.dataset.price);
 						let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular").innerText;
 						let oldPrice = (_priceBox !== "") ? parseInt(_priceBox.match(/\d/g).join("")) : price;
-						let priceSale = ((oldPrice - price) / oldPrice) * 100;
+						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 	
 						let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
 						let couponCode = null;
@@ -356,6 +356,12 @@
 		let allListHeaderPage = document.createElement("span");
 		allListHeaderPage.classList.add("pageChange");
 
+		var allListHeaderPageForward = document.createElement("span");
+		allListHeaderPageForward.classList.add("forward");
+		allListHeaderPageForward.dataset.soundhover = "";
+		allListHeaderPageForward.dataset.soundselect = "";
+		sounds.applySound(allListHeaderPageForward);
+
 		var allListHeaderPageNext = document.createElement("span");
 		allListHeaderPageNext.classList.add("next");
 		allListHeaderPageNext.dataset.soundhover = "";
@@ -371,7 +377,13 @@
 		allListHeaderPagePrev.dataset.soundselect = "";
 		sounds.applySound(allListHeaderPagePrev);
 
-		allListHeaderPage.append(allListHeaderPagePrev, allListHeaderPageCurrent, allListHeaderPageNext);
+		var allListHeaderPageBackward = document.createElement("span");
+		allListHeaderPageBackward.classList.add("backward");
+		allListHeaderPageBackward.dataset.soundhover = "";
+		allListHeaderPageBackward.dataset.soundselect = "";
+		sounds.applySound(allListHeaderPageBackward);
+
+		allListHeaderPage.append(allListHeaderPageBackward, allListHeaderPagePrev, allListHeaderPageCurrent, allListHeaderPageNext, allListHeaderPageForward);
 		allListHeader.append(allListHeaderInfo, allListHeaderPage);
 
 		var allListItem = document.createElement("div");
@@ -454,6 +466,10 @@
 		} = {}) => {
 			let total = itemList.sortedList.length;
 			let maxPage = (showCount === 0) ? 1 : Math.floor(total / showCount);
+
+			if (page === "last")
+				page = maxPage;
+
 			let from = Math.max((page - 1) * showCount, 0);
 			let to = Math.min(page * showCount, total - 1);
 
@@ -478,8 +494,11 @@
 			CURRENT_PAGE = page;
 		}
 
+		allListHeaderPageForward.addEventListener("mouseup", e => changeAllListPage("last"));
 		allListHeaderPageNext.addEventListener("mouseup", e => changeAllListPage(CURRENT_PAGE + 1));
 		allListHeaderPagePrev.addEventListener("mouseup", e => changeAllListPage(CURRENT_PAGE - 1));
+		allListHeaderPageBackward.addEventListener("mouseup", e => changeAllListPage(1));
+		
 		changeAllListPage(CURRENT_PAGE);
 
 		const settings = await setup({

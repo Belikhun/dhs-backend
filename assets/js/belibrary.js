@@ -140,10 +140,26 @@ function myajax({
                     data = res;
                 } else {
                     if (this.status >= 400) {
+                        let code = "HTTP" + this.status;
+                        let text = this.statusText;
+                        let resData = res;
+
+                        let header = this.getResponseHeader("output-json");
+
+                        if (header) {
+                            let headerJSON = JSON.parse(header);
+
+                            if (!resData)
+                                resData = headerJSON;
+
+                            code = `HTTP ${headerJSON.status} [${headerJSON.code}]`
+                            text = headerJSON.description;
+                        }
+
                         clog("errr", {
                             color: flatc("red"),
-                            text: "HTTP" + this.status
-                        }, this.statusText, {
+                            text: code
+                        }, text, {
                             color: flatc("magenta"),
                             text: method
                         }, {
@@ -151,7 +167,7 @@ function myajax({
                             text: url
                         });
 
-                        let errorObj = { code: 3, description: `HTTP ${this.status}: ${this.statusText}`, data: res }
+                        let errorObj = { code: 3, description: `${code}: ${text}`, data: resData }
                         error(errorObj);
                         reject(errorObj);
 
@@ -188,7 +204,6 @@ function delayAsync(time) {
         }, time);
     });
 }
-
 
 function waitFor(checker = async () => {}, handler = () => {}, retry = 10, timeout = 1000, onFail = () => {}) {
     return new Promise((resolve, reject) => {
@@ -574,7 +589,7 @@ function triBg(element, {
     speed = 26,
 	color = "gray",
 	scale = 2,
-	triangeCount = 38
+	triangleCount = 38
 } = {}) {
     let current = element.querySelector(".triBgContainer");
     if (current)
@@ -587,9 +602,9 @@ function triBg(element, {
 
     let container = document.createElement("div");
     container.classList.add("triBgContainer");
-    container.dataset.count = triangeCount;
+    container.dataset.count = triangleCount;
 
-    for (let i = 0; i < triangeCount; i++) {
+    for (let i = 0; i < triangleCount; i++) {
         let randScale = randBetween(0.4, 2.0, false);
         let randBright = ["brown", "dark"].indexOf(color) !== -1
             ? randBetween(1.1, 1.3, false)
@@ -617,13 +632,13 @@ function randBetween(min, max, toInt = true) {
         : (Math.random() * (max - min) + min)
 }
 
-/**
- * A shorthand of querySelector
- * @param {String} selector Selector
- * @returns {Element}
- */
 if (typeof $ !== "function")
-    var $ = (selector) => document.querySelector(selector);
+    /**
+     * A shorthand of querySelector
+     * @param {String} selector Selector
+     * @returns {Element}
+     */
+    function $ (selector) { return document.querySelector(selector) };
 
 cookie = {
     cookie: null,

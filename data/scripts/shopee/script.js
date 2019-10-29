@@ -170,8 +170,10 @@
 			}
 		})
 
-		if (!vouchersList.data.freeshipping_vouchers)
-			rejectSetup("Không tìm thấy danh sách Mã Miễn Phí Vận Chuyển! <br><i>(Đảm bảo rằng bạn đã đăng nhập vào <b>Shopee</b>)</i>");
+		if (!vouchersList.data) {
+			rejectSetup(`Không tìm thấy danh sách Mã Giảm Giá! <br><i>(Đảm bảo rằng bạn đã đăng nhập vào <b>Shopee</b>)</i>`);
+			return;
+		}
 
 		let freeshipCode = [];
 

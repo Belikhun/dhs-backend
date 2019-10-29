@@ -25,7 +25,7 @@
 	define("HOST_NAME", "dealhunter.000webhostapp.com");
 
 	define("EXTENSION_ID", "eonliieidenfhigoddlmcbjbofleagle");
-	define("EXTENSION_VERSION", "1.5");
+	define("EXTENSION_VERSION", "1.6");
 	define("EXTENSION_ZIP_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.zip");
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 
