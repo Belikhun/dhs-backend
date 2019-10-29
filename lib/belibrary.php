@@ -235,7 +235,8 @@
         switch (strtoupper(PAGE_TYPE)) {
             case "NORMAL":
                 if (!headers_sent())
-                    header("Output: [$code] $description");
+                    header("output: [$code] $description");
+                    header("output-json: ". json_encode($output));
 
                 if ($HTTPStatus >= 300 || $code !== 0)
                     printErrorPage($output, headers_sent());

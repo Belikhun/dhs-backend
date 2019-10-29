@@ -4,7 +4,7 @@
 	var infoUpdateInterval = null;
 	var timeUpdateInterval = null;
 
-	const HOSTNAME = "https://tiki.vn/";
+	const HOSTADDRESS = "https://tiki.vn/";
 	var selectedPageList = []
 	const pageList = {
 		phoneTablet:	{ title: "Điện Thoại - Máy Tính Bảng", path: "dien-thoai-may-tinh-bang/c1789" },
@@ -71,7 +71,7 @@
 				for (let page = 1; page <= pageCount; page++) {
 					heartbeat({ color: "yellow" });
 					let result = await myajax({
-						url: HOSTNAME + item.path,
+						url: HOSTADDRESS + item.path,
 						method: "GET",
 						query: {
 							src: "mega-menu",

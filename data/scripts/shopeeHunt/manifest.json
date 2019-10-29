@@ -1,0 +1,7 @@
+{
+    "name": "Shopee Sale Hunter",
+    "description": "Tìm item giá lỗi cho Shopee và Shopee Mall",
+    "site": "shopee.vn/",
+    "match": "*",
+    "version": 2
+}
