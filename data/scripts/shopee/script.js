@@ -16,7 +16,7 @@
 		log(`|===========================|`);
 		log(`|      Shopee Auto v007     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 20:12:36 17/10/2019  |`);
+		log(`|  LU: 22:10:48 29/10/2019  |`);
 		log(`|===========================|`);
 
 		// Get itemName
@@ -199,9 +199,21 @@
 		COUPON   = vouchersList.data.valid_vouchers[0]
 			? vouchersList.data.valid_vouchers[0].voucher_code
 			: "";
-		COUPON_DESC = vouchersList.data.valid_vouchers[0]
-			? vouchersList.data.valid_vouchers[0].description
-			: "Không có Mã Giảm Giá nào được đề xuất";
+		COUPON_DESC = "Không có Mã Giảm Giá nào được đề xuất";
+
+		if (vouchersList.data.valid_vouchers[0]) {
+			let _d = vouchersList.data.valid_vouchers[0];
+			COUPON_DESC = `MÃ <b style="font-size: 15px">${_d.voucher_code}</b>`;
+
+			COUPON_DESC += `<ul>`;
+			COUPON_DESC += `<li>Giảm ${_d.discount_percentage}% đơn tối thiểu ${_d.discount_value / 100000}đ, giảm tối đa ${_d.discount_cap / 100000}</li>`
+
+			for (let i of _d.customised_labels)
+				COUPON_DESC += `<li><i>${i.content}</i></li>`;
+
+			COUPON_DESC += `<li>Đã dùng <b>${_d.used_count}</b> lần. Còn ${formatTime(_d.end_time - time())}</li>`;
+			COUPON_DESC += `</ul>`;
+		}
 
 		log(`    + FREESHIP = ${FREESHIP}`);
 		log(`    + COUPON   = ${COUPON}`);
@@ -211,7 +223,7 @@
 		const settings = await setup({
 			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
-			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
+			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true },
 			useAirPay: { type: "checkbox", label: `Thanh toán bằng AirPay`, color: "blue", value: false, required: true },
 			couponNote: { type: "note", text: COUPON_DESC },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },

@@ -47,7 +47,7 @@
 		log(`|===========================|`);
 		log(`|     Shopee Deal Hunter    |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 19:20:12 29/10/2019  |`);
+		log(`|  LU: 20:54:12 29/10/2019  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -96,6 +96,10 @@
 
 				for (let item of result.data.items) {
 					if (list[item.itemid] || blackList.indexOf(item.itemid) !== -1)
+						continue;
+
+					//! Skip No Old Price
+					if (!item.price_before_discount)
 						continue;
 
 					let link = `https://shopee.vn/product-i.${item.shopid}.${item.itemid}`;

@@ -14,9 +14,9 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|       Tiki Auto v008      |`);
+		log(`|       Tiki Auto v009      |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:15:23 21/10/2019  |`);
+		log(`|  LU: 22:41:55 30/10/2019  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -35,6 +35,7 @@
 	
 		// Get ID
 		var ID = null;
+		var PID = null;
 
 		// Define
 		const fetchItemData = async () => {
@@ -65,6 +66,15 @@
 		}
 	
 		log(`Item ID: ${ID}`);
+
+		try {
+			PID = parseInt((await command("queryInput", { query: "input#product_id" })).value)
+		} catch(e) {
+			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(PID not found)</i>");
+			return;
+		}
+	
+		log(`Product ID: ${PID}`);
 		
 		await fetchItemData();
 		log("Đã lấy thông tin Item");
@@ -87,18 +97,79 @@
 				await fetchItemData();
 			}
 		}, 1000);
+
+		log("Đang lấy thông tin giá Item");
+		let beeCost = await myajax({
+			url: `https://apiv2.beecost.com/ecom/product/history`,
+			method: "GET",
+			query: {
+				product_base_id: `3__${PID}__${ID}`,
+				price_current: itemInitPrice
+			}
+		})
+
+		let costData = beeCost.data.price_classification;
+		let costHistory = beeCost.data.item_history.price;
+
+		//? PRICE HISTORY CONTAINER
+		let PHC = document.createElement("div");
+		PHC.classList.add("priceHistory");
+
+		let PHTitle = document.createElement("t");
+		PHTitle.classList.add("title");
+		PHTitle.innerText = "Thông Tin Giá";
+
+		let PHChart = document.createElement("div");
+		PHChart.classList.add("chart");
+		const PHChartBarMin = 40;
+		const PHChartBarMax = 100;
+
+		for (let value of costHistory) {
+			let bar = document.createElement("span");
+			let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
+			bar.classList.add("bar", (value === costData.max_price) ? "max" : (value === costData.min_price) ? "min" : "avg");
+			bar.dataset.value = value;
+			bar.style.height = `${((PHChartBarMin + _p * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+			PHChart.appendChild(bar);
+		}
+
+		let PHChartAvgLine = document.createElement("span");
+		PHChartAvgLine.classList.add("avgLine");
+		PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+		PHChart.appendChild(PHChartAvgLine);
+
+		let PHInfo = document.createElement("div");
+		PHInfo.classList.add("info");
+		PHInfo.innerHTML = `
+			<span class="col max">
+				<t>Cao Nhất</t>
+				<span class="price">${priceFormat(costData.max_price)}</span>
+			</span>
+			<span class="col avg">
+				<t>Trung Bình</t>
+				<span class="price">${priceFormat(costData.avg_price)}</span>
+			</span>
+			<span class="col min">
+				<t>Thấp Nhất</t>
+				<span class="price">${priceFormat(costData.min_price)}</span>
+			</span>
+		`
+
+		PHC.append(PHTitle, PHChart, PHInfo);
+		log(" + Lấy thông tin thành công (beeCost)");
 	
 		log("Đang chờ cài đặt từ người dùng");
 		// Wait for settings
 		const settings = await setup({
+			priceHistory: { type: "customNode", node: PHC },
 			note: { type: "note", level: "warning", text: "Chọn loại hàng trên trang sản phẩm. Tool sẽ tự động làm mới loại hàng và giá" },
 			orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
-			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true },
+			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: costData.min_price, required: true },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
 			reCheckPrice: { type: "number", label: "Kiểm tra lại giá", value: 5, depend: "orderBy:orderByPrice" },
 			orderByCoupon: { type: "switch", label: "Mua theo áp mã giảm giá", name: "orderBy" },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
-			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
+			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true },
 			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false },
 			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
 			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "pink", depend: "orderBy:orderByPrice" },

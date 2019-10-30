@@ -151,8 +151,8 @@
             orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
             orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, depend: "orderBy:orderByPrice" },
             orderCount: { type: "number", label: "Số lượng", value: 1, required: true, depend: "orderBy:orderByPrice" },
-            orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: 400, required: true, depend: "orderBy:orderByPrice" },
-            checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true, depend: "orderBy:orderByPrice" },
+            orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: 500, required: true, depend: "orderBy:orderByPrice" },
+            checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true, depend: "orderBy:orderByPrice" },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
             orderTime: { type: "time", label: "Giờ mua", depend: "orderBy:orderByTime" },
@@ -505,7 +505,7 @@
             runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang đặt hàng" });
             heartbeat();
             log(`Bắt đầu đặt hàng`);
-            log(` + Chờ ${delay}ms`);
+            log(` + Tạm dừng chạy ${delay}ms`);
 
             await delayAsync(delay);
 
