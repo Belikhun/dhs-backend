@@ -14,9 +14,9 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|       Tiki Auto v009      |`);
+		log(`|       Tiki Auto v010      |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 22:41:55 30/10/2019  |`);
+		log(`|  LU: 17:16:04 31/10/2019  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -68,7 +68,7 @@
 		//? PH Chart
 		var PHChart = document.createElement("div");
 		PHChart.classList.add("chart");
-		const PHChartBarMin = 40;
+		const PHChartBarMin = 30;
 		const PHChartBarMax = 100;
 		//? PH Info
 		var PHInfo = document.createElement("div");
@@ -81,7 +81,7 @@
 				url: `https://apiv2.beecost.com/ecom/product/history`,
 				method: "GET",
 				query: {
-					product_base_id: `${type}__${ID1}__${ID2}`,
+					product_base_id: [type, ID1, ID2].filter(Number).join("__"),
 					price_current: itemInitPrice
 				}
 			})
@@ -109,10 +109,10 @@
 
 			PHChart.innerHTML = "";
 
-			//? PH Line
+			//? PH deltaTime
 			var PHChartDeltaTime = document.createElement("span");
 			PHChartDeltaTime.classList.add("deltaTime");
-			PHChartDeltaTime.innerHTML = `<b>Δ:</b> ${costHistoryTimeDelta.toFixed(4)} tháng`;
+			PHChartDeltaTime.innerHTML = `<b>Δ:</b> ${costHistoryTimeDelta.toFixed(1)} tháng`;
 			PHChart.appendChild(PHChartDeltaTime);
 
 			for (let i = 0; i < costHistory.length; i++) {
@@ -121,7 +121,15 @@
 
 				let bar = document.createElement("span");
 				let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
-				bar.classList.add("bar", (value === costData.max_price) ? "max" : (value === costData.min_price) ? "min" : "avg");
+				bar.classList.add("bar", (value === costData.max_price)
+					? "max"
+					: (value === costData.min_price)
+						? "min"
+						:(value === itemInitPrice)
+							? "cur"
+							: "avg"
+				)
+
 				bar.dataset.value = value;
 				bar.title = `${priceFormat(value)}đ\n${timeStamp.toLocaleString()}`;
 				bar.style.height = `${((PHChartBarMin + _p * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;

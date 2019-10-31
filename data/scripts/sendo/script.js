@@ -14,9 +14,9 @@
 
     try {
         log(`|===========================|`);
-        log(`|      Sendo Auto v005      |`);
+        log(`|      Sendo Auto v006      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 22:03:55 28/10/2019  |`);
+        log(`|  LU: 20:50:13 31/10/2019  |`);
         log(`|===========================|`);
 
         // Get itemName
@@ -44,7 +44,6 @@
         var VARIANT_KEY = null;
 
         // Define
-
         const updateItemData = async () => {
             let data = await command("ajax", {
                 url: `/m/wap_v2/full/san-pham/${ITEMURL}`,
@@ -87,6 +86,109 @@
 
             return data;
         }
+        
+		//? PRICE HISTORY CONTAINER
+		var PHC = document.createElement("div");
+		PHC.classList.add("priceHistory");
+		//? PH Title
+		var PHTitle = document.createElement("t");
+		PHTitle.classList.add("title");
+		PHTitle.innerText = "Thông Tin Giá";
+		//? PH Chart
+		var PHChart = document.createElement("div");
+		PHChart.classList.add("chart");
+		const PHChartBarMin = 30;
+		const PHChartBarMax = 100;
+		//? PH Info
+		var PHInfo = document.createElement("div");
+		PHInfo.classList.add("info");
+		PHC.append(PHTitle, PHChart, PHInfo);
+
+		const updatePriceHistory = async (type, ID1, ID2) => {
+			log("Đang lấy thông tin giá Item");
+			let beeCost = await myajax({
+				url: `https://apiv2.beecost.com/ecom/product/history`,
+				method: "GET",
+				query: {
+					product_base_id: [type, ID1, ID2].filter(Number).join("__"),
+					price_current: itemInitPrice
+				}
+			})
+
+			let costData = { max_price: 0, min_price: 0, avg_price: 0 }
+			let costHistory = []
+			let costHistoryTime = []
+			let costHistoryTimeDelta = 0;
+
+			if (beeCost.status === "error") {
+				log(" + Lỗi đã xảy ra khi lấy thông tin giá Item");
+				log(`    + MSG : ${beeCost.meta.message || "Không Rõ"}`);
+				log(`    + Bỏ qua lỗi: true`);
+
+				PHC.classList.add("noData");
+			} else {
+				costData = beeCost.data.price_classification;
+				costHistory = beeCost.data.item_history.price;
+				costHistoryTime = beeCost.data.item_history.price_ts;
+				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
+				settingAutoPrice = costData.min_price;
+
+				PHC.classList.remove("noData");
+			}
+
+			PHChart.innerHTML = "";
+
+			//? PH deltaTime
+			var PHChartDeltaTime = document.createElement("span");
+			PHChartDeltaTime.classList.add("deltaTime");
+			PHChartDeltaTime.innerHTML = `<b>Δ:</b> ${costHistoryTimeDelta.toFixed(1)} tháng`;
+			PHChart.appendChild(PHChartDeltaTime);
+
+			for (let i = 0; i < costHistory.length; i++) {
+				let value = costHistory[i];
+				let timeStamp = new Date(costHistoryTime[i]);
+
+				let bar = document.createElement("span");
+				let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
+				bar.classList.add("bar", (value === costData.max_price)
+					? "max"
+					: (value === costData.min_price)
+						? "min"
+						:(value === itemInitPrice)
+							? "cur"
+							: "avg"
+				)
+
+				bar.dataset.value = value;
+				bar.title = `${priceFormat(value)}đ\n${timeStamp.toLocaleString()}`;
+				bar.style.height = `${((PHChartBarMin + _p * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+
+				PHChart.appendChild(bar);
+			}
+
+			//? PH Line
+			var PHChartAvgLine = document.createElement("span");
+			PHChartAvgLine.classList.add("avgLine");
+			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+			PHChart.appendChild(PHChartAvgLine);
+
+			PHInfo.innerHTML = `
+				<span class="col max">
+					<t>Cao Nhất</t>
+					<span class="price">${priceFormat(costData.max_price)}</span>
+				</span>
+				<span class="col avg">
+					<t>Trung Bình</t>
+					<span class="price">${priceFormat(costData.avg_price)}</span>
+				</span>
+				<span class="col min">
+					<t>Thấp Nhất</t>
+					<span class="price">${priceFormat(costData.min_price)}</span>
+				</span>
+			`
+
+			log(" + Lấy thông tin thành công (beeCost)");
+		}
 
         let regexResult = /(?:http|https):\/\/.+.sendo.vn\/(.+-(\d+))\.html/gm
             .exec(this.page.url.href);
@@ -100,6 +202,9 @@
         ID = parseInt(regexResult[2]);
 
         let itemData = await updateItemData();
+        var settingAutoPrice = itemInitPrice;
+
+		await updatePriceHistory(4, ID);
         log("Đã lấy thông tin Item");
 
         log(`Item URL: ${ITEMURL}`);
@@ -148,8 +253,9 @@
         
         // Wait for main settings
         const settings = await setup({
+			priceHistory: { type: "customNode", node: PHC },
             orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, depend: "orderBy:orderByPrice" },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingAutoPrice, required: true, depend: "orderBy:orderByPrice" },
             orderCount: { type: "number", label: "Số lượng", value: 1, required: true, depend: "orderBy:orderByPrice" },
             orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: 500, required: true, depend: "orderBy:orderByPrice" },
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true, depend: "orderBy:orderByPrice" },

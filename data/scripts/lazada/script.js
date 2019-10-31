@@ -16,9 +16,9 @@
 
     try {
         log(`|===========================|`);
-        log(`|      Lazada Auto v005     |`);
+        log(`|      Lazada Auto v007     |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 23:15:44 21/10/2019  |`);
+        log(`|  LU: 20:49:33 31/10/2019  |`);
         log(`|===========================|`);
     
         const __fetchItemData = async () => {
@@ -53,21 +53,31 @@
                 throw { code: -1, description: "Không tìm thấy thông tin item" }
 
             let json = JSON.parse(jsonText.innerText);
+
             json.offers.status = /(?:http|https)\:\/\/schema\.org\/(.+)$/gm
                 .exec(json.offers.availability)[1];
+
+            let itemID = /(\d+).+\-(\d+)/gm
+                .exec(json.sku);
+
+            json.id = parseInt(itemID[1]);
+            json.skuid = parseInt(itemID[2]);
 
             clog("DEBG", "Fetched Item Info:", json);
             return json;
         }
 
         // Get itemData
-        var itemData = {};
+		var ID = null;
+		var SKUID = null;
         var itemName = "";
         var itemInitPrice = null;
 
         const fetchItemData = async () => {
             let data = await __fetchItemData();
 
+            ID = data.id;
+            SKUID = data.skuid;
             itemName = data.name;
             itemInitPrice = data.offers.price;
 
@@ -76,30 +86,136 @@
                 title: itemName,
                 price: priceFormat(itemInitPrice),
                 tags: [
+                    `ID: ${data.id}`,
+                    `SKUID: ${data.skuid}`,
                     `Status: ${data.offers.status}`,
                     `Seller: ${data.offers.seller.name}`,
                     `${data.offers.warranty["@type"]}: ${data.offers.warranty.durationOfWarranty.value}`
                 ]
             })
         }
+        
+		//? PRICE HISTORY CONTAINER
+		var PHC = document.createElement("div");
+		PHC.classList.add("priceHistory");
+		//? PH Title
+		var PHTitle = document.createElement("t");
+		PHTitle.classList.add("title");
+		PHTitle.innerText = "Thông Tin Giá";
+		//? PH Chart
+		var PHChart = document.createElement("div");
+		PHChart.classList.add("chart");
+		const PHChartBarMin = 30;
+		const PHChartBarMax = 100;
+		//? PH Info
+		var PHInfo = document.createElement("div");
+		PHInfo.classList.add("info");
+		PHC.append(PHTitle, PHChart, PHInfo);
+
+		const updatePriceHistory = async (type, ID1, ID2) => {
+			log("Đang lấy thông tin giá Item");
+			let beeCost = await myajax({
+				url: `https://apiv2.beecost.com/ecom/product/history`,
+				method: "GET",
+				query: {
+					product_base_id: [type, ID1, ID2].filter(Number).join("__"),
+					price_current: itemInitPrice
+				}
+			})
+
+			let costData = { max_price: 0, min_price: 0, avg_price: 0 }
+			let costHistory = []
+			let costHistoryTime = []
+			let costHistoryTimeDelta = 0;
+
+			if (beeCost.status === "error") {
+				log(" + Lỗi đã xảy ra khi lấy thông tin giá Item");
+				log(`    + MSG : ${beeCost.meta.message || "Không Rõ"}`);
+				log(`    + Bỏ qua lỗi: true`);
+
+				PHC.classList.add("noData");
+			} else {
+				costData = beeCost.data.price_classification;
+				costHistory = beeCost.data.item_history.price;
+				costHistoryTime = beeCost.data.item_history.price_ts;
+				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
+				settingAutoPrice = costData.min_price;
+
+				PHC.classList.remove("noData");
+			}
+
+			PHChart.innerHTML = "";
+
+			//? PH deltaTime
+			var PHChartDeltaTime = document.createElement("span");
+			PHChartDeltaTime.classList.add("deltaTime");
+			PHChartDeltaTime.innerHTML = `<b>Δ:</b> ${costHistoryTimeDelta.toFixed(1)} tháng`;
+			PHChart.appendChild(PHChartDeltaTime);
+
+			for (let i = 0; i < costHistory.length; i++) {
+				let value = costHistory[i];
+				let timeStamp = new Date(costHistoryTime[i]);
+
+				let bar = document.createElement("span");
+				let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
+				bar.classList.add("bar", (value === costData.max_price)
+					? "max"
+					: (value === costData.min_price)
+						? "min"
+						:(value === itemInitPrice)
+							? "cur"
+							: "avg"
+				)
+
+				bar.dataset.value = value;
+				bar.title = `${priceFormat(value)}đ\n${timeStamp.toLocaleString()}`;
+				bar.style.height = `${((PHChartBarMin + _p * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+
+				PHChart.appendChild(bar);
+			}
+
+			//? PH Line
+			var PHChartAvgLine = document.createElement("span");
+			PHChartAvgLine.classList.add("avgLine");
+			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+			PHChart.appendChild(PHChartAvgLine);
+
+			PHInfo.innerHTML = `
+				<span class="col max">
+					<t>Cao Nhất</t>
+					<span class="price">${priceFormat(costData.max_price)}</span>
+				</span>
+				<span class="col avg">
+					<t>Trung Bình</t>
+					<span class="price">${priceFormat(costData.avg_price)}</span>
+				</span>
+				<span class="col min">
+					<t>Thấp Nhất</t>
+					<span class="price">${priceFormat(costData.min_price)}</span>
+				</span>
+			`
+
+			log(" + Lấy thông tin thành công (beeCost)");
+		}
     
         try {
-            itemData = await fetchItemData();
+            await fetchItemData();
         } catch(e) {
             clog("errr", e);
             rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy!");
             return;
         }
-
-        // Define
-    
+        var settingAutoPrice = itemInitPrice;
+        await updatePriceHistory(2, ID, SKUID);
         log("Đã lấy thông tin Item");
+
         log("Đang chờ cài đặt từ người dùng");
         // Wait for settings
         const settings = await setup({
+			priceHistory: { type: "customNode", node: PHC },
             preRunNote: { type: "note", level: "warning", text: `<b>Lưu Ý:</b> Lựa chọn loại hàng và số lượng trước khi chạy!` },
             orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, depend: "orderBy:orderByPrice" },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingAutoPrice, required: true, depend: "orderBy:orderByPrice" },
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true, depend: "orderBy:orderByPrice" },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
