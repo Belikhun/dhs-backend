@@ -138,7 +138,7 @@
 				costHistory = beeCost.data.item_history.price;
 				costHistoryTime = beeCost.data.item_history.price_ts;
 				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
-				settingAutoPrice = costData.min_price;
+				settingOrderPrice = costData.min_price;
 
 				PHC.classList.remove("noData");
 			}
@@ -212,7 +212,7 @@
 		log(`Shop ID: ${SID}`);
 
 		let itemData = await updateItemData();
-		var settingAutoPrice = itemInitPrice;
+		var settingOrderPrice = itemInitPrice;
 
 		await updatePriceHistory(1, ID, SID);
 		log("Đã lấy thông tin Item");
@@ -328,7 +328,7 @@
 		// Wait for main settings
 		const settings = await setup({
 			priceHistory: { type: "customNode", node: PHC },
-			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingAutoPrice, required: true },
+			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
 			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true },
 			useAirPay: { type: "checkbox", label: `Thanh toán bằng AirPay`, color: "blue", value: false, required: true },
