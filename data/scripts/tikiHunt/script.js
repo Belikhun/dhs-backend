@@ -37,7 +37,7 @@
 		log(`|===========================|`);
 		log(`|      Tiki Deal Hunter     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 20:14:36 17/10/2019  |`);
+		log(`|  LU: 22:10:12 31/10/2019  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -111,6 +111,7 @@
 	
 						list[item.dataset.id] = {
 							id: item.dataset.id,
+							pid: item.dataset.sellerProductId,
 							title: item.dataset.title,
 							link: link,
 							price,
@@ -502,7 +503,8 @@
 		changeAllListPage(CURRENT_PAGE);
 
 		const settings = await setup({
-			delay: { type: "number", label: "Thời Gian Nghỉ", value: 10 }
+			delay: { type: "number", label: "Thời Gian Nghỉ", value: 10 },
+			checkPriceHistory: { type: "checkbox", label: "Kiểm Tra Lịch Sử Giá", color: "blue", value: false }
 		})
 
 		log("Đang bắt đầu chạy...");
@@ -581,13 +583,43 @@
 			let changedList = []
 
 			for (let item of list.sortedList) {
-				if (itemList.list[item.id] && itemList.list[item.id].price <= item.price && itemList.list[item.id].sale >= item.sale)
+				if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))
 					continue;
 
 				let blackList = await getBlackList();
 				if (blackList.indexOf(item.id) !== -1) {
 					log(` + ITEM trong BlackList: ${item.id}`);
 					continue;
+				}
+
+				if (settings.checkPriceHistory) {
+					log(` + Đang kiểm tra lịch sử giá (beeCost)`);
+					log(`   + ID: ${item.id} PID: ${item.pid}`);
+
+					let beeCost = await myajax({
+						url: `https://apiv2.beecost.com/ecom/product/history`,
+						method: "GET",
+						query: {
+							product_base_id: [3, item.pid, item.id].filter(Number).join("__")
+						}
+					})
+
+					if (beeCost.status === "error") {
+						log("   + Không thể lấy lịch sử giá Item");
+						log(`     + MSG : ${beeCost.meta.message || "Không Rõ"}`);
+						log(`     + Bỏ qua lỗi: true`);
+					} else {
+						let costData = beeCost.data.price_classification;
+						let min = costData.min_price;
+						log(`   + GIÁ THẤP NHẤT: ${min}`);
+
+						if (item.price > min) {
+							log(`   + Giá hiện tại không đạt yêu cầu: ${item.price} > ${min}`);
+							log(`   + Đang bỏ qua`);
+
+							continue;
+						}
+					}
 				}
 
 				changed++;
