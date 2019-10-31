@@ -57,6 +57,103 @@
 				]
 			})
 		}
+
+		//? PRICE HISTORY CONTAINER
+		var PHC = document.createElement("div");
+		PHC.classList.add("priceHistory");
+		//? PH Title
+		var PHTitle = document.createElement("t");
+		PHTitle.classList.add("title");
+		PHTitle.innerText = "Thông Tin Giá";
+		//? PH Chart
+		var PHChart = document.createElement("div");
+		PHChart.classList.add("chart");
+		const PHChartBarMin = 40;
+		const PHChartBarMax = 100;
+		//? PH Info
+		var PHInfo = document.createElement("div");
+		PHInfo.classList.add("info");
+		PHC.append(PHTitle, PHChart, PHInfo);
+
+		const updatePriceHistory = async (type, ID1, ID2) => {
+			log("Đang lấy thông tin giá Item");
+			let beeCost = await myajax({
+				url: `https://apiv2.beecost.com/ecom/product/history`,
+				method: "GET",
+				query: {
+					product_base_id: `${type}__${ID1}__${ID2}`,
+					price_current: itemInitPrice
+				}
+			})
+
+			let costData = { max_price: 0, min_price: 0, avg_price: 0 }
+			let costHistory = []
+			let costHistoryTime = []
+			let costHistoryTimeDelta = 0;
+
+			if (beeCost.status === "error") {
+				log(" + Lỗi đã xảy ra khi lấy thông tin giá Item");
+				log(`    + MSG : ${beeCost.meta.message || "Không Rõ"}`);
+				log(`    + Bỏ qua lỗi: true`);
+
+				PHC.classList.add("noData");
+			} else {
+				costData = beeCost.data.price_classification;
+				costHistory = beeCost.data.item_history.price;
+				costHistoryTime = beeCost.data.item_history.price_ts;
+				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
+				settingAutoPrice = costData.min_price;
+
+				PHC.classList.remove("noData");
+			}
+
+			PHChart.innerHTML = "";
+
+			//? PH Line
+			var PHChartDeltaTime = document.createElement("span");
+			PHChartDeltaTime.classList.add("deltaTime");
+			PHChartDeltaTime.innerHTML = `<b>Δ:</b> ${costHistoryTimeDelta.toFixed(4)} tháng`;
+			PHChart.appendChild(PHChartDeltaTime);
+
+			for (let i = 0; i < costHistory.length; i++) {
+				let value = costHistory[i];
+				let timeStamp = new Date(costHistoryTime[i]);
+
+				let bar = document.createElement("span");
+				let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
+				bar.classList.add("bar", (value === costData.max_price) ? "max" : (value === costData.min_price) ? "min" : "avg");
+				bar.dataset.value = value;
+				bar.title = `${priceFormat(value)}đ\n${timeStamp.toLocaleString()}`;
+				bar.style.height = `${((PHChartBarMin + _p * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+
+				PHChart.appendChild(bar);
+			}
+
+			//? PH Line
+			var PHChartAvgLine = document.createElement("span");
+			PHChartAvgLine.classList.add("avgLine");
+			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+			PHChart.appendChild(PHChartAvgLine);
+
+			PHInfo.innerHTML = `
+				<span class="col max">
+					<t>Cao Nhất</t>
+					<span class="price">${priceFormat(costData.max_price)}</span>
+				</span>
+				<span class="col avg">
+					<t>Trung Bình</t>
+					<span class="price">${priceFormat(costData.avg_price)}</span>
+				</span>
+				<span class="col min">
+					<t>Thấp Nhất</t>
+					<span class="price">${priceFormat(costData.min_price)}</span>
+				</span>
+			`
+
+			log(" + Lấy thông tin thành công (beeCost)");
+		}
+
+		//? GET ITEM ID
 	
 		try {
 			ID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value)
@@ -77,86 +174,35 @@
 		log(`Product ID: ${PID}`);
 		
 		await fetchItemData();
+		var settingAutoPrice = itemInitPrice;
+
+		await updatePriceHistory(3, PID, ID);
 		log("Đã lấy thông tin Item");
 	
 		// Check for id change
 		updateInfoInterval = setInterval(async () => {
 			let _ID = null;
+			let _PID = null;
 	
 			try {
-				_ID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value)
+				_ID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value);
+				_PID = parseInt((await command("queryInput", { query: "input#product_id" })).value);
 			} catch(e) {
-				rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(ID not found)</i>");
+				rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy!");
 				return;
 			}
 			
-			if (ID !== _ID) {
-				log(`Phát hiện thay đổi ID: ${ID} -> ${_ID}`);
+			if (ID !== _ID || PID !== _PID) {
+				log(`Phát hiện thay đổi`);
+				log(` + ID : ${ID} -> ${_ID}`);
+				log(` + PID: ${PID} -> ${_PID}`);
 				ID = _ID;
+				PID = _PID
 				
+				await updatePriceHistory(3, PID, ID);
 				await fetchItemData();
 			}
 		}, 1000);
-
-		log("Đang lấy thông tin giá Item");
-		let beeCost = await myajax({
-			url: `https://apiv2.beecost.com/ecom/product/history`,
-			method: "GET",
-			query: {
-				product_base_id: `3__${PID}__${ID}`,
-				price_current: itemInitPrice
-			}
-		})
-
-		let costData = beeCost.data.price_classification;
-		let costHistory = beeCost.data.item_history.price;
-
-		//? PRICE HISTORY CONTAINER
-		let PHC = document.createElement("div");
-		PHC.classList.add("priceHistory");
-
-		let PHTitle = document.createElement("t");
-		PHTitle.classList.add("title");
-		PHTitle.innerText = "Thông Tin Giá";
-
-		let PHChart = document.createElement("div");
-		PHChart.classList.add("chart");
-		const PHChartBarMin = 40;
-		const PHChartBarMax = 100;
-
-		for (let value of costHistory) {
-			let bar = document.createElement("span");
-			let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
-			bar.classList.add("bar", (value === costData.max_price) ? "max" : (value === costData.min_price) ? "min" : "avg");
-			bar.dataset.value = value;
-			bar.style.height = `${((PHChartBarMin + _p * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
-			PHChart.appendChild(bar);
-		}
-
-		let PHChartAvgLine = document.createElement("span");
-		PHChartAvgLine.classList.add("avgLine");
-		PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
-		PHChart.appendChild(PHChartAvgLine);
-
-		let PHInfo = document.createElement("div");
-		PHInfo.classList.add("info");
-		PHInfo.innerHTML = `
-			<span class="col max">
-				<t>Cao Nhất</t>
-				<span class="price">${priceFormat(costData.max_price)}</span>
-			</span>
-			<span class="col avg">
-				<t>Trung Bình</t>
-				<span class="price">${priceFormat(costData.avg_price)}</span>
-			</span>
-			<span class="col min">
-				<t>Thấp Nhất</t>
-				<span class="price">${priceFormat(costData.min_price)}</span>
-			</span>
-		`
-
-		PHC.append(PHTitle, PHChart, PHInfo);
-		log(" + Lấy thông tin thành công (beeCost)");
 	
 		log("Đang chờ cài đặt từ người dùng");
 		// Wait for settings
@@ -164,7 +210,7 @@
 			priceHistory: { type: "customNode", node: PHC },
 			note: { type: "note", level: "warning", text: "Chọn loại hàng trên trang sản phẩm. Tool sẽ tự động làm mới loại hàng và giá" },
 			orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
-			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: costData.min_price, required: true },
+			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingAutoPrice, required: true },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
 			reCheckPrice: { type: "number", label: "Kiểm tra lại giá", value: 5, depend: "orderBy:orderByPrice" },
 			orderByCoupon: { type: "switch", label: "Mua theo áp mã giảm giá", name: "orderBy" },
