@@ -1,0 +1,684 @@
+// Script begin here
+(async () => {
+	var doCheck = true;
+	var infoUpdateInterval = null;
+	var timeUpdateInterval = null;
+
+	const HOSTADDRESS = "https://www.lazada.vn";
+	var selectedPageList = []
+	const pageList = {
+		phone:		{ title: "Điện thoại di động", path: "/dien-thoai-di-dong" },
+		tablet:		{ title: "Máy tính bảng", path: "/may-tinh-bang" },
+		laptop:		{ title: "Laptop", path: "/laptop" },
+		pc:			{ title: "Máy tính để bàn", path: "/may-tinh-de-ban-va-phu-kien" },
+		audio:		{ title: "Âm thanh", path: "/am-thanh" },
+		secCam:		{ title: "Camera giám sát", path: "/camera-giam-sat-2" },
+		picCam:		{ title: "Máy ảnh", path: "/may-anh-may-quay-phim" },
+		movCam:		{ title: "Máy quay phim", path: "/may-quay-phim" },
+		monitor:	{ title: "Máy quay phim", path: "/man-hinh-vi-tinh" },
+		printer:	{ title: "Máy in", path: "/man-hinh-may-in" },
+		sWatch:		{ title: "Đồng hồ thông minh", path: "/dong-ho-thong-minh" },
+		console:	{ title: "Máy chơi game", path: "/dieu-khien-choi-game" },
+		
+		phoneAcc:	{ title: "Phụ kiện di động", path: "/phu-kien-dien-thoai-may-tinh-bang" },
+		smartAcc:	{ title: "Thiết bị thông minh", path: "/thiet-bi-thong-minh" },
+		digital:	{ title: "Thiết bị số", path: "/thiet-bi-so" },
+		camAcc:		{ title: "Phụ kiện máy ảnh", path: "/phu-kien-may-anh-may-quay-phim" },
+		flyCamAcc:	{ title: "Phụ kiện fly cam", path: "phu-kien-may-bay-camera" },
+		storage:	{ title: "Thiết bị lưu trữ", path: "/thiet-bi-luu-tru-2" },
+		pcAcc:		{ title: "Phụ kiện máy tính", path: "/phu-kien-may-vi-tinh" },
+		pcComps:	{ title: "Linh kiện máy tính", path: "/linh-kien-may-tinh" },
+		netDevice:	{ title: "Thiết bị mạng", path: "/thiet-bi-mang" },
+		consoleAcc:	{ title: "Phụ kiện máy chơi game", path: "/phu-kien-may-choi-game" },
+	}
+
+	onCancel(() => {
+		this.subScreen.hide();
+		clearInterval(infoUpdateInterval);
+		clearInterval(timeUpdateInterval);
+		doCheck = false;
+	})
+
+	const log = (text) => writeLog(text);
+
+	try {
+		log(`|===========================|`);
+		log(`|     Lazada Deal Hunter    |`);
+		log(`|          Belikhun         |`);
+		log(`|  LU: 23:40:22 31/10/2019  |`);
+		log(`|===========================|`);
+
+		const getBlackList = async () => {
+			let data = await this.dataLoad("lazadaHuntBlackList");
+			return Object.keys(data.lazadaHuntBlackList || {});
+		}
+
+		const saveBlackList = async (list) => {
+			let listObj = {}
+			for (let i of list)
+				if (!isNaN(i) && i !== "")
+					listObj[i] = true;
+
+			await this.dataSave({ lazadaHuntBlackList: listObj });
+		}
+
+		const scanItem = async (sortBy = "sale", pageCount = 1, coolDown = 3000) => {
+			let list = {}
+			let sortedList = []
+			let blackList = await getBlackList();
+
+			heartbeat();
+			log(` + Đang lấy danh sách item`);
+			log(`   + sortBy    = ${sortBy}`);
+			log(`   + pageCount = ${pageCount}`);
+
+			for (let item of selectedPageList) {
+				let start = time();
+				log(`   + Đang tải: ${item.title}`);
+				
+				for (let page = 1; page <= pageCount; page++) {
+					heartbeat({ color: "yellow" });
+					let result = await myajax({
+						url: HOSTADDRESS + item.path,
+						method: "GET",
+						query: {
+							ajax: true,
+							sort: "priceasc",
+							page: page
+						},
+						type: "json"
+					});
+
+					heartbeat();
+		
+					let itemList = result.mods.listItems;
+	
+					for (let item of itemList) {
+						if (list[item.itemId] || blackList.indexOf(item.itemId) !== -1)
+							continue;
+
+						let link = item.productUrl;
+						let thumbnail = item.thumbs[0].image;
+	
+						let price = parseInt(item.price);
+						let oldPrice = (item.originalPrice) ? parseInt(item.originalPrice) : price;
+						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
+	
+						let couponBox = null;
+						let couponCode = null;
+						let couponPrice = null;
+						let couponSale = null;
+	
+						if (couponBox) {
+							couponCode = couponBox.innerText;
+							couponPrice = parseInt(item.querySelector("a > div.price-tag-wrap > p.price-tag > span.price > span").innerText.match(/\d/g).join(""));
+							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
+						}
+	
+						list[item.itemId] = {
+							id: item.itemId,
+							nid: item.nid,
+							title: item.name,
+							link: link,
+							price,
+							priceSale,
+							thumbnail,
+							oldPrice,
+							coupon: { code: couponCode, price: couponPrice, sale: couponSale },
+							sale: couponSale || priceSale
+						}
+	
+						sortedList.push(list[item.itemId]);
+					}
+
+					// Cooldown
+					log(`     + Cool Down: ${coolDown}ms`);
+					await delayAsync(coolDown);
+				}
+				
+				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
+			}
+
+			log(`   + Lấy danh sách thành công`);
+			heartbeat();
+			log(`   + Đang sắp xếp dữ liệu`);
+
+			switch (sortBy) {
+				case "sale":
+					sortedList.sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
+					break;
+			
+				case "name":
+					sortedList.sort((a, b) => (a.title < b.title) ? 1 : (a.title > b.title) ? -1 : 0);
+					break;
+
+				case "haveCoupon":
+					sortedList.sort((a, b) => a.coupon.code ? -1 : 1);
+					break;
+
+				case "priceUp":
+					sortedList.sort((a, b) => (a.price < b.price) ? -1 : (a.price > b.price) ? 1 : 0);
+					break;
+
+				case "priceDown":
+					sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.title > b.price) ? -1 : 0);
+					break;
+
+				default:
+					break;
+			}
+
+			log(`   + Sắp xếp dữ liệu thành công!`);
+			return { list, sortedList }
+		}
+
+		const createItemBox = (itemData, onBlacklist = () => {}) => {
+			let box = document.createElement("div");
+			box.classList.add("item");
+			box.setAttribute("item-id", itemData.id);
+			box.dataset.soundhover = "";
+			sounds.applySound(box);
+
+			let name = document.createElement("a");
+			name.classList.add("name");
+			name.innerText = itemData.title;
+			name.href = itemData.link;
+			name.target = "_blank";
+			name.dataset.soundselect = "";
+			sounds.applySound(name);
+			box.appendChild(name);
+
+			let priceInfo = document.createElement("span");
+			priceInfo.classList.add("priceInfo");
+			
+			let currentPrice = document.createElement("t");
+			currentPrice.classList.add("current", "price");
+			currentPrice.innerText = priceFormat(itemData.price);
+
+			let oldPrice = document.createElement("t");
+			oldPrice.classList.add("old", "price");
+			oldPrice.innerText = priceFormat(itemData.oldPrice);
+
+			let discount = document.createElement("t");
+			discount.classList.add("discount");
+			discount.innerText = `${(-itemData.priceSale).toFixed(2)}%`;
+
+			if (itemData.coupon.code) {
+				let couponContainer = document.createElement("div");
+				couponContainer.classList.add("coupon");
+	
+				let couponContainerCode = document.createElement("t");
+				couponContainerCode.classList.add("code");
+				couponContainerCode.innerText = itemData.coupon.code;
+	
+				let couponContainerPrice = document.createElement("span");
+				couponContainerPrice.classList.add("price");
+				couponContainerPrice.innerText = priceFormat(itemData.coupon.price);
+
+				let couponContainerSale = document.createElement("t");
+				couponContainerSale.classList.add("sale");
+				couponContainerSale.innerText = `${-(itemData.coupon.sale).toFixed(2)}%`;
+
+				couponContainer.append(couponContainerCode, couponContainerPrice, couponContainerSale);
+				box.appendChild(couponContainer);
+			}
+
+			let blackList = document.createElement("span");
+			blackList.classList.add("blackList");
+			blackList.setAttribute("item-id", itemData.id);
+			blackList.dataset.soundhoversoft = "";
+			blackList.dataset.soundselectsoft = "";
+			sounds.applySound(blackList);
+			blackList.addEventListener("click", e => onBlacklist(e));
+
+			priceInfo.append(currentPrice, oldPrice, discount);
+			box.append(priceInfo, blackList);
+
+			return box;
+		}
+		
+		const createChangedItemBox = (itemData, onBlacklist = () => {}) => {
+			let box = document.createElement("div");
+			box.classList.add("item");
+			box.setAttribute("item-id", itemData.id);
+			box.dataset.soundhover = "";
+			sounds.applySound(box);
+
+			let thumbnail = document.createElement("div");
+			thumbnail.classList.add("lazyload", "thumbnail");
+
+			let thumbnailImage = document.createElement("img");
+			thumbnailImage.onload = (e) => e.target.parentElement.dataset.loaded = 1;
+			thumbnailImage.src = itemData.thumbnail;
+
+			let thumbnailSpinner = document.createElement("div");
+			thumbnailSpinner.classList.add("simple-spinner");
+
+			thumbnail.append(thumbnailImage, thumbnailSpinner);
+
+			let infoBox = document.createElement("div");
+			infoBox.classList.add("info");
+
+			let name = document.createElement("a");
+			name.classList.add("name");
+			name.innerText = itemData.title;
+			name.href = itemData.link;
+			name.target = "_blank";
+			name.dataset.soundselect = "";
+			sounds.applySound(name);
+			infoBox.appendChild(name);
+
+			let priceInfo = document.createElement("span");
+			priceInfo.classList.add("priceInfo");
+			
+			let currentPrice = document.createElement("t");
+			currentPrice.classList.add("current", "price");
+			currentPrice.innerText = priceFormat(itemData.price);
+
+			let oldPrice = document.createElement("t");
+			oldPrice.classList.add("old", "price");
+			oldPrice.innerText = priceFormat(itemData.oldPrice);
+
+			let discount = document.createElement("t");
+			discount.classList.add("discount");
+			discount.innerText = `${(-itemData.priceSale).toFixed(2)}%`;
+
+			if (itemData.coupon.code) {
+				let couponContainer = document.createElement("div");
+				couponContainer.classList.add("coupon");
+	
+				let couponContainerCode = document.createElement("t");
+				couponContainerCode.classList.add("code");
+				couponContainerCode.innerText = itemData.coupon.code;
+	
+				let couponContainerPrice = document.createElement("span");
+				couponContainerPrice.classList.add("price");
+				couponContainerPrice.innerText = priceFormat(itemData.coupon.price);
+
+				let couponContainerSale = document.createElement("t");
+				couponContainerSale.classList.add("sale");
+				couponContainerSale.innerText = `${-(itemData.coupon.sale).toFixed(2)}%`;
+
+				couponContainer.append(couponContainerCode, couponContainerPrice, couponContainerSale);
+				infoBox.appendChild(couponContainer);
+			}
+
+			let blackList = document.createElement("span");
+			blackList.classList.add("blackList");
+			blackList.setAttribute("item-id", itemData.id);
+			blackList.dataset.soundhoversoft = "";
+			blackList.dataset.soundselectsoft = "";
+			sounds.applySound(blackList);
+			blackList.addEventListener("click", e => onBlacklist(e));
+
+			priceInfo.append(currentPrice, oldPrice, discount);
+			infoBox.append(priceInfo, blackList);
+			box.append(thumbnail, infoBox);
+
+			return box;
+		}
+
+		const deleteNode = (node) => node.parentElement.removeChild(node);
+
+		//* ==============
+		//*   START HERE
+		//* ==============
+
+		await info({ hide: true });
+
+		// Container Element Init
+		let container = document.createElement("div");
+
+		let title = document.createElement("t");
+		title.classList.add("title");
+		title.innerText = "Danh sách Item";
+		container.appendChild(title);
+
+		//? Changed List Box
+		let changedList = document.createElement("div");
+		changedList.classList.add("container", "changed");
+
+		let changedListHeader = document.createElement("div");
+		changedListHeader.classList.add("header");
+
+		let changedListHeaderInfo = document.createElement("span");
+		changedListHeaderInfo.classList.add("info");
+		changedListHeaderInfo.innerText = "Đã Bị Thay Đổi";
+
+		changedListHeader.append(changedListHeaderInfo);
+
+		var changedListItem = document.createElement("div");
+		changedListItem.classList.add("itemList");
+
+		changedList.append(changedListHeader, changedListItem);
+		container.appendChild(changedList);
+
+		//? All List Box
+		let allList = document.createElement("div");
+		allList.classList.add("container", "allList");
+		
+		let allListHeader = document.createElement("div");
+		allListHeader.classList.add("header");
+
+		let allListHeaderInfo = document.createElement("span");
+		allListHeaderInfo.classList.add("info");
+		allListHeaderInfo.innerText = "Toàn Bộ";
+
+		let allListHeaderPage = document.createElement("span");
+		allListHeaderPage.classList.add("pageChange");
+
+		var allListHeaderPageForward = document.createElement("span");
+		allListHeaderPageForward.classList.add("forward");
+		allListHeaderPageForward.dataset.soundhover = "";
+		allListHeaderPageForward.dataset.soundselect = "";
+		sounds.applySound(allListHeaderPageForward);
+
+		var allListHeaderPageNext = document.createElement("span");
+		allListHeaderPageNext.classList.add("next");
+		allListHeaderPageNext.dataset.soundhover = "";
+		allListHeaderPageNext.dataset.soundselect = "";
+		sounds.applySound(allListHeaderPageNext);
+
+		var allListHeaderPageCurrent = document.createElement("t");
+		allListHeaderPageCurrent.classList.add("current");
+
+		var allListHeaderPagePrev = document.createElement("span");
+		allListHeaderPagePrev.classList.add("prev");
+		allListHeaderPagePrev.dataset.soundhover = "";
+		allListHeaderPagePrev.dataset.soundselect = "";
+		sounds.applySound(allListHeaderPagePrev);
+
+		var allListHeaderPageBackward = document.createElement("span");
+		allListHeaderPageBackward.classList.add("backward");
+		allListHeaderPageBackward.dataset.soundhover = "";
+		allListHeaderPageBackward.dataset.soundselect = "";
+		sounds.applySound(allListHeaderPageBackward);
+
+		allListHeaderPage.append(allListHeaderPageBackward, allListHeaderPagePrev, allListHeaderPageCurrent, allListHeaderPageNext, allListHeaderPageForward);
+		allListHeader.append(allListHeaderInfo, allListHeaderPage);
+
+		var allListItem = document.createElement("div");
+		allListItem.classList.add("itemList");
+
+		allList.append(allListHeader, allListItem);
+		container.appendChild(allList);
+
+		//? BLACK LIST
+		const addToBlackList = async (id) => {
+			let list = await getBlackList();
+			let itemBoxList = document.querySelectorAll(`#subScreen > div.container .item[item-id="${id}"]`);
+			
+			for (let item of itemBoxList)
+				deleteNode(item);
+
+			list.push(id);
+			await saveBlackList(list);
+		}
+
+		this.subScreen.show(container, "dealHunt");
+		let blackList = await getBlackList();
+		let pageListSetupData = {
+			note: { type: "note", level: "info", text: `<b style="font-size: 14px">LỰA CHỌN DANH MỤC SẢN PHẨM</b>` }
+		};
+
+		for (let key of Object.keys(pageList))
+			pageListSetupData[key] = {
+				type: "checkbox",
+				label: pageList[key].title,
+				color: "blue",
+				value: true
+			}
+
+		let pageListSetup = await setup(pageListSetupData, { confirm: "Tiếp" });
+
+		log("DANH SÁCH TRANG:");
+
+		for (let key of Object.keys(pageListSetup)) {
+			log(` + ` + pleft(key, 18, true) + ` = ${pageListSetup[key]}`);
+			
+			if (pageListSetup[key] === true)
+				selectedPageList.push(pageList[key]);
+		}
+
+		// Cool Down
+		await delayAsync(1000);
+
+		var firstScanSetup = await setup({
+			sortBy: {
+				type: "radio",
+				label: "Sắp xếp theo",
+				required: false,
+				list: [
+					{ name: `Tên`, color: "blue", value: "name" },
+					{ name: `Mức giảm giá`, color: "pink", value: "sale", checked: true },
+					{ name: `Có mã giảm giá`, color: "blue", value: "haveCoupon" },
+					{ name: `Giá item (nhỏ đến lớn)`, color: "blue", value: "priceUp" },
+					{ name: `Giá item (lớn đến nhỏ)`, color: "blue", value: "priceDown" }
+				]
+			},
+			scanPage: { type: "number", label: "Số Trang Quét Mỗi Loại", value: 1 },
+			coolDown: { type: "number", label: "Thời gian chờ", value: 3000 },
+			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";") }
+		}, { confirm: "Tiếp" })
+
+		log("PRE SETUP:");
+
+		for (let key of Object.keys(firstScanSetup))
+			log(` + ` + pleft(key, 18, true) + ` = ${firstScanSetup[key]}`);
+		
+		// Save BlackList
+		await saveBlackList(firstScanSetup.blackList.split(";"));
+
+		// Start Scanning Item
+		var itemList = await scanItem(firstScanSetup.sortBy, firstScanSetup.scanPage, firstScanSetup.coolDown);
+		var CURRENT_PAGE = 1;
+
+		const changeAllListPage = async (page, {
+			showCount = 10
+		} = {}) => {
+			let total = itemList.sortedList.length;
+			let maxPage = (showCount === 0) ? 1 : Math.floor(total / showCount);
+
+			if (page === "last")
+				page = maxPage;
+
+			let from = Math.max((page - 1) * showCount, 0);
+			let to = Math.min(page * showCount, total - 1);
+
+			if (page > maxPage || page < 1)
+				return;
+
+			allListItem.innerHTML = "";
+			let blackList = await getBlackList();
+			
+			for (let i = from; i < to; i++) {
+				if (blackList.indexOf(itemList.sortedList[i].id) !== -1) {
+					if (itemList.list[itemList.sortedList[i].id])
+						delete itemList.list[itemList.sortedList[i].id];
+
+					itemList.sortedList.splice(i, 1);
+				}
+
+				allListItem.appendChild(createItemBox(itemList.sortedList[i], e => addToBlackList(e.target.getAttribute("item-id"))));
+				allListHeaderPageCurrent.innerText = `${from + 1}-${to + 1} ${page}/${maxPage}`;
+			}
+
+			CURRENT_PAGE = page;
+		}
+
+		allListHeaderPageForward.addEventListener("mouseup", e => changeAllListPage("last"));
+		allListHeaderPageNext.addEventListener("mouseup", e => changeAllListPage(CURRENT_PAGE + 1));
+		allListHeaderPagePrev.addEventListener("mouseup", e => changeAllListPage(CURRENT_PAGE - 1));
+		allListHeaderPageBackward.addEventListener("mouseup", e => changeAllListPage(1));
+		
+		changeAllListPage(CURRENT_PAGE);
+
+		const settings = await setup({
+			delay: { type: "number", label: "Thời Gian Nghỉ", value: 10 },
+			checkPriceHistory: { type: "checkbox", label: "Kiểm Tra Lịch Sử Giá", color: "blue", value: false }
+		})
+
+		log("Đang bắt đầu chạy...");
+		run();
+		
+		// Start
+		var runNth = 1;
+		var checkNth = 0;
+		var checkPer = 60;
+		var startTime = time();
+		var start = time();
+		var end = start + settings.delay;
+
+		var checker = async () => {
+			checkNth++;
+
+			let curTime = time();
+			let runTime = end - curTime;
+			let progress = (curTime - start) / (end - start);
+			
+			runInfo({
+				current: runTime.toFixed(2),
+				target: "0.00",
+				progress: progress * 100,
+				now: parseInt((end - start) - runTime),
+				end: parseInt(end - start),
+				saved: progress * 100,
+				itemStatus: `Chạy lần ${runNth}`,
+				itemStatusColor: "green",
+				dataType: "time"
+			})
+
+			if (runTime <= 0) {
+				let startCheck = time();
+				log("");
+				log(`Bắt đầu kiểm tra (lần ${runNth})`);
+				await __doUpdate();
+				log(` + KIỂM TRA HOÀN THÀNH`);
+				log(` + Thời gian: ${(time() - startCheck).toFixed(2)}s`);
+
+				// Reset
+				runNth++;
+				start = time();
+				end = start + settings.delay;
+			}
+		}
+
+		infoUpdateInterval = setInterval(() => {
+			heartbeat({ color: "blue" });
+			runInfo({ checkDetail: `TPS: ${checkNth}`, dataType: "time" });
+			checkNth = 0;
+		}, 1000)
+
+		timeUpdateInterval = setInterval(() => {
+			runInfo({
+				time: time() - startTime,
+				dataType: "time"
+			})
+		}, checkPer);
+
+		const __checkHandler = async () => {
+			if (!doCheck)
+				return;
+	
+			let timeStart = time();
+			await checker();
+			setTimeout(() => __checkHandler(), checkPer - ((time() - timeStart) * 1000));
+		}
+
+		const __doUpdate = async () => {
+			runInfo({ now: `Bước 1`, end: `Bước 2`, progress: 0, checkDetail: "Đang Lấy Danh Sách Item" });
+			let list = await scanItem(firstScanSetup.sortBy, firstScanSetup.scanPage);
+
+			runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang So Sánh Thông Tin" });
+			let changed = 0;
+			let changedList = []
+
+			for (let item of list.sortedList) {
+				if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))
+					continue;
+
+				let blackList = await getBlackList();
+				if (blackList.indexOf(item.id) !== -1) {
+					log(` + ITEM trong BlackList: ${item.id}`);
+					continue;
+				}
+
+				if (settings.checkPriceHistory) {
+					log(` + Đang kiểm tra lịch sử giá (beeCost)`);
+					log(`   + ID: ${item.id} PID: ${item.pid}`);
+
+					let beeCost = await myajax({
+						url: `https://apiv2.beecost.com/ecom/product/history`,
+						method: "GET",
+						query: {
+							product_base_id: [3, item.pid, item.id].filter(Number).join("__")
+						}
+					})
+
+					if (beeCost.status === "error") {
+						log("   + Không thể lấy lịch sử giá Item");
+						log(`     + MSG : ${beeCost.meta.message || "Không Rõ"}`);
+						log(`     + Bỏ qua lỗi: true`);
+					} else {
+						let costData = beeCost.data.price_classification;
+						let min = costData.min_price;
+						log(`   + GIÁ THẤP NHẤT: ${min}`);
+
+						if (item.price > min) {
+							log(`   + Giá hiện tại không đạt yêu cầu: ${item.price} > ${min}`);
+							log(`   + Đang bỏ qua`);
+
+							continue;
+						}
+					}
+				}
+
+				changed++;
+
+				if (itemList.list[item.id]) {
+					log(` + ITEM Thay Đổi: ${item.id} [${changed}]`);
+					log(`   + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
+					log(`   + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
+				} else {
+					log(` + ITEM Mới: ${item.id} [${changed}]`);
+					log(`   + GIÁ:  ${item.price}`);
+					log(`   + SALE: ${item.sale.toFixed(2)}%`);
+				}
+	
+				//? Remove Old Box If Exist
+				let existBox = changedListItem.querySelectorAll(`.item[item-id="${item.id}"]`);
+				for (let item of existBox)
+					deleteNode(item);
+				
+				let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
+				changedListItem.prepend(itemBox);
+				changedList.push({ title: item.title, message: item.id + "" });
+				itemList.list[item.id] = item;
+			}
+
+			if (changed > 0) {
+				sounds.notification();
+				chrome.notifications.create({
+					type: "list",
+					title: "Deal Hunter Suite",
+					message: `Đã tìm thấy ${changed} item thay đổi giá`,
+					contextMessage: `${(time() - start).toFixed(2)}s`,
+					iconUrl: "/assets/img/icon@32x32.png",
+					items: changedList,
+					requireInteraction: true
+				});
+			}
+
+			delete list;
+			delete changedList;
+
+			runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công" });
+		}
+
+		__checkHandler();
+		log("Bắt đầu chạy");
+	} catch(e) {
+		triggerError(e);
+		return;
+	}
+})()

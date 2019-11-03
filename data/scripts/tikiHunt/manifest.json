@@ -1,7 +1,7 @@
 {
     "name": "Tiki Sale Hunter",
-    "description": "Tìm item giá lỗi cho Tiki",
+    "description": "Tìm item giá lỗi và tự động đặt mua cho Tiki",
     "site": "tiki.vn/",
     "match": "*",
-    "version": 4
+    "version": 5
 }

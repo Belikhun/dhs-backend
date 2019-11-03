@@ -604,7 +604,7 @@
 			let changedList = []
 
 			for (let item of list.sortedList) {
-				if (itemList.list[item.id] && itemList.list[item.id].price <= item.price && itemList.list[item.id].sale >= item.sale)
+				if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))
 					continue;
 
 				let blackList = await getBlackList();
