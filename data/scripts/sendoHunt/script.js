@@ -123,6 +123,9 @@
 					let oldPrice = item.price || price;
 					let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 
+					if (priceSale < 80)
+						continue;
+
 					let couponBox = null;
 					let couponCode = null;
 					let couponPrice = null;
@@ -174,7 +177,7 @@
 					break;
 
 				case "priceDown":
-					sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.title > b.price) ? -1 : 0);
+					sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.price > b.price) ? -1 : 0);
 					break;
 
 				default:

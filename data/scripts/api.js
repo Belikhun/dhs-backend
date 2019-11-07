@@ -10,7 +10,8 @@ const info = async ({
     id = null,
     title = null,
     price = null,
-    tags = null
+    tags = null,
+    hide = false
 } = {}) => {}
 
 const setup = async (settingList, { confirm = "Bắt đầu", cancel = "Hủy" } = {}) => {}

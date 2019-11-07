@@ -151,7 +151,7 @@
 					break;
 
 				case "priceDown":
-					sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.title > b.price) ? -1 : 0);
+					sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.price > b.price) ? -1 : 0);
 					break;
 
 				default:
@@ -508,7 +508,7 @@
 			delay: { type: "number", label: "Thời Gian Nghỉ", value: 10 },
 			checkPriceHistory: { type: "checkbox", label: "Kiểm Tra Lịch Sử Giá", color: "blue", value: false },
 			autobuy: { type: "checkbox", label: "Tự động mua", color: "pink", value: false, depend: "checkPriceHistory" },
-			autobuyRatio: { type: "number", label: "Tỉ lệ giá", value: 8.5, depend: "autobuy" },
+			autobuyRatio: { type: "number", label: "Tỉ lệ giá", value: 8.5, step: 0.01, depend: "autobuy" },
 			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false, depend: "autobuy" },
 			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
 			accountList: { type: "textarea", label: "Danh sách tài khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy" }
