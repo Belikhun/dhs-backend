@@ -4299,5 +4299,27 @@
             "username": "belivipro9x99",
             "ip": "::1"
         }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1573136132,
+        "time": "07\/11\/2019 14:15:32",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1573136133,
+        "time": "07\/11\/2019 21:15:33",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [620aaaeabf1e5fb303c2ae8666fc9e31]",
+        "module": "auth.php:41",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
     }
 ]

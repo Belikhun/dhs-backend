@@ -3,5 +3,5 @@
     "description": "Tự động thêm voucher vào ví cho lazada",
     "site": "lazada.vn/",
     "match": "lazada\\.vn.*",
-    "version": 1
+    "version": 2
 }

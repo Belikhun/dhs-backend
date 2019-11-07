@@ -45,17 +45,21 @@
 						try {
 							data = {
 								id: parseInt(item.dataset.voucherid),
+								sellerID: parseInt(item.dataset.sellerid),
+								spreadID: parseInt(item.dataset.spreadid),
 								name: item.querySelector(".voucher-desc").innerText,
 								value: parseInt(item.querySelector(".voucher-value").innerText.replace(/\\./g, "")),
 								condition: item.querySelector(".voucher-condition p:nth-child(2)").innerText,
-								soldout: item.dataset.soldout === "true" || item.dataset.status === "sold-out"
+								soldout: item.dataset.soldout === "true" || item.dataset.status === "sold-out",
+								collected: item.dataset.collected === "true" || false
 							}
 						} catch(e) {
 							console.error(e);
-						} finally {
-							voucherData[data.id] = data;
-							voucherSortedList.push(data);
+							continue;
 						}
+
+						voucherData[data.id] = data;
+						voucherSortedList.push(data);
 					}
 					
 					voucherSortedList.sort((a, b) => (a.value < b.value) ? 1 : (a.value > b.value) ? -1 : 0);
@@ -84,7 +88,7 @@
 				label: `${item.name}<br><ul style="margin: 2px 0 0 0;"><li><font size="3">GIẢM <b>${priceFormat(item.value)}đ</b></font></li><li>Từ ${item.condition}</li></ul>`,
 				color: item.soldout ? "pink" : "blue",
 				value: false,
-				disabled: item.soldout
+				disabled: item.collected
 			}
 
 		const voucherSetup = await setup(voucherSetupData, { confirm: "Tiếp" });
@@ -130,7 +134,7 @@
 			target: end,
 			end: parseInt(end - start),
 			dataType: "time",
-			itemStatus: `CHUẨN BỊ CLICK ${selectedVoucherList.length} VOUCHER`,
+			itemStatus: `CHUẨN BỊ THÊM ${selectedVoucherList.length} VOUCHER`,
 			itemStatusColor: "gray"
 		});
 
@@ -159,13 +163,105 @@
 				for (let item of selectedVoucherList) {
 					runInfo({
 						dataType: "time",
-						itemStatus: `ĐÃ CLICK ${clicked}/${selectedVoucherList.length} VOUCHER`,
+						itemStatus: `ĐÃ THÊM ${clicked}/${selectedVoucherList.length} VOUCHER`,
 						itemStatusColor: "yellow"
 					});
 
-					log(` + Đang click Voucher ${item.id}`);
-					await command("click", { query: `.voucher-item[data-voucherid = "${item.id}"] .voucher-collect` });
-					log(` + Click thành công!`);
+					log(` + Đang thêm Voucher ${item.id}`);
+
+					// Get UMI Token
+					let tokens = (await command("eval", {
+						script: `
+							(function() {
+								let _e = document.createElement("script");
+								_e.text = \`
+									document.body.dataset.ua = window.Group_umid.getUA();
+									document.body.dataset.umid = window.Group_umid.getUmidToken();
+								\`;
+								document.body.appendChild(_e);
+						
+								return {
+									ua: document.body.dataset.ua,
+									umid: document.body.dataset.umid,
+									sign: /_m_h5_tk=(.+)_\\d+;/gm.exec(document.cookie)[1]
+								}
+							}())
+						`
+					})).result
+
+					let result = {}
+					try {
+						result = await command("ajax", {
+							url: "https://acs-m.lazada.vn/h5/mtop.lazada.promotion.voucher.spread/1.0/",
+							method: "POST",
+							header: {
+								"accept": "application/json",
+								"accept-language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+								"cache-control": "no-cache",
+								"content-type": "application/x-www-form-urlencoded",
+								"pragma": "no-cache",
+								"sec-fetch-mode": "cors",
+								"sec-fetch-site": "same-site",
+								"x-i18n-language": "vi",
+								"x-i18n-regionid": "VN",
+								"x-ua": tokens.ua,
+								"x-umidtoken": tokens.umid
+							},
+							query: {
+								jsv: "2.5.1",
+								appKey: 24677475,
+								t: time() * 1000,
+								sign: tokens.sign,
+								api: "mtop.lazada.promotion.voucher.spread",
+								v: "1.0",
+								type: "originaljson",
+								isSec: 1,
+								AntiCreep: true,
+								timeout: 20000,
+								needLogin: true,
+								dataType: "json",
+								sessionOption: "AutoLoginOnly",
+								"x-i18n-language": "vi",
+								"x-i18n-regionID": "VN"
+							},
+							form: {
+								data: JSON.stringify({
+									group: "LAZADA",
+									domain: "campaignTools",
+									scene: "module",
+									asac: "LAZADA2018100000000006",
+									promotionType: "MCP",
+									sellerId: item.sellerID,
+									spreadId: item.spreadID,
+									applyValue: 1,
+									voucherId: item.id
+								})
+							}
+						});
+					} catch(e) {
+						heartbeat({ color: "red" });
+                        log(" + Lỗi đã xảy ra khi thêm Voucher vào ví");
+                        log(`    + Code: ${e.code}`);
+                        log(`    + MSG : ${e.description || "Không Rõ"}`);
+						log(`    + Bỏ qua lỗi: true`);
+						clicked++;
+
+						continue;
+					}
+
+					if (!result.data.success) {
+						heartbeat({ color: "red" });
+						log(" + Lỗi đã xảy ra khi thêm Voucher vào ví");
+                        log(`    + Key  : ${result.data.errorCode.key}`);
+                        log(`    + MSG  : ${result.data.errorCode.displayMessage || "Không Rõ"}`);
+                        log(`    + UUID : ${result.data.uuid || "Không Rõ"}`);
+						log(`    + Bỏ qua lỗi: true`);
+						
+						continue;
+					}
+
+					heartbeat();
+					log(` + Thêm thành công!`);
 					clicked++;
 
 					log(` + Chờ ${settings.addDelay}ms`);
@@ -174,11 +270,11 @@
 	
 				complete();
 				runInfo({
-					itemStatus: `CLICK THÀNH CÔNG ${clicked}/${selectedVoucherList.length} VOUCHER`,
+					itemStatus: `THÊM THÀNH CÔNG ${clicked}/${selectedVoucherList.length} VOUCHER`,
 					itemStatusColor: "green",
 					progress: 100,
 					progWarn: false,
-					checkDetail: "Click thành công",
+					checkDetail: "Thêm thành công",
 					dataType: "time"
 				});
 				log("CHẠY KẾT THÚC");
@@ -202,7 +298,7 @@
         }
 
         __checkHandler();
-        log("Bắt đầu kiểm tra giá");
+        log("Bắt đầu chạy");
     } catch(e) {
         triggerError(e);
         return;
