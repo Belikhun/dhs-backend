@@ -92,7 +92,9 @@
 						catid: item.id,
 						limit: listLimit,
 						offset: 0,
-						recommend_type: recommendType
+						recommend_type: recommendType,
+						by: "price",
+						order: "asc"
 					},
 					type: "json"
 				});
@@ -476,7 +478,7 @@
 					{ name: `Loại Đề Nghị 1`, color: "blue", value: 1 }
 				]
 			},
-			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 1000 },
+			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 138 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "160px", value: blackList.join(";") }
 		}, { confirm: "Tiếp" })

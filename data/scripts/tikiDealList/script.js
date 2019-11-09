@@ -19,10 +19,11 @@
 		log(`|===========================|`);
 		log(`|  Tiki Upcoming Deal List  |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 22:10:12 31/10/2019  |`);
+		log(`|  LU: 21:42:39 09/11/2019  |`);
 		log(`|===========================|`);
 
 		const scanItem = async ({
+			sortBy = "sale",
 			pageCount = 1,
 			itemCount = 120,
 			saleFilter = 0
@@ -32,7 +33,10 @@
 
 			heartbeat();
 			log(` + Đang lấy danh sách item`);
-			log(`   + pageCount = ${pageCount}`);
+			log(`   + sortBy     = ${sortBy}`);
+			log(`   + pageCount  = ${pageCount}`);
+			log(`   + itemCount  = ${itemCount}`);
+			log(`   + saleFilter = ${saleFilter}`);
 			runInfo({
 				end: pageCount,
 				dataType: "time"
@@ -85,7 +89,7 @@
 						thumbnail,
 						oldPrice,
 						sale: priceSale,
-						end: item.special_to_date,
+						open: item.special_to_date,
 						progress: item.progress
 					}
 
@@ -105,7 +109,30 @@
 			log(`   + Lấy danh sách thành công`);
 			heartbeat();
 			log(`   + Đang sắp xếp dữ liệu`);
-			sortedList.sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
+			switch (sortBy) {
+				case "sale":
+					sortedList.sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
+					break;
+			
+				case "openTime":
+					sortedList.sort((a, b) => (a.open < b.open) ? -1 : (a.open > b.open) ? 1 : 0);
+					break;
+
+				case "name":
+					sortedList.sort((a, b) => (a.title < b.title) ? 1 : (a.title > b.title) ? -1 : 0);
+					break;
+
+				case "priceUp":
+					sortedList.sort((a, b) => (a.price < b.price) ? -1 : (a.price > b.price) ? 1 : 0);
+					break;
+
+				case "priceDown":
+					sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.price > b.price) ? -1 : 0);
+					break;
+
+				default:
+					break;
+			}
 
 			log(`   + Sắp xếp dữ liệu thành công!`);
 			return { list, sortedList }
@@ -164,7 +191,7 @@
 
 			let dealOpen = document.createElement("t");
 			dealOpen.classList.add("open");
-			liveTime(dealOpen, itemData.end, { count: "down" });
+			liveTime(dealOpen, itemData.open, { count: "down" });
 
 			let dealProgress = document.createElement("span");
 			dealProgress.classList.add("progressBar");
@@ -259,7 +286,19 @@
 
 		this.subScreen.show(container, "dealHunt");
 
-		var firstScanSetup = await setup({
+		var settings = await setup({
+			sortBy: {
+				type: "radio",
+				label: "Sắp xếp theo",
+				required: false,
+				list: [
+					{ name: `Tên`, color: "blue", value: "name" },
+					{ name: `Mức giảm giá`, color: "pink", value: "sale", checked: true },
+					{ name: `Thời gian mở bán`, color: "blue", value: "openTime" },
+					{ name: `Giá item (nhỏ đến lớn)`, color: "blue", value: "priceUp" },
+					{ name: `Giá item (lớn đến nhỏ)`, color: "blue", value: "priceDown" }
+				]
+			},
 			scanPage: { type: "number", label: "Số trang quét", value: 1 },
 			itemCount: { type: "number", label: "Số lượng Item", value: 200 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 }
@@ -267,8 +306,8 @@
 
 		log("PRE SETUP:");
 
-		for (let key of Object.keys(firstScanSetup))
-			log(` + ` + pleft(key, 18, true) + ` = ${firstScanSetup[key]}`);
+		for (let key of Object.keys(settings))
+			log(` + ` + pleft(key, 18, true) + ` = ${settings[key]}`);
 
 		log("Đang bắt đầu chạy...");
 		run();
@@ -287,9 +326,10 @@
 
 		// Start Scanning Item
 		var itemList = await scanItem({
-			pageCount: firstScanSetup.scanPage,
-			itemCount: firstScanSetup.itemCount,
-			saleFilter: firstScanSetup.saleFilter
+			sortBy: settings.sortBy,
+			pageCount: settings.scanPage,
+			itemCount: settings.itemCount,
+			saleFilter: settings.saleFilter
 		});
 		var CURRENT_PAGE = 1;
 
@@ -325,6 +365,7 @@
 		
 		changeAllListPage(CURRENT_PAGE);
 
+		runInfo({ checkDetail: "Đã Chạy Xong" })
 		await complete();
 	} catch(e) {
 		triggerError(e);

@@ -277,16 +277,6 @@
 
         log("Đang bắt đầu chạy...");
         run();
-        
-        // // Start
-        // var checkNth = 0;
-        // var start = time();
-    
-        // runInfo({
-        //     target: settings.orderPrice
-        // });
-    
-        
 
         // Start
         var checkNth = 0;

@@ -642,7 +642,6 @@
 						log(`     + Bỏ qua lỗi: true`);
 					} else {
 						let costData = beeCost.data.price_classification;
-						let costHistory = beeCost.data.item_history.price;
 						let min = costData.min_price;
 						log(`   + GIÁ THẤP NHẤT: ${min}`);
 
@@ -653,7 +652,7 @@
 							continue;
 						}
 
-						let priceRatio = costHistory[costHistory.length - 2] / costHistory[costHistory.length - 1];
+						let priceRatio = min / item.price;
 						log(`   + PRICE RATIO: ${priceRatio.toFixed(2)}`);
 
 						if (priceRatio >= settings.autobuyRatio) {
