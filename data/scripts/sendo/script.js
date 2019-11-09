@@ -257,7 +257,7 @@
             orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
             orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true, depend: "orderBy:orderByPrice" },
             orderCount: { type: "number", label: "Số lượng", value: 1, required: true, depend: "orderBy:orderByPrice" },
-            orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: 500, required: true, depend: "orderBy:orderByPrice" },
+            orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: 0, required: true, depend: "orderBy:orderByPrice" },
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true, depend: "orderBy:orderByPrice" },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },

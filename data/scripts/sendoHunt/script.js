@@ -66,7 +66,14 @@
 			await this.dataSave({ sendoHuntBlackList: listObj });
 		}
 
-		const scanItem = async (sortBy = "sale", listLimit = 60, { mall = false, certified = false, freeShip = false } = {}) => {
+		const scanItem = async ({
+			sortBy = "sale",
+			listLimit = 60,
+			mall = false,
+			certified = false,
+			freeShip = false,
+			saleFilter = 0
+		} = {}) => {
 			let list = {}
 			let sortedList = []
 			let blackList = await getBlackList();
@@ -123,7 +130,7 @@
 					let oldPrice = item.price || price;
 					let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 
-					if (priceSale < 80)
+					if (priceSale < saleFilter)
 						continue;
 
 					let couponBox = null;
@@ -476,6 +483,7 @@
 			certified: { type: "checkbox", label: "Shop uy tín", color: "blue", value: false },
 			freeShip: { type: "checkbox", label: "Miễn Phí Vận Chuyển", color: "blue", value: false },
 			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 1000 },
+			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 80 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "160px", value: blackList.join(";") }
 		}, { confirm: "Tiếp" })
 
@@ -488,10 +496,13 @@
 		await saveBlackList(firstScanSetup.blackList.split(";"));
 
 		// Start Scanning Item
-		var itemList = await scanItem(firstScanSetup.sortBy, firstScanSetup.fetchCount, {
+		var itemList = await scanItem({
+			sortBy: firstScanSetup.sortBy,
+			listLimit: firstScanSetup.fetchCount,
 			mall: firstScanSetup.mall,
 			certified: firstScanSetup.certified,
-			freeShip: firstScanSetup.freeShip
+			freeShip: firstScanSetup.freeShip,
+			saleFilter: firstScanSetup.saleFilter
 		});
 		var CURRENT_PAGE = 1;
 
@@ -608,7 +619,14 @@
 
 		const __doUpdate = async () => {
 			runInfo({ now: `Bước 1`, end: `Bước 2`, progress: 0, checkDetail: "Đang Lấy Danh Sách Item" });
-			let list = await scanItem(firstScanSetup.sortBy, firstScanSetup.fetchCount, firstScanSetup.recommendType);
+			let list = await scanItem({
+				sortBy: firstScanSetup.sortBy,
+				listLimit: firstScanSetup.fetchCount,
+				mall: firstScanSetup.mall,
+				certified: firstScanSetup.certified,
+				freeShip: firstScanSetup.freeShip,
+				saleFilter: firstScanSetup.saleFilter
+			});
 
 			runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang So Sánh Thông Tin" });
 			let changed = 0;

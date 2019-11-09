@@ -54,7 +54,11 @@
 			await this.dataSave({ tikiHuntBlackList: listObj });
 		}
 
-		const scanItem = async (sortBy = "sale", pageCount = 1) => {
+		const scanItem = async ({
+			sortBy = "sale",
+			pageCount = 1,
+			saleFilter = 0
+		} = {}) => {
 			let list = {}
 			let sortedList = []
 			let blackList = await getBlackList();
@@ -98,6 +102,9 @@
 						let oldPrice = (_priceBox !== "") ? parseInt(_priceBox.match(/\d/g).join("")) : price;
 						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 	
+						if (priceSale < saleFilter)
+							continue;
+
 						let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
 						let couponCode = null;
 						let couponPrice = null;
@@ -447,6 +454,7 @@
 				]
 			},
 			scanPage: { type: "number", label: "Số Trang Quét Mỗi Loại", value: 1 },
+			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 0 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";") }
 		}, { confirm: "Tiếp" })
 
@@ -459,7 +467,11 @@
 		await saveBlackList(firstScanSetup.blackList.split(";"));
 
 		// Start Scanning Item
-		var itemList = await scanItem(firstScanSetup.sortBy, firstScanSetup.scanPage);
+		var itemList = await scanItem({
+			sortBy: firstScanSetup.sortBy,
+			pageCount: firstScanSetup.scanPage,
+			saleFilter: firstScanSetup.saleFilter
+		});
 		var CURRENT_PAGE = 1;
 
 		const changeAllListPage = async (page, {
@@ -592,7 +604,11 @@
 
 		const __doUpdate = async () => {
 			runInfo({ now: `Bước 1`, end: `Bước 2`, progress: 0, checkDetail: "Đang Lấy Danh Sách Item" });
-			let list = await scanItem(firstScanSetup.sortBy, firstScanSetup.scanPage);
+			let list = await scanItem({
+				sortBy: firstScanSetup.sortBy,
+				pageCount: firstScanSetup.scanPage,
+				saleFilter: firstScanSetup.saleFilter
+			});
 
 			runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang So Sánh Thông Tin" });
 			let changed = 0;

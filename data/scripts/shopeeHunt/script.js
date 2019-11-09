@@ -64,7 +64,12 @@
 			await this.dataSave({ shopeeHuntBlackList: listObj });
 		}
 
-		const scanItem = async (sortBy = "sale", listLimit = 60, recommendType = 6) => {
+		const scanItem = async ({
+			sortBy = "sale",
+			listLimit = 60,
+			recommendType = 6,
+			saleFilter = 0
+		}) => {
 			let list = {}
 			let sortedList = []
 			let blackList = await getBlackList();
@@ -108,6 +113,9 @@
 					let price = item.price / 100000;
 					let oldPrice = item.price_before_discount / 100000 || price;
 					let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
+
+					if (priceSale < saleFilter)
+						continue;
 
 					let couponBox = null;
 					let couponCode = null;
@@ -469,6 +477,7 @@
 				]
 			},
 			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 1000 },
+			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "160px", value: blackList.join(";") }
 		}, { confirm: "Tiếp" })
 
@@ -481,7 +490,12 @@
 		await saveBlackList(firstScanSetup.blackList.split(";"));
 
 		// Start Scanning Item
-		var itemList = await scanItem(firstScanSetup.sortBy, firstScanSetup.fetchCount, firstScanSetup.recommendType);
+		var itemList = await scanItem({
+			sortBy: firstScanSetup.sortBy,
+			listLimit: firstScanSetup.fetchCount,
+			recommendType: firstScanSetup.recommendType,
+			saleFilter: firstScanSetup.saleFilter
+		});
 		var CURRENT_PAGE = 1;
 
 		const changeAllListPage = async (page, {
@@ -597,7 +611,12 @@
 
 		const __doUpdate = async () => {
 			runInfo({ now: `Bước 1`, end: `Bước 2`, progress: 0, checkDetail: "Đang Lấy Danh Sách Item" });
-			let list = await scanItem(firstScanSetup.sortBy, firstScanSetup.fetchCount, firstScanSetup.recommendType);
+			let list = await scanItem({
+				sortBy: firstScanSetup.sortBy,
+				listLimit: firstScanSetup.fetchCount,
+				recommendType: firstScanSetup.recommendType,
+				saleFilter: firstScanSetup.saleFilter
+			});
 
 			runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang So Sánh Thông Tin" });
 			let changed = 0;

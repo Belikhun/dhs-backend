@@ -14,7 +14,7 @@
         log(`|===========================|`);
         log(`|       Lazada Voucher      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 23:04:27 06/11/2019  |`);
+        log(`|  LU: 00:44:03 08/11/2019  |`);
         log(`|===========================|`);
 
 		info({ hide: true });
@@ -297,8 +297,8 @@
             setTimeout(() => __checkHandler(), checkPer - ((time() - timeStart) * 1000));
         }
 
-        __checkHandler();
         log("Bắt đầu chạy");
+        __checkHandler();
     } catch(e) {
         triggerError(e);
         return;
