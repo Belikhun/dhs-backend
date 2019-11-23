@@ -14,9 +14,9 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|       Tiki Auto v010      |`);
+		log(`|       Tiki Auto v011      |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 17:16:04 31/10/2019  |`);
+		log(`|  LU: 23:19:45 09/11/2019  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -226,6 +226,15 @@
 			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true },
 			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false },
 			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
+			paymentMethod: {
+				type: "radio",
+				label: "Phương Thức Thanh Toán",
+				required: true,
+				list: [
+					{ name: `Thanh Toán Khi Nhận Hàng`, color: "pink", value: "cod", checked: true },
+					{ name: `Ví Momo`, color: "blue", value: "momo" }
+				]
+			},
 			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "pink", depend: "orderBy:orderByPrice" },
 			autoReOrderTimes: { type: "number", label: "Số lần tự động mua lại", value: 2, depend: "autoReOrder" },
 		});
@@ -350,7 +359,8 @@
 								try {
 									await __doOrder({
 										id: ID,
-										count: settings.orderCount
+										count: settings.orderCount,
+										paymentMethod: settings.paymentMethod
 									});
 								} finally {
 									successCount++;
@@ -363,7 +373,8 @@
 							await __doOrder({
 								id: ID,
 								count: settings.orderCount,
-								coupon: settings.coupon
+								coupon: settings.coupon,
+								paymentMethod: settings.paymentMethod
 							});
 			
 						complete();
@@ -548,6 +559,7 @@
 			count = 0,
 			coupon = "",
 			skipPre = false,
+			paymentMethod = "cod"
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
@@ -635,8 +647,8 @@
 				if (item.name !== "")
 					paymentData[item.name] = item.value;
 
-			log(` + Phương thức thanh toán: COD`);
-			paymentData.selected_payment_method = "cod";
+			log(` + Phương thức thanh toán: ${paymentMethod.toUpperCase()}`);
+			paymentData.selected_payment_method = paymentMethod;
 
 			if (paymentDoc.getElementById("plan-3")) {
 				log(` + Phát hiện Tiki Now!`);
@@ -697,7 +709,16 @@
 			heartbeat();
 			log(" + doOrder đã hoàn thành!");
 			log("=========== KẾT QUẢ ===========");
-			log(` + Thời gian   : ${orderTimer.stop}s`);
+
+			if (paymentMethod === "momo") {
+				log(` + Order Code    : ${placeOrder.order_code}`);
+				log(` + TransactionID : ${placeOrder.payment.transactionId}`);
+				log(` + payURL        : <a href="${placeOrder.payment.payUrl}" target="_blank">LINK</a>`);
+				log(` + QR Code       : <a href="${placeOrder.payment.qrCode}" target="_blank">LINK</a>`);
+				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.payment.qrCode}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+			}
+
+			log(` + Thời gian     : ${orderTimer.stop}s`);
 		}
 
 		//? Order By Coupon Init

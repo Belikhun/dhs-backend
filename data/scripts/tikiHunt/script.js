@@ -37,7 +37,7 @@
 		log(`|===========================|`);
 		log(`|      Tiki Deal Hunter     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 22:10:12 31/10/2019  |`);
+		log(`|  LU: 23:50:49 14/11/2019  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -131,6 +131,8 @@
 	
 						sortedList.push(list[item.dataset.id]);
 					}
+
+					delete result;
 				}
 				
 				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
@@ -725,7 +727,6 @@
 			runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công" });
 		}
 
-		
 		const __doOrder = async ({
 			id = 0,
 			count = 0,
@@ -736,18 +737,35 @@
 			sounds.notification();
 			let orderTimer = new stopClock();
 
+			log(`Đang đăng xuất khỏi tài khoản hiện tại`);
+			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang đăng xuất" });
+
+			await command("ajax", {
+				url: "/api/v2/account/logout",
+				method: "GET",
+				header: {
+					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"]
+				}
+			});
+
+			log("Đăng xuất thành công");
+
 			log(`Đang đăng nhập vào tài khoản \"${username}\"`);
-			runInfo({ now: `Bước 1`, end: `Bước 5`, progress: 0, checkDetail: "Đang đăng nhập" });
+			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
+			
+			let CSRF_LOGIN = (await command("queryInput", { query: `input[name="TIKI_CSRF_TOKEN"]` })).value;
+			log(` + CSRF: ${CSRF_LOGIN}`);
+			
 			let loginData = {}
 
 			try {
 				loginData = await command("ajax", {
-					url: "/api/v2/tokens",
+					url: "/customer/account/ajaxLogin",
 					method: "POST",
-					json: {
-						grant_type: "password",
+					form: {
 						email: username,
-						password: password
+						password: password,
+						TIKI_CSRF_TOKEN: CSRF_LOGIN
 					}
 				});
 			} catch(e) {
@@ -765,8 +783,10 @@
 				throw { code: -1, description: "Thất bại khi đăng nhập vào tài khoản", data: e.data.data }
 			}
 
+			log("Đăng nhập thành công");
+
 			log("Đang thêm Item vào Giỏ Hàng");
-			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
+			runInfo({ now: `Bước 3`, progress: 20, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
 			heartbeat();
 			let addData = {}
 
@@ -796,7 +816,7 @@
 			log(" + Thêm vào giỏ thành công!");
 
 			if (coupon !== "") {
-				runInfo({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
+				runInfo({ progress: 30, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 
 				log(` + Đang áp dụng Coupon: ${coupon}`)
 				await command("ajax", {
@@ -811,7 +831,7 @@
 			}
 			
 			heartbeat();
-			runInfo({ now: `Bước 3`, progress: 30, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
+			runInfo({ now: `Bước 4`, progress: 40, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
 			log(`Đang chọn địa chỉ Giao Hàng`);
 
 			log(` + Đang lấy thông tin địa chỉ`);
@@ -822,7 +842,7 @@
 			})
 
 			heartbeat();
-			runInfo({ progress: 40, progWarn: false });
+			runInfo({ progress: 50, progWarn: false });
 			log(` + Đang phân tích thông tin`);
 			let shippingDoc = (new DOMParser()).parseFromString(shippingRAW, "text/html");
 
@@ -842,7 +862,7 @@
 				}
 			})
 
-			runInfo({ now: `Bước 4`, progress: 60, progWarn: false, checkDetail: "Đang lấy thông tin thanh toán" });
+			runInfo({ now: `Bước 5`, progress: 60, progWarn: false, checkDetail: "Đang lấy thông tin thanh toán" });
 			log(`Đang lấy thông tin Thanh Toán`);
 			heartbeat();
 
@@ -900,7 +920,7 @@
 
 			paymentData.is_using_card = 0;
 
-			runInfo({ now: `Bước 5`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
+			runInfo({ now: `Bước 6`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
 			log(`Đang tiến hành đặt hàng`);
 			heartbeat();
 

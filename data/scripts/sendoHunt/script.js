@@ -158,7 +158,8 @@
 
 					sortedList.push(list[item.id]);
 				}
-				
+
+				delete result;
 				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
 			}
 

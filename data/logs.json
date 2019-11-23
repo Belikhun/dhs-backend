@@ -4728,5 +4728,214 @@
             "username": "belivipro9x99",
             "ip": "::1"
         }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1573314193,
+        "time": "09\/11\/2019 15:43:13",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1573314194,
+        "time": "09\/11\/2019 22:43:14",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [c28134c7f80d19949eb13d5633c79647]",
+        "module": "auth.php:41",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1573314818,
+        "time": "09\/11\/2019 15:53:38",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1573314819,
+        "time": "09\/11\/2019 22:53:39",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [a68ae62e2200e80d383a88fa58fddbde]",
+        "module": "auth.php:41",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1573315169,
+        "time": "09\/11\/2019 15:59:29",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1573315170,
+        "time": "09\/11\/2019 22:59:30",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [be2a6a09fb486191d6d6bca7ff4acf16]",
+        "module": "auth.php:41",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1573317250,
+        "time": "09\/11\/2019 16:34:10",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1574007823,
+        "time": "17\/11\/2019 16:23:43",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1574007826,
+        "time": "17\/11\/2019 23:23:46",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [cdf276969639207e73ca797b9b292d8c]",
+        "module": "auth.php:41",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1574008002,
+        "time": "17\/11\/2019 16:26:42",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1574008003,
+        "time": "17\/11\/2019 23:26:43",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [a5691a5e555a0dfa0590832555510fec]",
+        "module": "auth.php:41",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1574008486,
+        "time": "17\/11\/2019 16:34:46",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1574008487,
+        "time": "17\/11\/2019 23:34:47",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [6006b27265fd6c9b730c2af3d6047db4]",
+        "module": "auth.php:41",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1574010384,
+        "time": "17\/11\/2019 17:06:24",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1574010385,
+        "time": "18\/11\/2019 00:06:25",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [c304a22047db7b9510a3518aac528dba]",
+        "module": "auth.php:41",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1574085685,
+        "time": "18\/11\/2019 14:01:25",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1574085686,
+        "time": "18\/11\/2019 21:01:26",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [9f006199fb9a61fbd6de600fe0827c9d]",
+        "module": "auth.php:41",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "ERRR",
+        "unixtime": 1574087562,
+        "time": "18\/11\/2019 14:32:42",
+        "text": "[2] Cannot modify header information - headers already sent by (output started at C:\\Users\\Belikhun\\Desktop\\project\\dealHunter\\backend\\data\\avatar\\get.php:23) t\u1ea1i belibrary.php:239",
+        "module": "unknown:unknown",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1574087563,
+        "time": "18\/11\/2019 21:32:43",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [6e5116bbee545442232c664e2e428012]",
+        "module": "auth.php:41",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
     }
 ]

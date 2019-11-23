@@ -89,7 +89,7 @@
 						thumbnail,
 						oldPrice,
 						sale: priceSale,
-						open: item.special_to_date,
+						open: item.special_from_date,
 						progress: item.progress
 					}
 
@@ -191,7 +191,7 @@
 
 			let dealOpen = document.createElement("t");
 			dealOpen.classList.add("open");
-			liveTime(dealOpen, itemData.open, { count: "down" });
+			liveTime(dealOpen, itemData.open, { count: "down", ended: "Đã Bắt Đầu" });
 
 			let dealProgress = document.createElement("span");
 			dealProgress.classList.add("progressBar");

@@ -4,7 +4,10 @@
 	var infoUpdateInterval = null;
 	var timeUpdateInterval = null;
 
-	const HOSTADDRESS = "https://shopee.vn/api/v2/recommend_items/get";
+	const HOSTADDRESS = {
+		recommend: "https://shopee.vn/api/v2/recommend_items/get",
+		search: "https://shopee.vn/api/v2/search_items"
+	};
 	var selectedPageList = []
 	const pageList = {
 		popular:		{ title: "Phổ biến", id: -2 },
@@ -47,7 +50,7 @@
 		log(`|===========================|`);
 		log(`|     Shopee Deal Hunter    |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 20:54:12 29/10/2019  |`);
+		log(`|  LU: 21:26:01 18/11/2019  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -65,10 +68,13 @@
 		}
 
 		const scanItem = async ({
+			algo = "recommendAlgo",
 			sortBy = "sale",
 			listLimit = 60,
+			pageCount = 1,
 			recommendType = 6,
-			saleFilter = 0
+			saleFilter = 0,
+			keyword = []
 		}) => {
 			let list = {}
 			let sortedList = []
@@ -76,75 +82,124 @@
 
 			heartbeat();
 			log(` + Đang lấy danh sách item`);
+			log(`   + algorithm     = ${algo}`);
 			log(`   + sortBy        = ${sortBy}`);
 			log(`   + listLimit     = ${listLimit}`);
+			log(`   + pageCount     = ${pageCount}`);
 			log(`   + recommendType = ${recommendType}`);
+			log(`   + saleFilter    = ${saleFilter}`);
+			log(`   + keyword       = ${keyword.join("; ")}`);
 
 			for (let item of selectedPageList) {
 				let start = time();
 				log(`   + Đang tải: ${item.title}`);
 
-				heartbeat({ color: "yellow" });
-				let result = await myajax({
-					url: HOSTADDRESS,
-					method: "GET",
-					query: {
-						catid: item.id,
-						limit: listLimit,
-						offset: 0,
-						recommend_type: recommendType,
-						by: "price",
-						order: "asc"
-					},
-					type: "json"
-				});
+				for (let page = 1; page <= pageCount; page++) {
+					heartbeat({ color: "yellow" });
+					let result = {}
+					let resultList = []
+					
+					switch (algo) {
+						case "recommendAlgo":
+							result = await myajax({
+								url: HOSTADDRESS.recommend,
+								method: "GET",
+								query: {
+									catid: item.id,
+									limit: listLimit,
+									offset: listLimit * (page - 1),
+									recommend_type: recommendType,
+									by: "discount",
+									order: "asc"
+								},
+								type: "json"
+							});
 
-				heartbeat();
+							resultList = result.data.items;
+							break;
 
-				for (let item of result.data.items) {
-					if (list[item.itemid] || blackList.indexOf(item.itemid) !== -1)
-						continue;
+						case "searchAlgo":
+							if (item.id === -2)
+								continue;
 
-					//! Skip No Old Price
-					if (!item.price_before_discount)
-						continue;
+							if (listLimit > 100)
+								log(`CẢNH BÁO: listLimit vượt quá giới hạn của Shopee (${listLimit} > 100). listLimit sẽ bị thay đổi xuống 100!`);
 
-					let link = `https://shopee.vn/product-i.${item.shopid}.${item.itemid}`;
-					let thumbnail = `https://cf.shopee.vn/file/${item.image}`;
-
-					let price = item.price / 100000;
-					let oldPrice = item.price_before_discount / 100000 || price;
-					let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
-
-					if (priceSale < saleFilter)
-						continue;
-
-					let couponBox = null;
-					let couponCode = null;
-					let couponPrice = null;
-					let couponSale = null;
-
-					if (couponBox) {
-						couponCode = "unknown";
-						couponPrice = parseInt(0);
-						couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
+							for (let key of keyword) {
+								result = await myajax({
+									url: HOSTADDRESS.search,
+									method: "GET",
+									query: {
+										categoryids: item.id,
+										keyword: key,
+										limit: Math.min(listLimit, 100),
+										newest: listLimit * (page - 1),
+										page_type: "search",
+										by: "discount",
+										order: "desc",
+										version: 2
+									},
+									type: "json"
+								});
+	
+								resultList.concat(result.items);
+							}
+							break;
+					
+						default:
+							break;
 					}
 
-					list[item.itemid] = {
-						id: item.itemid,
-						title: item.name,
-						link: link,
-						price,
-						priceSale,
-						thumbnail,
-						oldPrice,
-						coupon: { code: couponCode, price: couponPrice, sale: couponSale },
-						sale: couponSale || priceSale
+					heartbeat();
+
+					for (let item of resultList) {
+						if (list[item.itemid] || blackList.indexOf(item.itemid) !== -1)
+							continue;
+
+						//! Skip No Old Price
+						if (!item.price_before_discount)
+							continue;
+
+						let link = `https://shopee.vn/product-i.${item.shopid}.${item.itemid}`;
+						let thumbnail = `https://cf.shopee.vn/file/${item.image}`;
+
+						let price = item.price / 100000;
+						let oldPrice = item.price_before_discount / 100000 || price;
+						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
+
+						if (priceSale < saleFilter)
+							continue;
+
+						let couponBox = null;
+						let couponCode = null;
+						let couponPrice = null;
+						let couponSale = null;
+
+						if (couponBox) {
+							couponCode = "unknown";
+							couponPrice = parseInt(0);
+							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
+						}
+
+						list[item.itemid] = {
+							id: item.itemid,
+							title: item.name,
+							link: link,
+							price,
+							priceSale,
+							thumbnail,
+							oldPrice,
+							coupon: { code: couponCode, price: couponPrice, sale: couponSale },
+							sale: couponSale || priceSale
+						}
+
+						sortedList.push(list[item.itemid]);
 					}
 
-					sortedList.push(list[item.itemid]);
+					delete result;
+					delete resultList;
 				}
-				
+
 				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
 			}
 
@@ -478,7 +533,13 @@
 					{ name: `Loại Đề Nghị 1`, color: "blue", value: 1 }
 				]
 			},
+			searchAlgoNote: { type: "note", level: "info", text: "Sử dụng API Tìm Kiếm sẽ lấy thông tin danh sách item theo thứ tự giảm giá" },
+			recommendAlgo: { type: "switch", label: "API Đề Xuất", name: "algorithm", value: true },
+			searchAlgo: { type: "switch", label: "API Tìm Kiếm", name: "algorithm", color: "pink", value: false },
+			searchKeyNote: { type: "note", level: "info", text: "Mỗi từ khóa một dòng" },
+			searchKey: { type: "textarea", label: "Từ Khóa", height: "100px", depend: "algorithm:searchAlgo" },
 			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 138 },
+			pageCount: { type: "number", label: "Số Trang Lấy Mỗi Loại", value: 1 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "160px", value: blackList.join(";") }
 		}, { confirm: "Tiếp" })
@@ -488,15 +549,20 @@
 		for (let key of Object.keys(firstScanSetup))
 			log(` + ` + pleft(key, 18, true) + ` = ${firstScanSetup[key]}`);
 		
+		firstScanSetup.searchKey = firstScanSetup.searchKey.split("\n");
+
 		// Save BlackList
 		await saveBlackList(firstScanSetup.blackList.split(";"));
 
 		// Start Scanning Item
 		var itemList = await scanItem({
+			algo: firstScanSetup.algorithm,
 			sortBy: firstScanSetup.sortBy,
 			listLimit: firstScanSetup.fetchCount,
+			pageCount: firstScanSetup.pageCount,
 			recommendType: firstScanSetup.recommendType,
-			saleFilter: firstScanSetup.saleFilter
+			saleFilter: firstScanSetup.saleFilter,
+			keyword: firstScanSetup.searchKey
 		});
 		var CURRENT_PAGE = 1;
 
@@ -614,10 +680,13 @@
 		const __doUpdate = async () => {
 			runInfo({ now: `Bước 1`, end: `Bước 2`, progress: 0, checkDetail: "Đang Lấy Danh Sách Item" });
 			let list = await scanItem({
+				algo: firstScanSetup.algorithm,
 				sortBy: firstScanSetup.sortBy,
 				listLimit: firstScanSetup.fetchCount,
+				pageCount: firstScanSetup.pageCount,
 				recommendType: firstScanSetup.recommendType,
-				saleFilter: firstScanSetup.saleFilter
+				saleFilter: firstScanSetup.saleFilter,
+				keyword: firstScanSetup.searchKey
 			});
 
 			runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang So Sánh Thông Tin" });
