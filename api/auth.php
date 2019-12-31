@@ -38,6 +38,8 @@
     $keyDB -> query("UPDATE `keylist` SET `lastused` = ? WHERE `key` = ?", time(), $key);
     session_regenerate_id();
 
+    $result["tags"] = unserialize($result["tags"]);
+
     writeLog("OKAY", "Đã cấp quyền truy cập cho \"". $result["name"] ."\" [". session_id() ."]");
     stop(0, "Đã cấp quyền truy cập", 200, Array(
         "token" => $_SESSION["apiToken"],

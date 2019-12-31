@@ -8,11 +8,12 @@
 
 	define("APPNAME", "Deal Hunter Suite");
 	define("AUTHOR", "Team DHS");
-	define("VERSION", "0.5.1");
+	define("VERSION", "0.6.0");
 	define("VERSION_TAG", "release");
 	define("REPO_ADDRESS", "");
 	define("REPORT_ERROR", REPO_ADDRESS . "/issues");
 	define("CONTACT_LINK", "http://m.me/HunterDealJustFun");
+	define("TRACK_ID", "UA-124598427-1");
 
 	// Size Limit
 	define("MAX_IMAGE_SIZE", 2097153);
@@ -25,7 +26,7 @@
 	define("HOST_NAME", "dealhunter.000webhostapp.com");
 
 	define("EXTENSION_ID", "ooeeakiohlmkbdmdpfkhkkafgappoijd");
-	define("EXTENSION_VERSION", "1.13");
+	define("EXTENSION_VERSION", "2.0");
 	define("EXTENSION_ZIP_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.zip");
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 

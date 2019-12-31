@@ -16,7 +16,7 @@
 		log(`|===========================|`);
 		log(`|   Tiki Multiple Account   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:23:12 14/11/2019  |`);
+		log(`|  LU: 19:08:29 26/11/2019  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -233,7 +233,16 @@
 			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
 			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false },
-			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true }
+			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
+			paymentMethod: {
+				type: "radio",
+				label: "Phương Thức Thanh Toán",
+				required: true,
+				list: [
+					{ name: `Thanh Toán Khi Nhận Hàng`, color: "pink", value: "cod", checked: true },
+					{ name: `Ví Momo`, color: "blue", value: "momo" }
+				]
+			},
 		});
 	
 		log("CÀI ĐẶT:");
@@ -318,6 +327,7 @@
 							id: ID,
 							count: settings.orderCount,
 							coupon: settings.coupon,
+							paymentMethod: settings.paymentMethod,
 							username: item.u,
 							password: item.p
 						});
@@ -362,6 +372,7 @@
 			id = 0,
 			count = 0,
 			coupon = "",
+			paymentMethod = "cod",
 			username = "",
 			password = ""
 		}) => {
@@ -519,8 +530,8 @@
 				if (item.name !== "")
 					paymentData[item.name] = item.value;
 
-			log(` + Phương thức thanh toán: COD`);
-			paymentData.selected_payment_method = "cod";
+			log(` + Phương thức thanh toán: ${paymentMethod.toUpperCase()}`);
+			paymentData.selected_payment_method = paymentMethod;
 
 			if (paymentDoc.getElementById("plan-3")) {
 				log(` + Phát hiện Tiki Now!`);
@@ -581,6 +592,15 @@
 			heartbeat();
 			log(" + doOrder đã hoàn thành!");
 			log("=========== KẾT QUẢ ===========");
+
+			if (paymentMethod === "momo") {
+				log(` + Order Code    : ${placeOrder.order_code}`);
+				log(` + TransactionID : ${placeOrder.payment.transactionId}`);
+				log(` + payURL        : <a href="${placeOrder.payment.payUrl}" target="_blank">LINK</a>`);
+				log(` + QR Code       : <a href="${placeOrder.payment.qrCode}" target="_blank">LINK</a>`);
+				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.payment.qrCode}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+			}
+
 			log(` + Thời gian   : ${orderTimer.stop}s`);
 		}
 	

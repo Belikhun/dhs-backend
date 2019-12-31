@@ -79,6 +79,10 @@
             $error = "URI Too Long";
             $description = "The URI provided was too long for the server to process.";
             break;
+        case 429:
+            $error = "Too Many Request";
+            $description = "Hey, you! Yes you. Why you spam here?";
+            break;
         case 500:
             $error = "Internal Server Error";
             $description = "the server did an oopsie";
@@ -176,23 +180,21 @@
                 <a href="/"><button class="sq-btn">Về Trang Chủ</button></a>
             </div>
         </div>
-
-
     </div>
 
     <div class="footer">
-        <img src="/assets/img/icon.png" class="icon">
+        <img src="/assets/img/icon.webp" class="icon">
         <p><?php print APPNAME; ?>. Copyright (c) <?php print AUTHOR; ?>. This project is licensed under the MIT License.</p>
     </div>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-124598427-2"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?php print TRACK_ID; ?>"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
+        function gtag() { dataLayer.push(arguments) }
+        gtag("js", new Date());
 
-        gtag('config', 'UA-124598427-2');
+        gtag("config", `<?php print TRACK_ID; ?>`);
     </script>
 </body>
 

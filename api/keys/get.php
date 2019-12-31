@@ -33,6 +33,7 @@
     array_walk($result, function(&$v) {
         $v["valid"] = $v["expire"] - time();
         $v["expired"] = $v["valid"] < 0 ? true : false;
+        $v["tags"] = unserialize($v["tags"]);
     });
 
     if (!empty($keyID)) {

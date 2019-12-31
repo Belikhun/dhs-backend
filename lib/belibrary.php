@@ -187,7 +187,6 @@
             "xlsx" => "application/vnd.ms-excel",
             "pptx" => "application/vnd.ms-powerpoint",
     
-    
             // open office
             "odt" => "application/vnd.oasis.opendocument.text",
             "ods" => "application/vnd.oasis.opendocument.spreadsheet",
@@ -235,8 +234,7 @@
         switch (strtoupper(PAGE_TYPE)) {
             case "NORMAL":
                 if (!headers_sent())
-                    header("output: [$code] $description");
-                    header("output-json: ". json_encode($output));
+                    header("Output: [$code] $description");
 
                 if ($HTTPStatus >= 300 || $code !== 0)
                     printErrorPage($output, headers_sent());

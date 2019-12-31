@@ -49,6 +49,7 @@ const keysManager = {
         keyNameInput: $("#addKeyName"),
         keyInput: $("#addKey"),
         allowInput: $("#addAllow"),
+        tagsInput: $("#addTags"),
         keyExpireDateInput: $("#addKeyExpireDate"),
         keyExpireTimeInput: $("#addKeyExpireTime"),
         keyExpireNow: $("#addKeyExpireNow"),
@@ -58,6 +59,14 @@ const keysManager = {
     reloadBtn: $("#reloadBtn"),
     sortByNewSettings: $("#sortByNew"),
     showExpiredSettings: $("#showExpired"),
+
+    tagsColor: {
+        vip: "#98ffa9",
+        admin: "#fff57d",
+        trial: "#eac8ff",
+        tester: "#ffc6db",
+        pro: "#a0ffe5"
+    },
 
     async init() {
         // Set up events
@@ -100,6 +109,7 @@ const keysManager = {
                 name: this.addForm.keyNameInput.value,
                 key: this.addForm.keyInput.value,
                 allow: this.addForm.allowInput.value,
+                tags: this.addForm.tagsInput.value,
                 expire: time(new Date(`${this.addForm.keyExpireDateInput.value} ${this.addForm.keyExpireTimeInput.value}`))
             }
 
@@ -144,9 +154,13 @@ const keysManager = {
 
         for (let key of Object.keys(data)) {
             let keyData = data[key];
+            let tagsString = "";
 
             if (this.showExpiredSettings.checked && !keyData.expired)
                 continue;
+
+            for (let item of keyData.tags)
+                tagsString += `<tag ${(typeof this.tagsColor[item.toLowerCase()] === "string") ? `style="background-color: ${this.tagsColor[item.toLowerCase()]}"` : ""}>${item}</tag>`;
 
             html += `
                 <div class="group user sound" data-soundhover data-edit-target="${keyData["id"]}">
@@ -154,6 +168,7 @@ const keysManager = {
                         <span class="id">${keyData["id"]}</span>
                         <ul class="info">
                             <li class="keyName">${keyData["name"]}</li>
+                            <li class="tags">${tagsString}</li>
                             <li class="key">${keyData["key"]}</li>
                             <li class="allow">Cho phép: <b>${keyData["allow"].split(";").join(", ")}</b></li>
                         </ul>
@@ -203,31 +218,36 @@ const keysManager = {
                 <span class="column grow">
                     <div class="row">
                         <div class="formGroup blue sound small" data-soundselectsoft>
-                            <input id="keyName_${keyID}" type="text" class="formField" autocomplete="off" placeholder="ID" required>
+                            <input id="keyName_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Tên" required>
                             <label for="keyName_${keyID}">Tên</label>
                         </div>
 
                         <div class="formGroup blue sound large" data-soundselectsoft>
-                            <input id="keyKey_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Tên người dùng" required>
+                            <input id="keyKey_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Khóa" required>
                             <label for="keyKey_${keyID}">Key</label>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="formGroup blue large sound" data-soundselectsoft>
-                            <input id="keyAllow_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Tên người dùng" required>
+                            <input id="keyAllow_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Script cho phép" required>
                             <label for="keyAllow_${keyID}">Danh sách script cho phép (ngăn cách bằng ";")</label>
+                        </div>
+
+                        <div class="formGroup blue large sound" data-soundselectsoft>
+                            <input id="tags_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Thẻ">
+                            <label for="tags_${keyID}">Thẻ (ngăn cách bằng dấu cách)</label>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="formGroup blue sound large" data-soundselectsoft>
-                            <input id="keyExpireDate_${keyID}" type="date" class="formField" autocomplete="off" placeholder="Tên người dùng" required>
+                            <input id="keyExpireDate_${keyID}" type="date" class="formField" autocomplete="off" placeholder="Ngày hết hạn" required>
                             <label for="keyExpireDate_${keyID}">Ngày hết hạn</label>
                         </div>
 
                         <div class="formGroup grow blue sound small" data-soundselectsoft>
-                            <input id="keyExpireTime_${keyID}" type="time" class="formField" autocomplete="off" placeholder="ID" required>
+                            <input id="keyExpireTime_${keyID}" type="time" class="formField" autocomplete="off" placeholder="Giờ hết hạn" required>
                             <label for="keyExpireTime_${keyID}">Giờ hết hạn</label>
                         </div>
 
@@ -252,6 +272,7 @@ const keysManager = {
         var keyNameInput = $(`#keyName_${keyID}`);
         var keyKeyInput = $(`#keyKey_${keyID}`);
         var keyAllowInput = $(`#keyAllow_${keyID}`);
+        var tagsInput = $(`#tags_${keyID}`);
         var keyExpireDateInput = $(`#keyExpireDate_${keyID}`);
         var keyExpireTimeInput = $(`#keyExpireTime_${keyID}`);
         var keyExpireNow = $(`#keyExpireNow_${keyID}`);
@@ -277,6 +298,7 @@ const keysManager = {
         keyNameInput.value = data.name;
         keyKeyInput.value = data.key;
         keyAllowInput.value = data.allow;
+        tagsInput.value = data.tags.join(" ");
 
         let expireTime = new Date(data.expire * 1000);
         keyExpireDateInput.value = cvdate(
@@ -311,7 +333,8 @@ const keysManager = {
             let data = {
                 name: keyNameInput.value,
                 key: keyKeyInput.value,
-                allow: keyAllowInput.value, 
+                allow: keyAllowInput.value,
+                tags: tagsInput.value,
                 expire: time(new Date(`${keyExpireDateInput.value} ${keyExpireTimeInput.value}`))
             }
 

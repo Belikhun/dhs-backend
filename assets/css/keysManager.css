@@ -55,7 +55,8 @@ body:not(.embeded) {
 
 #keysContainer .storedKeyList .info .keyName {
     position: relative;
-    font-size: 18px;
+    font-family: Exo;
+    font-size: 20px;
     font-weight: bold;
     letter-spacing: 0.4px;
     color: #425161;
@@ -69,8 +70,36 @@ body:not(.embeded) {
     color: rgb(221, 52, 52);
 }
 
+#keysContainer .storedKeyList .info .tags {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+#keysContainer .storedKeyList .info .tags > tag {
+    position: relative;
+    display: inline-block;
+    background-color: #f1f1f1;
+    color: #4d4d4d;
+    margin: 4px;
+    padding: 2px 10px;
+    border-radius: 15px;
+    font-family: "Calibri";
+    font-weight: bold;
+    font-size: 11px;
+    -webkit-font-smoothing: antialiased;
+}
+
+#keysContainer .storedKeyList .info .tags > tag:first-child {
+    margin: 0 4px 0 0;
+}
+
 #keysContainer .storedKeyList .info .key {
     position: relative;
+    font-family: "Open Sans";
     font-size: 12px;
     font-weight: lighter;
     color: #676f79;

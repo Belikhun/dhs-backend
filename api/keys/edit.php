@@ -29,12 +29,14 @@
     $key = getForm("key");
     $allow = getForm("allow");
     $expire = getForm("expire");
+    $tags = serialize(preg_split("/ /", getForm("tags", ""), -1, PREG_SPLIT_NO_EMPTY));
 
     $toChange = array_filter(Array(
         "name" => $name,
         "key" => $key,
         "allow" => $allow,
-        "expire" => (int) $expire
+        "expire" => (int) $expire,
+        "tags" => $tags,
     ));
 
     $keyDB = new ezsql(DB_TABLE);

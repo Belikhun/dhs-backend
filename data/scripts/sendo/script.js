@@ -16,7 +16,7 @@
         log(`|===========================|`);
         log(`|      Sendo Auto v006      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 20:50:13 31/10/2019  |`);
+        log(`|  LU: 20:17:31 28/11/2019  |`);
         log(`|===========================|`);
 
         // Get itemName
@@ -261,7 +261,7 @@
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true, depend: "orderBy:orderByPrice" },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
-            orderTime: { type: "time", label: "Giờ mua", depend: "orderBy:orderByTime" },
+            orderTime: { type: "time", label: "Giờ mua", depend: "orderBy:orderByTime", step: 0.001 },
             timeCheckInterval: { type: "number", label: "Khoảng kiểm tra", depend: "orderBy:orderByTime", value: 60 },
             stepSleep: { type: "number", label: "STEP SLEEP", value: STEP_SLEEP },
             maxRetry: { type: "number", label: "RETRY", value: RETRY },

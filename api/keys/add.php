@@ -27,11 +27,12 @@
     $key = reqForm("key");
     $allow = reqForm("allow");
     $expire = reqForm("expire");
+    $tags = serialize(preg_split("/ /", getForm("tags", ""), -1, PREG_SPLIT_NO_EMPTY));
 
     $keyDB = new ezsql(DB_TABLE);
     
-    $query = "INSERT INTO `keylist` (`name`, `key`, `allow`, `createdate`, `lastused`, `expire`) VALUES (?, ?, ?, ?, ?, ?)";
-    $result = $keyDB -> query($query, $name, $key, $allow, time(), time(), $expire);
+    $query = "INSERT INTO `keylist` (`name`, `key`, `allow`, `createdate`, `lastused`, `expire`, `tags`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $result = $keyDB -> query($query, $name, $key, $allow, time(), time(), $expire, $tags);
 
     writeLog("OKAY", "Đã thêm key vào cơ sở dữ liệu: ". $key);
     stop(0, "Thêm key vào cơ sở dữ liệu thành công!", 200, Array( "name" => $name, "key" => $key, "expire" => $expire ));
