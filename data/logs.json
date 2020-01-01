@@ -8952,5 +8952,533 @@
             "username": "belivipro9x99",
             "ip": "::1"
         }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577805555,
+        "time": "31\/12\/2019 22:19:15",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [34137b2e96e134917910883c0f2f0948]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577806402,
+        "time": "31\/12\/2019 22:33:22",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577806540,
+        "time": "31\/12\/2019 22:35:40",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [3f5e1159aa2c50c357e9456a9e9ad888]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577806628,
+        "time": "31\/12\/2019 22:37:08",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [22e7713924c54eec259c01136ff59372]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577806775,
+        "time": "31\/12\/2019 22:39:35",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [81956e571d0b58680959708067f57129]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577806919,
+        "time": "31\/12\/2019 22:41:59",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [5689fe90b959837df80c95b3ce209ca7]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577807838,
+        "time": "31\/12\/2019 22:57:18",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [e49ac11fe58e1ba75eac6bfa62c3bc40]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577807927,
+        "time": "31\/12\/2019 22:58:47",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [ba4405bf63ed04673f7dab48242deb3f]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577808144,
+        "time": "31\/12\/2019 23:02:24",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [4e1a679ebb1c84a59dbd94726bc7a4af]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577808266,
+        "time": "31\/12\/2019 23:04:26",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [a8934bbef960e1769103a03e68f4a9d7]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577808314,
+        "time": "31\/12\/2019 23:05:14",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [87cf5b96ddb3d1adbed4a37d5c85d230]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577808337,
+        "time": "31\/12\/2019 23:05:37",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577808340,
+        "time": "31\/12\/2019 23:05:40",
+        "text": "\u0110\u00e3 x\u00f3a key kh\u1ecfi c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID [32]",
+        "module": "remove.php:33",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577808886,
+        "time": "31\/12\/2019 23:14:46",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577809133,
+        "time": "31\/12\/2019 23:18:53",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577809139,
+        "time": "31\/12\/2019 23:18:59",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [2f9c5027d8e6db752b171beafdf21a8f]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577841954,
+        "time": "01\/01\/2020 08:25:54",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [09c60f0277af1aa64116e30e7a9aae66]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577842757,
+        "time": "01\/01\/2020 08:39:17",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [74d808bdfc412f5f0423034155ba6b08]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577843054,
+        "time": "01\/01\/2020 08:44:14",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [c19f4d51b323b83dedb78afb737bf634]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577844521,
+        "time": "01\/01\/2020 09:08:41",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [3991272229e1d8e28b6e537242f3e267]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577844646,
+        "time": "01\/01\/2020 09:10:46",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [abb690b4efe9354377552ab4f41273cf]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577846360,
+        "time": "01\/01\/2020 09:39:20",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [fdcbbcc46932e77291e47e58ef24a85b]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577847023,
+        "time": "01\/01\/2020 09:50:23",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [cb43379cd7fb275fc164f287febf09ae]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577848163,
+        "time": "01\/01\/2020 10:09:23",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [997904da8b545a239dff8892daa6c5e8]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577848373,
+        "time": "01\/01\/2020 10:12:53",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [fd53ea0656d02576ae698c6507ea3d7d]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577848561,
+        "time": "01\/01\/2020 10:16:01",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [0ee0be3d0055d57533611f82c414392c]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577848701,
+        "time": "01\/01\/2020 10:18:21",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [6c045b93c4d7734e9e257e20262f1fc0]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577849434,
+        "time": "01\/01\/2020 10:30:34",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [57f4c1b578a05ab28450758f8869185e]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577852854,
+        "time": "01\/01\/2020 11:27:34",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [6b928b4dad71da51532e53a948af4511]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577853782,
+        "time": "01\/01\/2020 11:43:02",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [efd3a3f30da338d96a693bc826b5f116]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577857555,
+        "time": "01\/01\/2020 12:45:55",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [8a3b6694117193e6acad36125cbe2be7]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577857715,
+        "time": "01\/01\/2020 12:48:35",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [c49c1a9bafae609c31b5a77856673d91]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577857769,
+        "time": "01\/01\/2020 12:49:29",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [0a87b43c2648eb7df8b17745543004c7]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577858991,
+        "time": "01\/01\/2020 13:09:51",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [39b3ede078776ac4b5797ad5c143938d]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859032,
+        "time": "01\/01\/2020 13:10:32",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [40194b8adf284d915bdd33b3928e47db]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859355,
+        "time": "01\/01\/2020 13:15:55",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [23814283fabc39b7d9667723acce6d65]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859363,
+        "time": "01\/01\/2020 13:16:03",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [1836d48e0c59345c6d0ac2e4ba006afc]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859426,
+        "time": "01\/01\/2020 13:17:06",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [c388b33ab6bbd20538bf7dc030df90e5]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859455,
+        "time": "01\/01\/2020 13:17:35",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [567ada2674b427815a12f60232e3371e]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859526,
+        "time": "01\/01\/2020 13:18:46",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [673b0df1e453fae5ba561097507ff72b]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859691,
+        "time": "01\/01\/2020 13:21:31",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859692,
+        "time": "01\/01\/2020 13:21:32",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859722,
+        "time": "01\/01\/2020 13:22:02",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577859950,
+        "time": "01\/01\/2020 13:25:50",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "WARN",
+        "unixtime": 1577860011,
+        "time": "01\/01\/2020 13:26:51",
+        "text": "Got statuscode \"404 Not Found\" when trying to access: \/api\/updates\/latest?type=zip",
+        "module": "belibrary.php:382",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "WARN",
+        "unixtime": 1577860012,
+        "time": "01\/01\/2020 06:26:52",
+        "text": "Got statuscode \"404 Not Found\" when trying to access: \/assets\/img\/icon.webp",
+        "module": "error.php:120",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577860054,
+        "time": "01\/01\/2020 13:27:34",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [bfc635f7b622e8cfb3993eeaca0d5138]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1577860068,
+        "time": "01\/01\/2020 13:27:48",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [7f949440d57e84c2e25d79e98e29037b]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
     }
 ]

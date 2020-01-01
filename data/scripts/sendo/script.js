@@ -14,9 +14,9 @@
 
     try {
         log(`|===========================|`);
-        log(`|      Sendo Auto v006      |`);
+        log(`|      Sendo Auto v007      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 20:17:31 28/11/2019  |`);
+        log(`|  LU: 13:11:29 01/01/2020  |`);
         log(`|===========================|`);
 
         // Get itemName
@@ -76,7 +76,6 @@
                 tags: [
                     ...modelName,
                     `Shop ID: ${data.result.data.shop_info.shop_id}`,
-                    `status: ${data.result.data.product_status}`,
                     `Còn lại: ${stock}`,
                     `freeShip: ${data.result.data.shop_free_shipping ? "Có" : "Không"}`,
                     `SKU: ${data.result.data.sku}`,
@@ -253,11 +252,13 @@
         
         // Wait for main settings
         const settings = await setup({
-			priceHistory: { type: "customNode", node: PHC },
-            orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true, depend: "orderBy:orderByPrice" },
-            orderCount: { type: "number", label: "Số lượng", value: 1, required: true, depend: "orderBy:orderByPrice" },
-            orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: 0, required: true, depend: "orderBy:orderByPrice" },
+            priceHistory: { type: "customNode", node: PHC },
+            orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", color: "pink", value: true },
+            orderByCoupon: { type: "switch", label: "Mua theo mã giảm giá", name: "orderBy" },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true, depend: "orderBy:orderByTime", doubt: true },
+            orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
+            orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: "0", required: false },
+            coupon: { type: "text", label: "Mã giảm giá", required: false },
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true, depend: "orderBy:orderByPrice" },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
@@ -265,11 +266,32 @@
             timeCheckInterval: { type: "number", label: "Khoảng kiểm tra", depend: "orderBy:orderByTime", value: 60 },
             stepSleep: { type: "number", label: "STEP SLEEP", value: STEP_SLEEP },
             maxRetry: { type: "number", label: "RETRY", value: RETRY },
+            platform: { type: "text", label: "SENDO PLATFORM", value: "mobile" },
         });
 
         STEP_SLEEP = settings.stepSleep;
         RETRY = settings.maxRetry;
-    
+
+        if (settings.orderBy === "orderByCoupon" && settings.checkInterval < 2000) {
+            let response = await popup.show({
+                title: "Thông Báo",
+				message: "Mua theo mã giảm giá",
+				description: `Giá trị khoảng kiểm tra quá nhỏ <b>(${settings.timeCheckInterval} < 2000)</b>. Điều này sẽ kích hoạt hệ thống xác nhận Capcha của Sendo!<br><b>Giá trị này sẽ được đặt về 2000</b>`,
+				level: "info",
+				buttonList: {
+                    close: { text: "Xác Nhận", color: "blue" },
+                    quit: { text: "Quay Lại", color: "pink" }
+                }
+            });
+
+            if (response === "quit") {
+                rejectSetup("User Rejected Setup");
+                return;
+            }
+
+            settings.timeCheckInterval = 2000;
+        }
+
         log("CÀI ĐẶT:");
 
         for (let key of Object.keys(settings))
@@ -284,6 +306,123 @@
         var checkPer = (settings.orderBy === "orderByTime") ? settings.timeCheckInterval : settings.checkInterval;
 
         switch (settings.orderBy) {
+
+			//! |==========================|
+			//! |   Order By Coupon Check  |
+			//! |==========================|
+
+			case "orderByCoupon":
+				runInfo({
+					end: settings.checkInterval + "ms",
+					target: settings.orderPrice
+				});
+			
+				var checker = async () => {
+					checkNth++;
+			
+                    let reqStart = time();
+                    let info = {}
+
+					try {
+						info = await command("ajax", {
+                            url: "/api/checkout/info",
+                            method: "POST",
+                            header: {
+                                "User-Agent": `Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko)`
+                            },
+                            json: {
+                                "shop_id": SHOPID,
+                                "product_hashes": [PRODUCT_HASH],
+                                "sendo_platform": settings.platform,
+                                "current_voucher": { voucher_code: settings.coupon },
+                                "current_receive_email_info": {
+                                    "is_disable_suggest_email": false,
+                                    "receive_email": ""
+                                },
+                                "current_ticket_info": {
+                                    "is_validate_date": false,
+                                    "use_date": 0
+                                },
+                                "enable_tracking": true,
+                                "ignore_invalid_product": -1,
+                                "version": 3.1
+                            }
+                        })
+					} catch(e) {
+						heartbeat({ color: "red" });
+						log(" + Lỗi đã xảy ra khi lấy thông tin Item");
+						log(`    + Code: ${e.code}`);
+						log(`    + MSG : ${e.description || "Không Rõ"}`);
+						log(`    + Bỏ qua lỗi: true`);
+
+						let reqTime = ((time() - reqStart) * 1000);
+						let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+						runInfo({
+							progress: reqTimeAT,
+                            now: reqTime.toFixed(2) + "ms",
+                            end: settings.checkInterval + "ms",
+							itemStatus: "LỖI ĐÃ XẢY RA",
+							itemStatusColor: "red",
+							checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+						});
+
+						return;
+					}
+			
+					let reqTime = ((time() - reqStart) * 1000);
+                    let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+                    var currentPrice = info.data.products_checkout.total_price;
+			
+					runInfo({
+						progress: reqTimeAT,
+                        now: reqTime.toFixed(2) + "ms",
+                        end: settings.checkInterval + "ms",
+						current: currentPrice ? currentPrice : "Không Rõ",
+						saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
+						itemStatus: `${settings.coupon}: ${info.data.voucher_info.error || "Mã Hợp Lệ"}`,
+						itemStatusColor: info.data.voucher_info.error ? "yellow" : "green",
+						checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
+					})
+
+					heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
+
+					if (typeof currentPrice === "number" && (currentPrice < settings.orderPrice || currentPrice < itemInitPrice)) {
+						log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
+						doCheck = false;
+                        order();
+                        
+						await __doOrder({
+                            shopId: SHOPID,
+                            coupon: settings.coupon,
+                            delay: settings.orderDelay
+                        });
+
+						complete();
+                        runInfo({
+                            itemStatus: `Đặt thành công ${settings.orderCount} items`,
+                            itemStatusColor: "green",
+                            progress: 100,
+                            progWarn: false,
+                            checkDetail: "Đặt hàng thành công"
+                        });
+        
+                        log("CHẠY KẾT THÚC");
+						return;
+                    }
+                    
+                    // UNLOAD MEMORY
+                    delete info;
+                    delete reqStart;
+                    delete currentPrice;
+                    delete reqTime;
+                    delete reqTimeAT;
+				}
+			
+				infoUpdateInterval = setInterval(() => {
+					let runTime = time() - start;
+					runInfo({ time: runTime });
+				}, 60);
+				break;
 
             //! |==========================|
 			//! |      Order By Time       |
@@ -340,6 +479,11 @@
                         log("CHẠY KẾT THÚC");
                         return;
                     }
+
+                    // UNLOAD MEMORY
+                    delete curTime;
+                    delete runTime;
+                    delete progress;
                 }
     
                 infoUpdateInterval = setInterval(() => {
@@ -359,12 +503,35 @@
                     checkNth++;
                     let reqStart = time();
                     let data = {}
+                    let info = {}
         
                     try {
                         data = await command("ajax", {
                             url: `https://sendo.vn/m/wap_v2/full/san-pham/${ITEMURL}`,
                             method: "GET"
                         });
+
+                        info = await command("ajax", {
+                            url: "/api/checkout/info",
+                            method: "POST",
+                            json: {
+                                "shop_id": SHOPID,
+                                "product_hashes": [PRODUCT_HASH],
+                                "sendo_platform": settings.platform,
+                                "current_voucher": { "enable_suggest_voucher": true },
+                                "current_receive_email_info": {
+                                    "is_disable_suggest_email": false,
+                                    "receive_email": ""
+                                },
+                                "current_ticket_info": {
+                                    "is_validate_date": false,
+                                    "use_date": 0
+                                },
+                                "enable_tracking": true,
+                                "ignore_invalid_product": -1,
+                                "version": 3.1
+                            }
+                        })
                     } catch(e) {
                         heartbeat({ color: "red" });
                         log(" + Lỗi đã xảy ra khi lấy thông tin Item");
@@ -386,8 +553,8 @@
                         return;
                     }
         
-                    let price = data.result.data.final_price;
-                    let stock = data.result.data.quantity;
+                    let price = info.data.products_checkout.total_price;
+                    let stock = data.result.data.stock_status;
         
                     if (HAVE_VARIATIONS && VARIANT_KEY) {
                         let i = data.result.data.variants[VARIANT_KEY];
@@ -402,16 +569,17 @@
                     runInfo({
                         progress: reqTimeAT,
                         now: reqTime.toFixed(2) + "ms",
+                        end: settings.checkInterval + "ms",
                         current: currentPrice ? currentPrice : "Không Rõ",
                         saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
-                        itemStatus: (stock > 0) ? `CÓ HÀNG (${stock})` : `KHÔNG CÒN HÀNG (${stock})`,
-                        itemStatusColor: (stock > 0) ? "green" : "red",
+                        itemStatus: (stock) ? `CÓ HÀNG` : `KHÔNG CÒN HÀNG`,
+                        itemStatusColor: (stock) ? "green" : "red",
                         checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
                     })
         
                     heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
         
-                    if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && stock > 0) {
+                    if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && stock) {
                         log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
                         doCheck = false;
                         order();
@@ -434,6 +602,16 @@
                         log("CHẠY KẾT THÚC");
                         return;
                     }
+
+                    // UNLOAD MEMORY
+                    delete reqStart;
+                    delete data;
+                    delete info;
+                    delete price;
+                    delete stock;
+                    delete currentPrice;
+                    delete reqTime;
+                    delete reqTimeAT;
                 }
     
                 infoUpdateInterval = setInterval(() => {
@@ -567,7 +745,7 @@
                 json: {
                     "shop_id": shopId,
                     "product_hashes": [PRODUCT_HASH],
-                    "sendo_platform": "desktop2",
+                    "sendo_platform": settings.platform,
                     "current_voucher": voucherJson,
                     "current_receive_email_info": {
                         "is_disable_suggest_email": false,
@@ -579,7 +757,7 @@
                     },
                     "enable_tracking": true,
                     "ignore_invalid_product": -1,
-                    "version": 2.2
+                    "version": 3.1
                 }
             })
 
@@ -620,7 +798,7 @@
                     ignore_invalid_product: -1,
                     order_type: 1,
                     product_hashes: info.data.products_checkout.product_hashes,
-                    sendo_platform: "desktop2",
+                    sendo_platform: settings.platform,
                     shop_id: shopId,
                     version: 2.2
                 }
