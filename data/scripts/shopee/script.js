@@ -2,8 +2,6 @@
 (async () => {
 	var infoUpdateInterval = null;
 	var doCheck = true;
-	var STEP_SLEEP = 200;
-	var RETRY = 60
 
 	onCancel(() => {
 		clearInterval(infoUpdateInterval);
@@ -14,16 +12,16 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|      Shopee Auto v008     |`);
+		log(`|      Shopee Auto v009     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 20:50:58 31/10/2019  |`);
+		log(`|  LU: 23:38:29 02/01/2020  |`);
 		log(`|===========================|`);
 
 		// Get itemName
 		var itemName = "";
 	
 		try {
-			itemName = (await command("eval", { script: `[].reduce.call(document.querySelector("div > div.qaNIZv").childNodes, (a, b) => a + (b.nodeType === 3 ? b.textContent : ""), "");` })).result
+			itemName = (await command("queryText", { query: `div > div.qaNIZv > span` })).text;
 		} catch(e) {
 			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(itemName not found)</i>");
 			return;
@@ -328,12 +326,14 @@
 		// Wait for main settings
 		const settings = await setup({
 			priceHistory: { type: "customNode", node: PHC },
-			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true },
+			orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", color: "pink", value: true },
+            orderByCoupon: { type: "switch", label: "Mua theo mã giảm giá", name: "orderBy" },
+			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true, depend: "orderBy:orderByPrice" },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
 			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true },
-			useAirPay: { type: "checkbox", label: `Thanh toán bằng AirPay`, color: "blue", value: false, required: true },
 			couponNote: { type: "note", text: COUPON_DESC },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
+			useAirPay: { type: "checkbox", label: `Thanh toán bằng AirPay`, color: "blue", value: false, required: true },
 			APISource: { type: "text", label: "X-API-SOURCE", value: "pc" }
 		});
 	
@@ -347,128 +347,25 @@
 		run();
 		
 		// Start
+		var CHECKOUT_GET = {};
 		var checkNth = 0;
 		var start = time();
-	
-		runInfo({
-			end: settings.checkInterval + "ms",
-			target: settings.orderPrice
-		});
-	
-		const checker = async () => {
-			checkNth++;
-	
-			let reqStart = time();
-			let data = {}
-			try {
-				data = await command("ajax", {
-					url: `/api/v2/item/get`,
-					method: "GET",
-					query: {
-						itemid: ID,
-						shopid: SID
-					}
-				});
-			} catch(e) {
-				heartbeat({ color: "red" });
-				log(" + Lỗi đã xảy ra khi lấy thông tin Item");
-				log(`    + Code: ${e.code}`);
-				log(`    + MSG : ${e.description || "Không Rõ"}`);
-				log(`    + Bỏ qua lỗi: true`);
 
-				let reqTime = ((time() - reqStart) * 1000);
-				let reqTimeAT = (reqTime / settings.checkInterval) * 100;
-				runInfo({
-					progress: reqTimeAT,
-					now: reqTime.toFixed(2) + "ms",
-					itemStatus: "LỖI ĐÃ XẢY RA",
-					itemStatusColor: "red",
-					checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
-				});
 
-				return;
-			}
 
-			let price = data.item.price;
-			let stock = data.item.stock;
+		//* ======================
+		//* DO ORDER MAIN FUNCTION
+		//* ======================
 
-			if (HAVE_VARIATIONS) {
-				let i = data.item.models[MODEL_KEY];
-				price = i.price;
-				stock = i.stock;
-			}
-	
-			var currentPrice = data.item ? price / 100000 : null;
-			let reqTime = ((time() - reqStart) * 1000);
-			let reqTimeAT = (reqTime / settings.checkInterval) * 100;
-	
-			runInfo({
-				progress: reqTimeAT,
-				now: reqTime.toFixed(2) + "ms",
-				current: currentPrice ? currentPrice : "Không Rõ",
-				saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
-				itemStatus: (stock > 0) ? `CÓ HÀNG (${stock})` : `KHÔNG CÒN HÀNG (${stock})`,
-				itemStatusColor: (stock > 0) ? "green" : "red",
-				checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
-			})
-
-			heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
-
-			if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && stock > 0) {
-				log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
-				doCheck = false;
-				order();
-
-				await __doOrder({
-					id: ID,
-					shopId: SID,
-					modelId: MODEL_ID,
-					count: settings.orderCount,
-					autoOrder: settings.autoOrder,
-					coupon: settings.coupon,
-					freeShip: FREESHIP,
-					APISource: settings.APISource
-				});
-	
-				complete();
-				runInfo({
-					itemStatus: `Đặt thành công ${settings.orderCount} items`,
-					itemStatusColor: "green",
-					progress: 100,
-					progWarn: false,
-					checkDetail: "Đặt hàng thành công"
-				});
-
-				log("CHẠY KẾT THÚC");
-				return;
-			}
-		}
-	
-		const __checkHandler = async () => {
-			if (!doCheck)
-				return;
-	
-			let timeStart = time();
-			await checker();
-			setTimeout(() => __checkHandler(), settings.checkInterval - ((time() - timeStart) * 1000));
-		}
-	
-		infoUpdateInterval = setInterval(() => {
-			let runTime = time() - start;
-			runInfo({ time: runTime });
-		}, 60)
-		
-		const __doOrder = async ({
+		const __addToCart = async ({
 			id = 0,
 			shopId = 0,
 			modelId = null,
 			count = 1,
 			coupon = "",
-			freeShip = null,
 			APISource = "pc"
 		}) => {
 			sounds.notification();
-			let orderTimer = new stopClock();
 			const _mIdObj = (typeof modelId === "number") ? { modelid: modelId } : {}
 			
 			log("Đang thêm Item vào Giỏ Hàng");
@@ -517,7 +414,7 @@
 			log("Đang lấy thông tin Item");
 
 			log(" + Fetching /checkout/get");
-			let checkoutGet = await command("ajax", {
+			CHECKOUT_GET = await command("ajax", {
 				url: "/api/v2/checkout/get",
 				method: "POST",
 				header: {
@@ -559,13 +456,13 @@
 				}
 			})
 
-			if (checkoutGet.error) {
+			if (CHECKOUT_GET.error) {
 				await errored("Lỗi khi tiến hành Thanh Toán Item");
 				log(" + Errored while checking out Items");
-				log(`    + Code: ${checkoutGet.error}`);
-				log(`    + EC  : ${checkoutGet.error_empty_cart}`);
-				log(`    + MSG : ${checkoutGet.error_msg || "Không Rõ"}`);
-				throw { code: -1, description: "Không thể tiến hành Checkout", data: checkoutGet };
+				log(`    + Code: ${CHECKOUT_GET.error}`);
+				log(`    + EC  : ${CHECKOUT_GET.error_empty_cart}`);
+				log(`    + MSG : ${CHECKOUT_GET.error_msg || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể tiến hành Checkout", data: CHECKOUT_GET };
 			}
 
 			heartbeat();
@@ -605,7 +502,13 @@
 				log(` + Code: ${cartVerifyData.err_code}`);
 				throw { code: cartVerifyData.err_code, description: `Lỗi Khi Tiến Hành Thanh Toán Item` };
 			}
+		}
 
+		const __applyCoupon = async ({
+			coupon = "",
+			freeShip = null,
+			APISource = "pc"
+		}) => {
 			if (coupon !== "" || freeShip !== null) {
 				runInfo({ now: `Bước 3`, progress: 40, progWarn: false, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 				log(`Đang áp dụng Coupon: ${coupon}`);
@@ -662,13 +565,17 @@
 				} else
 					log(`    + Đã áp dụng thành công: ${response.applied_voucher_code}`);
 			}
-
+		}
+		
+		const __doOrder = async ({
+			APISource = "pc"
+		}) => {
 			runInfo({ now: `Bước 4`, progress: 60, progWarn: false, checkDetail: "Đang chọn phương thức thanh toán" });
 			heartbeat();
 			log("Đang chọn phương thức thanh toán")
 			log(` + Sử dụng AirPay: ${settings.useAirPay}`);
 
-			checkoutGet.selected_payment_channel_data = settings.useAirPay
+			CHECKOUT_GET.selected_payment_channel_data = settings.useAirPay
 				? {
 					channel_id: 5001800,
 					channel_item_option_info: {},
@@ -693,7 +600,7 @@
 					"x-csrftoken": CSRF,
 					"x-requested-with": "XMLHttpRequest"
 				},
-				json: checkoutGet
+				json: CHECKOUT_GET
 			})
 
 			if (placeOrder.error && placeOrder.error !== 0) {
@@ -711,10 +618,308 @@
 			log(` + CheckoutID  : ${placeOrder.checkoutid}`);
 			log(` + paymentType : ${placeOrder.payment_type}`);
 			log(` + Order ID    : ${placeOrder.orderids.join(", ")}`);
-			log(` + Thời gian   : ${orderTimer.stop}s`);
 
 			command("changeLocation", { href: placeOrder.redirect_url });
 		}
+
+		//* ========
+		//*   MAIN
+		//* ========
+
+		switch (settings.orderBy) {
+
+			//! |==========================|
+			//! |   Order By Coupon Check  |
+			//! |==========================|
+
+			case "orderByCoupon":
+				runInfo({
+					end: settings.checkInterval + "ms",
+					target: settings.orderPrice
+				});
+
+				if (settings.coupon == "") {
+					rejectSetup("Mã Giảm Giá không được để trống");
+					return;
+				}
+
+				sounds.notification();
+				await __addToCart({
+					id: ID,
+					shopId: SID,
+					modelId: MODEL_ID,
+					count: settings.orderCount,
+					coupon: settings.coupon,
+					APISource: settings.APISource
+				});
+
+				runInfo({ now: `Bước 3`, progress: 40, progWarn: false, checkDetail: "Đang Lấy Thông Tin Giỏ Hàng" });
+
+				heartbeat();
+				log(" + Đang lấy danh sách giỏ hàng");
+				var ordersData = await command("ajax", {
+					url: "/api/v2/cart/get_orders",
+					method: "GET",
+					header: {
+						"sec-fetch-mode": "cors",
+						"sec-fetch-site": "same-origin",
+						"x-api-source": settings.APISource,
+						"x-csrftoken": CSRF,
+						"x-requested-with": "XMLHttpRequest"
+					}
+				})
+
+				for (let i = 0; i < ordersData.data.shoporders.length; i++)
+					for (let j = 0; j < ordersData.data.shoporders[i].iteminfos.length; j++)
+						ordersData.data.shoporders[i].iteminfos[j].checkout = true;
+
+				var checker = async () => {
+					checkNth++;
+			
+                    let reqStart = time();
+                    let info = {}
+
+					try {
+						info = await command("ajax", {
+							url: "/api/v2/checkout/coupon",
+							method: "POST",
+							header: {
+								"sec-fetch-mode": "cors",
+								"sec-fetch-site": "same-origin",
+								"x-api-source": settings.APISource,
+								"x-csrftoken": CSRF,
+								"x-requested-with": "XMLHttpRequest"
+							},
+							json: {
+								promotion_data: {
+									auto_apply_vouchers: false,
+									free_shipping_voucher_info: {
+										free_shipping_voucher_id: FREESHIP
+									},
+									use_coins: false,
+									voucher_code: settings.coupon
+								},
+		
+								shoporders: ordersData.data.shoporders
+							}
+						})
+					} catch(e) {
+						heartbeat({ color: "red" });
+						log(" + Lỗi đã xảy ra khi áp dụng Coupon");
+						log(`    + Code: ${e.code}`);
+						log(`    + MSG : ${e.description || "Không Rõ"}`);
+						log(`    + Bỏ qua lỗi: true`);
+
+						let reqTime = ((time() - reqStart) * 1000);
+						let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+						runInfo({
+							progress: reqTimeAT,
+                            now: reqTime.toFixed(2) + "ms",
+                            end: settings.checkInterval + "ms",
+							itemStatus: "LỖI ĐÃ XẢY RA",
+							itemStatusColor: "red",
+							checkDetail: "Một lỗi đã xảy ra trong quá trình áp dụng Coupon"
+						});
+
+						return;
+					}
+			
+					let reqTime = ((time() - reqStart) * 1000);
+                    let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+                    var currentPrice = info.total_payment[0] / 100000;
+			
+					runInfo({
+						progress: reqTimeAT,
+                        now: reqTime.toFixed(2) + "ms",
+                        end: settings.checkInterval + "ms",
+						current: currentPrice ? currentPrice : "Không Rõ",
+						saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
+						itemStatus: `${settings.coupon}: ${(info.invalid_message_code === 0) ? "Mã Hợp Lệ" : info.invalid_message_reason}`,
+						itemStatusColor: (info.invalid_message_code === 0) ? "green" : "yellow",
+						checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
+					})
+
+					heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
+
+					if (typeof currentPrice === "number" && (info.invalid_message_code === 0)) {
+						log(`ACP> ${settings.coupon}: ${info.voucher_info.error || "Mã Hợp Lệ"}`);
+						let orderTimer = new stopClock();
+
+						doCheck = false;
+						order();
+						sounds.notification();
+
+						await __doOrder({
+							APISource: settings.APISource
+						});
+						
+						log(` + Thời gian   : ${orderTimer.stop}s`);
+						complete();
+						runInfo({
+							itemStatus: `Đặt thành công ${settings.orderCount} items`,
+							itemStatusColor: "green",
+							progress: 100,
+							progWarn: false,
+							checkDetail: "Đặt hàng thành công"
+						});
+
+						log("CHẠY KẾT THÚC");
+
+						delete orderTimer;
+                    }
+                    
+                    // UNLOAD MEMORY
+                    delete info;
+                    delete reqStart;
+                    delete currentPrice;
+                    delete reqTime;
+                    delete reqTimeAT;
+				}
+
+				break;
+
+			//! |==========================|
+			//! |      Order By Price      |
+			//! |==========================|
+            
+            case "orderByPrice":
+				runInfo({
+					end: settings.checkInterval + "ms",
+					target: settings.orderPrice
+				});
+
+				var checker = async () => {
+					checkNth++;
+			
+					let reqStart = time();
+					let data = {}
+
+					try {
+						data = await command("ajax", {
+							url: `/api/v2/item/get`,
+							method: "GET",
+							query: {
+								itemid: ID,
+								shopid: SID
+							}
+						});
+					} catch(e) {
+						heartbeat({ color: "red" });
+						log(" + Lỗi đã xảy ra khi lấy thông tin Item");
+						log(`    + Code: ${e.code}`);
+						log(`    + MSG : ${e.description || "Không Rõ"}`);
+						log(`    + Bỏ qua lỗi: true`);
+
+						let reqTime = ((time() - reqStart) * 1000);
+						let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+						runInfo({
+							progress: reqTimeAT,
+							now: reqTime.toFixed(2) + "ms",
+							itemStatus: "LỖI ĐÃ XẢY RA",
+							itemStatusColor: "red",
+							checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+						});
+
+						// UNLOAD MEMORY
+						delete reqTime;
+						delete reqTimeAT;
+						return;
+					}
+
+					let price = data.item.price;
+					let stock = data.item.stock;
+
+					if (HAVE_VARIATIONS) {
+						let i = data.item.models[MODEL_KEY];
+						price = i.price;
+						stock = i.stock;
+					}
+			
+					var currentPrice = data.item ? price / 100000 : null;
+					let reqTime = ((time() - reqStart) * 1000);
+					let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+			
+					runInfo({
+						progress: reqTimeAT,
+						now: reqTime.toFixed(2) + "ms",
+						current: currentPrice ? currentPrice : "Không Rõ",
+						saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
+						itemStatus: (stock > 0) ? `CÓ HÀNG (${stock})` : `KHÔNG CÒN HÀNG (${stock})`,
+						itemStatusColor: (stock > 0) ? "green" : "red",
+						checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
+					})
+
+					heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
+
+					if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && stock > 0) {
+						log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
+						let orderTimer = new stopClock();
+
+						doCheck = false;
+						order();
+						sounds.notification();
+
+						await __addToCart({
+							id: ID,
+							shopId: SID,
+							modelId: MODEL_ID,
+							count: settings.orderCount,
+							coupon: settings.coupon,
+							APISource: settings.APISource
+						});
+
+						await __applyCoupon({
+							coupon: settings.coupon,
+							freeShip: FREESHIP,
+							APISource: settings.APISource
+						});
+
+						await __doOrder({
+							APISource: settings.APISource
+						});
+						
+						log(` + Thời gian   : ${orderTimer.stop}s`);
+						complete();
+						runInfo({
+							itemStatus: `Đặt thành công ${settings.orderCount} items`,
+							itemStatusColor: "green",
+							progress: 100,
+							progWarn: false,
+							checkDetail: "Đặt hàng thành công"
+						});
+
+						log("CHẠY KẾT THÚC");
+
+						delete orderTimer;
+						return;
+					}
+
+					// UNLOAD MEMORY
+					delete reqStart;
+					delete data;
+					delete price;
+					delete stock;
+					delete currentPrice;
+					delete reqTime;
+					delete reqTimeAT;
+				}
+
+				break;
+		}
+	
+		const __checkHandler = async () => {
+			if (!doCheck)
+				return;
+	
+			let timeStart = time();
+			await checker();
+			setTimeout(() => __checkHandler(), settings.checkInterval - ((time() - timeStart) * 1000));
+		}
+	
+		infoUpdateInterval = setInterval(() => {
+			let runTime = time() - start;
+			runInfo({ time: runTime });
+		}, 60)
 	
 		__checkHandler();
 		log("Bắt đầu kiểm tra giá");

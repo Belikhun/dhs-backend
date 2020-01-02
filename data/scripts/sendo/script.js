@@ -255,11 +255,11 @@
             priceHistory: { type: "customNode", node: PHC },
             orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", color: "pink", value: true },
             orderByCoupon: { type: "switch", label: "Mua theo mã giảm giá", name: "orderBy" },
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true, depend: "orderBy:orderByTime", doubt: true },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true, depend: "orderBy:orderByPrice" },
             orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
             orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: "0", required: false },
             coupon: { type: "text", label: "Mã giảm giá", required: false },
-            checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true, depend: "orderBy:orderByPrice" },
+            checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true, depend: "orderBy:orderByTime", doubt: true },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
             orderTime: { type: "time", label: "Giờ mua", depend: "orderBy:orderByTime", step: 0.001 },
@@ -315,7 +315,12 @@
 				runInfo({
 					end: settings.checkInterval + "ms",
 					target: settings.orderPrice
-				});
+                });
+                
+                if (settings.coupon == "") {
+					rejectSetup("Mã Giảm Giá không được để trống");
+					return;
+				}
 			
 				var checker = async () => {
 					checkNth++;
@@ -327,9 +332,6 @@
 						info = await command("ajax", {
                             url: "/api/checkout/info",
                             method: "POST",
-                            header: {
-                                "User-Agent": `Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko)`
-                            },
                             json: {
                                 "shop_id": SHOPID,
                                 "product_hashes": [PRODUCT_HASH],
@@ -350,7 +352,7 @@
                         })
 					} catch(e) {
 						heartbeat({ color: "red" });
-						log(" + Lỗi đã xảy ra khi lấy thông tin Item");
+						log(" + Lỗi đã xảy ra khi áp dụng Coupon");
 						log(`    + Code: ${e.code}`);
 						log(`    + MSG : ${e.description || "Không Rõ"}`);
 						log(`    + Bỏ qua lỗi: true`);
@@ -363,7 +365,7 @@
                             end: settings.checkInterval + "ms",
 							itemStatus: "LỖI ĐÃ XẢY RA",
 							itemStatusColor: "red",
-							checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+							checkDetail: "Một lỗi đã xảy ra trong quá trình áp dụng Coupon"
 						});
 
 						return;
@@ -386,8 +388,8 @@
 
 					heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
 
-					if (typeof currentPrice === "number" && (currentPrice < settings.orderPrice || currentPrice < itemInitPrice)) {
-						log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
+					if (typeof currentPrice === "number" && (!info.data.voucher_info.error)) {
+						log(`ACP> ${settings.coupon}: ${info.data.voucher_info.error || "Mã Hợp Lệ"}`);
 						doCheck = false;
                         order();
                         
@@ -492,6 +494,10 @@
                     checkNth = 0;
                 }, 1000)
                 break;
+
+            //! |==========================|
+			//! |      Order By Price      |
+			//! |==========================|
             
             case "orderByPrice":
                 runInfo({

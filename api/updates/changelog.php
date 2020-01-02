@@ -1,10 +1,11 @@
-<h2>Thay đổi trong v2.1 (1/1/2020)</h3>
+<h2>Thay đổi trong v2.2 (2/1/2020)</h3>
 
 <h3>Script <i>(scripts)</i></h3>
 <ul>
 	<li>Thêm trường <b>Mã giảm giá</b> cho Sendo <pre>(sendo#1)</pre></li>
 	<li>Thêm tính năng <b>Mua theo áp mã</b> cho Sendo <pre>(sendo#2)</pre></li>
 	<li>Chuyển sang kiểm tra giá trong <b>thanh toán</b> thay vì kiểm tra giá tại <b>thông tin hàng</b> khi mua theo giá tại Sendo <pre>(sendo#3)</pre></li>
+	<li>Thêm tính năng <b>Mua theo áp mã</b> cho Shopee <pre>(shopee#1)</pre></li>
 </ul>
 
 <h3>Extension <i>(frontend)</i></h3>
