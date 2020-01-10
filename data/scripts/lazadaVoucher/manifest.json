@@ -2,6 +2,6 @@
     "name": "Lazada Voucher",
     "description": "Tự động thêm voucher vào ví cho lazada",
     "site": "lazada.vn/",
-    "match": "lazada\\.vn.*",
+    "match": "pages\\.lazada\\.vn.*",
     "version": 2
 }

@@ -24,8 +24,6 @@
 			script: `
 				var scrollInterval = setInterval(e => {
 					"window.scrollTo(0, document.body.scrollHeight);"
-					
-					
 				})
 			`
 		});
@@ -191,21 +189,17 @@
 
 					let result = {}
 					try {
+						log(`   + Sending POST request`);
 						result = await command("ajax", {
 							url: "https://acs-m.lazada.vn/h5/mtop.lazada.promotion.voucher.spread/1.0/",
 							method: "POST",
+							withCredentials: true,
 							header: {
-								"accept": "application/json",
-								"accept-language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
-								"cache-control": "no-cache",
-								"content-type": "application/x-www-form-urlencoded",
-								"pragma": "no-cache",
-								"sec-fetch-mode": "cors",
-								"sec-fetch-site": "same-site",
-								"x-i18n-language": "vi",
-								"x-i18n-regionid": "VN",
-								"x-ua": tokens.ua,
-								"x-umidtoken": tokens.umid
+								"Content-Type": "application/json;charset=UTF-8",
+								"X-I18N-LANGUAGE": "vi",
+								"X-I18N-REGIONID": "VN",
+								"X-UA": tokens.ua,
+								"X-UMIDTOKEN": tokens.umid
 							},
 							query: {
 								jsv: "2.5.1",
@@ -244,8 +238,16 @@
                         log(`    + Code: ${e.code}`);
                         log(`    + MSG : ${e.description || "Không Rõ"}`);
 						log(`    + Bỏ qua lỗi: true`);
-						clicked++;
 
+						continue;
+					}
+
+					if (result.ret[0]) {
+						heartbeat({ color: "red" });
+						log(" + Lỗi đã xảy ra khi thêm Voucher vào ví");
+                        log(`    + RET  : ${result.ret[0]}`);
+						log(`    + Bỏ qua lỗi: true`);
+						
 						continue;
 					}
 
@@ -271,7 +273,7 @@
 				complete();
 				runInfo({
 					itemStatus: `THÊM THÀNH CÔNG ${clicked}/${selectedVoucherList.length} VOUCHER`,
-					itemStatusColor: "green",
+					itemStatusColor: (selectedVoucherList.length === clicked) ? "green" : "red",
 					progress: 100,
 					progWarn: false,
 					checkDetail: "Thêm thành công",
