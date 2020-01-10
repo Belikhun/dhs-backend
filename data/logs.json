@@ -196,5 +196,60 @@
             "username": "belivipro9x99",
             "ip": "::1"
         }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1578670870,
+        "time": "10\/01\/2020 22:41:10",
+        "text": "\u0110\u0103ng nh\u1eadp th\u00e0nh c\u00f4ng [337faa0293f71c9a6484afcb1a9c6140]",
+        "module": "login.php:32",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1578670879,
+        "time": "10\/01\/2020 22:41:19",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1578670885,
+        "time": "10\/01\/2020 22:41:25",
+        "text": "\u0110\u00e3 ch\u1ec9nh s\u1eeda key trong c\u01a1 s\u1edf d\u1eef li\u1ec7u: ID tags",
+        "module": "edit.php:49",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1578670892,
+        "time": "10\/01\/2020 22:41:32",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [9665bcb6191d5e83c956335b3952ff05]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1578671973,
+        "time": "10\/01\/2020 22:59:33",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [bf61174fab6533341f6c5416d1ddae97]",
+        "module": "auth.php:43",
+        "client": {
+            "username": "belivipro9x99",
+            "ip": "::1"
+        }
     }
 ]

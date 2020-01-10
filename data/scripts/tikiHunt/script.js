@@ -634,7 +634,7 @@
 						url: `https://apiv2.beecost.com/ecom/product/history`,
 						method: "GET",
 						query: {
-							product_base_id: [3, item.pid, item.id].filter(Number).join("__")
+							product_base_id: [3, item.id, item.pid].filter(Number).join("__")
 						}
 					})
 
@@ -644,7 +644,7 @@
 						log(`     + Bỏ qua lỗi: true`);
 					} else {
 						let costData = beeCost.data.price_classification;
-						let min = costData.min_price;
+						let min = costData ? costData.min_price : Math.min.apply(this, beeCost.data.item_history.price);
 						log(`   + GIÁ THẤP NHẤT: ${min}`);
 
 						if (item.price > min) {
