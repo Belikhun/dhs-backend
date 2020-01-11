@@ -37,7 +37,7 @@
 		log(`|===========================|`);
 		log(`|      Tiki Deal Hunter     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:50:49 14/11/2019  |`);
+		log(`|  LU: 21:54:28 11/01/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -57,8 +57,10 @@
 		const scanItem = async ({
 			sortBy = "sale",
 			pageCount = 1,
-			saleFilter = 0
-		} = {}) => {
+			saleFilter = 0,
+			doSort = true,
+			itemHandler = () => {}
+		} = {}, set = () => {}) => {
 			let list = {}
 			let sortedList = []
 			let blackList = await getBlackList();
@@ -68,8 +70,10 @@
 			log(`   + sortBy    = ${sortBy}`);
 			log(`   + pageCount = ${pageCount}`);
 
-			for (let item of selectedPageList) {
+			for (let itemNth = 0; itemNth < selectedPageList.length; itemNth++) {
+				let item = selectedPageList[itemNth];
 				let start = time();
+
 				log(`   + Đang tải: ${item.title}`);
 				
 				for (let page = 1; page <= pageCount; page++) {
@@ -85,6 +89,12 @@
 						type: "text"
 					});
 
+					// Calc progress
+					let now = (itemNth * pageCount + page);
+					let end = pageCount * selectedPageList.length;
+					set((now / end) * 100, now, end);
+					delete now;
+					delete end;
 					heartbeat();
 		
 					let itemPage = (new DOMParser()).parseFromString(result, "text/html");
@@ -128,8 +138,12 @@
 							coupon: { code: couponCode, price: couponPrice, sale: couponSale },
 							sale: couponSale || priceSale
 						}
+
+						// Item Handling Function
+						await itemHandler(list[item.dataset.id]);
 	
-						sortedList.push(list[item.dataset.id]);
+						if (doSort)
+							sortedList.push(list[item.dataset.id]);
 					}
 
 					delete result;
@@ -139,35 +153,39 @@
 			}
 
 			log(`   + Lấy danh sách thành công`);
-			heartbeat();
-			log(`   + Đang sắp xếp dữ liệu`);
 
-			switch (sortBy) {
-				case "sale":
-					sortedList.sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
-					break;
-			
-				case "name":
-					sortedList.sort((a, b) => (a.title < b.title) ? 1 : (a.title > b.title) ? -1 : 0);
-					break;
-
-				case "haveCoupon":
-					sortedList.sort((a, b) => a.coupon.code ? -1 : 1);
-					break;
-
-				case "priceUp":
-					sortedList.sort((a, b) => (a.price < b.price) ? -1 : (a.price > b.price) ? 1 : 0);
-					break;
-
-				case "priceDown":
-					sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.price > b.price) ? -1 : 0);
-					break;
-
-				default:
-					break;
+			if (doSort) {
+				heartbeat();
+				log(`   + Đang sắp xếp dữ liệu`);
+	
+				switch (sortBy) {
+					case "sale":
+						sortedList.sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
+						break;
+				
+					case "name":
+						sortedList.sort((a, b) => (a.title < b.title) ? 1 : (a.title > b.title) ? -1 : 0);
+						break;
+	
+					case "haveCoupon":
+						sortedList.sort((a, b) => a.coupon.code ? -1 : 1);
+						break;
+	
+					case "priceUp":
+						sortedList.sort((a, b) => (a.price < b.price) ? -1 : (a.price > b.price) ? 1 : 0);
+						break;
+	
+					case "priceDown":
+						sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.price > b.price) ? -1 : 0);
+						break;
+	
+					default:
+						break;
+				}
+	
+				log(`   + Sắp xếp dữ liệu thành công!`);
 			}
 
-			log(`   + Sắp xếp dữ liệu thành công!`);
 			return { list, sortedList }
 		}
 
@@ -468,12 +486,31 @@
 		// Save BlackList
 		await saveBlackList(firstScanSetup.blackList.split(";"));
 
+		// Change Layout
+		run();
+
+		runInfo({
+			end: "100%",
+			current: "0",
+			itemStatus: `Đang quét lần đầu`,
+			itemStatusColor: "green",
+			dataType: "time"
+		})
+
 		// Start Scanning Item
 		var itemList = await scanItem({
 			sortBy: firstScanSetup.sortBy,
 			pageCount: firstScanSetup.scanPage,
 			saleFilter: firstScanSetup.saleFilter
-		});
+		}, (p, now, end) => runInfo({
+			now: `${p.toFixed(0)}%`,
+			current: now,
+			target: end,
+			progress: p,
+			progWarn: false,
+			dataType: "time"
+		}));
+
 		var CURRENT_PAGE = 1;
 
 		const changeAllListPage = async (page, {
@@ -605,126 +642,124 @@
 		}
 
 		const __doUpdate = async () => {
-			runInfo({ now: `Bước 1`, end: `Bước 2`, progress: 0, checkDetail: "Đang Lấy Danh Sách Item" });
-			let list = await scanItem({
+			runInfo({ now: `0`, end: `100%`, progress: 0, checkDetail: "Đang Lấy Danh Sách Item", dataType: "time" });
+
+			await scanItem({
 				sortBy: firstScanSetup.sortBy,
 				pageCount: firstScanSetup.scanPage,
-				saleFilter: firstScanSetup.saleFilter
-			});
+				saleFilter: firstScanSetup.saleFilter,
+				doSort: false,
+				itemHandler: async (item) => {
+					if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))
+						return;
 
-			runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang So Sánh Thông Tin" });
-			let changed = 0;
-			let changedList = []
+					let blackList = await getBlackList();
+					if (blackList.indexOf(item.id) !== -1) {
+						log(` + ITEM trong BlackList: ${item.id}`);
+						return;
+					}
 
-			for (let item of list.sortedList) {
-				if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))
-					continue;
-
-				let blackList = await getBlackList();
-				if (blackList.indexOf(item.id) !== -1) {
-					log(` + ITEM trong BlackList: ${item.id}`);
-					continue;
-				}
-
-				if (settings.checkPriceHistory) {
-					log(` + Đang kiểm tra lịch sử giá (beeCost)`);
-					log(`   + ID: ${item.id} PID: ${item.pid}`);
-
-					let beeCost = await myajax({
-						url: `https://apiv2.beecost.com/ecom/product/history`,
-						method: "GET",
-						query: {
-							product_base_id: [3, item.id, item.pid].filter(Number).join("__")
-						}
-					})
-
-					if (beeCost.status === "error") {
-						log("   + Không thể lấy lịch sử giá Item");
-						log(`     + MSG : ${beeCost.meta.message || "Không Rõ"}`);
-						log(`     + Bỏ qua lỗi: true`);
+					if (itemList.list[item.id]) {
+						log(` + ITEM Thay Đổi: ${item.id} [${changed}]`);
+						log(`   + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
+						log(`   + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
 					} else {
-						let costData = beeCost.data.price_classification;
-						let min = costData ? costData.min_price : Math.min.apply(this, beeCost.data.item_history.price);
-						log(`   + GIÁ THẤP NHẤT: ${min}`);
+						log(` + ITEM Mới: ${item.id} [${changed}]`);
+						log(`   + GIÁ:  ${item.price}`);
+						log(`   + SALE: ${item.sale.toFixed(2)}%`);
+					}
+		
+					//? Remove Old Box If Exist
+					let existBox = changedListItem.querySelectorAll(`.item[item-id="${item.id}"]`);
+					for (let item of existBox)
+						deleteNode(item);
+					
+					let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
+					changedListItem.prepend(itemBox);
+					itemList.list[item.id] = item;
 
-						if (item.price > min) {
-							log(`   + Giá hiện tại không đạt yêu cầu: ${item.price} > ${min}`);
-							log(`   + Đang bỏ qua`);
+					// Send Notifiaction
+					sounds.notification();
+					chrome.notifications.create({
+						type: "basic",
+						title: "Deal Hunter Suite",
+						message: `Đã thêm: ${item.title}`,
+						contextMessage: `${(time() - start).toFixed(2)}s`,
+						iconUrl: "/assets/img/icon@32x32.png",
+						requireInteraction: true
+					});
 
-							continue;
-						}
+					if (settings.checkPriceHistory) {
+						log(` + Đang kiểm tra lịch sử giá (beeCost)`);
+						log(`   + ID: ${item.id} PID: ${item.pid}`);
 
-						let priceRatio = min / item.price;
-						log(`   + PRICE RATIO: ${priceRatio.toFixed(2)}`);
+						let beeCost = await myajax({
+							url: `https://apiv2.beecost.com/ecom/product/history`,
+							method: "GET",
+							query: {
+								product_base_id: [3, item.id, item.pid].filter(Number).join("__")
+							}
+						})
 
-						if (priceRatio >= settings.autobuyRatio) {
-							log(`   + BẮT ĐẦU ĐẶT MUA`);
+						if (beeCost.status === "error") {
+							log("   + Không thể lấy lịch sử giá Item");
+							log(`     + MSG : ${beeCost.meta.message || "Không Rõ"}`);
+							log(`     + Bỏ qua lỗi: true`);
+						} else {
+							let costData = beeCost.data.price_classification;
+							let min = costData ? costData.min_price : Math.min.apply(this, beeCost.data.item_history.price);
+							log(`   + GIÁ THẤP NHẤT: ${min}`);
 
-							for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
-								let item = accountList[orderNth];
-			
-								runInfo({ itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`, itemStatusColor: "yellow" });
-								heartbeat();
-								log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
-			
-								try {
-									await __doOrder({
-										id: item.id,
-										count: 1,
-										username: item.u,
-										password: item.p
-									});
-								} finally {
-									successCount++;
+							let priceRatio = min / item.price;
+							log(`   + PRICE RATIO: ${priceRatio.toFixed(2)}`);
+
+							if (priceRatio >= settings.autobuyRatio) {
+								log(`   + BẮT ĐẦU ĐẶT MUA`);
+
+								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
+									let item = accountList[orderNth];
+				
+									runInfo({ itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`, itemStatusColor: "yellow" });
+									heartbeat();
+									log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
+				
+									try {
+										await __doOrder({
+											id: item.id,
+											count: 1,
+											username: item.u,
+											password: item.p
+										});
+									} finally {
+										successCount++;
+									}
+				
+									heartbeat();
+									log(`Mua thành công cho tài khoản ${item.u}! (${orderNth + 1}Nth)`);
 								}
-			
-								heartbeat();
-								log(`Mua thành công cho tài khoản ${item.u}! (${orderNth + 1}Nth)`);
+
+								chrome.notifications.create({
+									type: "basic",
+									title: "Deal Hunter Suite",
+									message: `Mua thành công: ${item.title}`,
+									contextMessage: `${(time() - start).toFixed(2)}s`,
+									iconUrl: "/assets/img/icon@32x32.png",
+									requireInteraction: true
+								});
 							}
 						}
 					}
 				}
+			}, (p, now, end) => runInfo({
+				now: `${p.toFixed(0)}%`,
+				current: now,
+				target: end,
+				progress: p,
+				progWarn: false,
+				dataType: "time"
+			}) );
 
-				changed++;
-
-				if (itemList.list[item.id]) {
-					log(` + ITEM Thay Đổi: ${item.id} [${changed}]`);
-					log(`   + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
-					log(`   + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
-				} else {
-					log(` + ITEM Mới: ${item.id} [${changed}]`);
-					log(`   + GIÁ:  ${item.price}`);
-					log(`   + SALE: ${item.sale.toFixed(2)}%`);
-				}
-	
-				//? Remove Old Box If Exist
-				let existBox = changedListItem.querySelectorAll(`.item[item-id="${item.id}"]`);
-				for (let item of existBox)
-					deleteNode(item);
-				
-				let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
-				changedListItem.prepend(itemBox);
-				changedList.push({ title: item.title, message: item.id + "" });
-				itemList.list[item.id] = item;
-			}
-
-			if (changed > 0) {
-				sounds.notification();
-				chrome.notifications.create({
-					type: "list",
-					title: "Deal Hunter Suite",
-					message: `Đã tìm thấy ${changed} item thay đổi giá`,
-					contextMessage: `${(time() - start).toFixed(2)}s`,
-					iconUrl: "/assets/img/icon@32x32.png",
-					items: changedList,
-					requireInteraction: true
-				});
-			}
-
-			delete list;
-			delete changedList;
-
-			runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công" });
+			runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công", dataType: "time" });
 		}
 
 		const __doOrder = async ({
