@@ -1,0 +1,7 @@
+{
+    "name": "Tiki Sale Hunter Plus",
+    "description": "Tìm item giá lỗi và tự động đặt mua cho Tiki",
+    "site": "tiki.vn/",
+    "match": "*",
+    "version": 7
+}

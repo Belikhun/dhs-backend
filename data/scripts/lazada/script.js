@@ -139,7 +139,6 @@
 				costHistory = beeCost.data.item_history.price;
 				costHistoryTime = beeCost.data.item_history.price_ts;
 				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
-				settingOrderPrice = costData.min_price;
 
 				PHC.classList.remove("noData");
 			}
@@ -205,7 +204,7 @@
             rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy!");
             return;
         }
-        var settingOrderPrice = itemInitPrice;
+
         await updatePriceHistory(2, ID, SKUID);
         log("Đã lấy thông tin Item");
 
@@ -215,7 +214,7 @@
 			priceHistory: { type: "customNode", node: PHC },
             preRunNote: { type: "note", level: "warning", text: `<b>Lưu Ý:</b> Lựa chọn loại hàng và số lượng trước khi chạy!` },
             orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: settingOrderPrice, required: true, depend: "orderBy:orderByPrice" },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, depend: "orderBy:orderByPrice" },
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true, depend: "orderBy:orderByPrice" },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
