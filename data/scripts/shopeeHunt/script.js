@@ -757,6 +757,8 @@
 					changedListItem.prepend(itemBox);
 					changedList.push({ title: item.title, message: item.id + "" });
 					itemList.list[item.id] = item;
+
+					sounds.notification();
 				}
 			}, (p, now, end) => runInfo({
 				now: `${p.toFixed(0)}%`,
@@ -768,7 +770,6 @@
 			}));
 
 			if (changed > 0) {
-				sounds.notification();
 				chrome.notifications.create({
 					type: "list",
 					title: "Deal Hunter Suite",

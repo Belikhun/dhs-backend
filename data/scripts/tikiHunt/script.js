@@ -642,6 +642,7 @@
 		}
 
 		const __doUpdate = async () => {
+			var changed = 0;
 			runInfo({ now: `0`, end: `100%`, progress: 0, checkDetail: "Đang Lấy Danh Sách Item", dataType: "time" });
 
 			await scanItem({
@@ -659,14 +660,36 @@
 						return;
 					}
 
+					// Increase Counter
+					changed++;
+
+					// Send Notifiaction
+					sounds.notification();
+
 					if (itemList.list[item.id]) {
 						log(` + ITEM Thay Đổi: ${item.id} [${changed}]`);
 						log(`   + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
 						log(`   + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
+
+						chrome.notifications.create({
+							type: "basic",
+							title: "Deal Hunter Suite",
+							message: `Đã thay đổi: ${item.title} [${changed}]`,
+							contextMessage: `${(time() - start).toFixed(2)}s`,
+							iconUrl: "/assets/img/icon@32x32.png"
+						});
 					} else {
 						log(` + ITEM Mới: ${item.id} [${changed}]`);
 						log(`   + GIÁ:  ${item.price}`);
 						log(`   + SALE: ${item.sale.toFixed(2)}%`);
+
+						chrome.notifications.create({
+							type: "basic",
+							title: "Deal Hunter Suite",
+							message: `Đã thêm: ${item.title} [${changed}]`,
+							contextMessage: `${(time() - start).toFixed(2)}s`,
+							iconUrl: "/assets/img/icon@32x32.png"
+						});
 					}
 		
 					//? Remove Old Box If Exist
@@ -677,17 +700,6 @@
 					let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
 					changedListItem.prepend(itemBox);
 					itemList.list[item.id] = item;
-
-					// Send Notifiaction
-					sounds.notification();
-					chrome.notifications.create({
-						type: "basic",
-						title: "Deal Hunter Suite",
-						message: `Đã thêm: ${item.title}`,
-						contextMessage: `${(time() - start).toFixed(2)}s`,
-						iconUrl: "/assets/img/icon@32x32.png",
-						requireInteraction: true
-					});
 
 					if (settings.checkPriceHistory) {
 						log(` + Đang kiểm tra lịch sử giá (beeCost)`);
@@ -741,7 +753,7 @@
 								chrome.notifications.create({
 									type: "basic",
 									title: "Deal Hunter Suite",
-									message: `Mua thành công: ${item.title}`,
+									message: `Mua thành công: ${item.title} (${item.id})`,
 									contextMessage: `${(time() - start).toFixed(2)}s`,
 									iconUrl: "/assets/img/icon@32x32.png",
 									requireInteraction: true
@@ -758,6 +770,8 @@
 				progWarn: false,
 				dataType: "time"
 			}) );
+
+			delete changed;
 
 			runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công", dataType: "time" });
 		}

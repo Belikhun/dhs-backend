@@ -383,5 +383,27 @@
             "username": null,
             "ip": "::1"
         }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1578807232,
+        "time": "12\/01\/2020 12:33:52",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [6d7e8965a2a550df98efb4085f9c6273]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1578808193,
+        "time": "12\/01\/2020 12:49:53",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [a40258a0f9a8c518f121ebbc709c8850]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
     }
 ]
