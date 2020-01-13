@@ -37,7 +37,7 @@
 		log(`|===========================|`);
 		log(`|      Tiki Deal Hunter     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 21:54:28 11/01/2020  |`);
+		log(`|  LU: 18:23:17 13/01/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -481,7 +481,8 @@
 		log("PRE SETUP:");
 
 		for (let key of Object.keys(firstScanSetup))
-			log(` + ` + pleft(key, 18, true) + ` = ${firstScanSetup[key]}`);
+			if (key !== "blackList")
+				log(` + ` + pleft(key, 18, true) + ` = ${firstScanSetup[key]}`);
 		
 		// Save BlackList
 		await saveBlackList(firstScanSetup.blackList.split(";"));
@@ -616,6 +617,7 @@
 				runNth++;
 				start = time();
 				end = start + settings.delay;
+				this.script.status.container.dataset.triColor = "dark";
 			}
 		}
 
@@ -667,9 +669,9 @@
 					sounds.notification();
 
 					if (itemList.list[item.id]) {
-						log(` + ITEM Thay Đổi: ${item.id} [${changed}]`);
-						log(`   + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
-						log(`   + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
+						log(`   + ITEM Thay Đổi: ${item.id} [${changed}]`);
+						log(`     + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
+						log(`     + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
 
 						chrome.notifications.create({
 							type: "basic",
@@ -679,9 +681,9 @@
 							iconUrl: "/assets/img/icon@32x32.png"
 						});
 					} else {
-						log(` + ITEM Mới: ${item.id} [${changed}]`);
-						log(`   + GIÁ:  ${item.price}`);
-						log(`   + SALE: ${item.sale.toFixed(2)}%`);
+						log(`   + ITEM Mới: ${item.id} [${changed}]`);
+						log(`     + GIÁ:  ${item.price}`);
+						log(`     + SALE: ${item.sale.toFixed(2)}%`);
 
 						chrome.notifications.create({
 							type: "basic",
@@ -702,8 +704,8 @@
 					itemList.list[item.id] = item;
 
 					if (settings.checkPriceHistory) {
-						log(` + Đang kiểm tra lịch sử giá (beeCost)`);
-						log(`   + ID: ${item.id} PID: ${item.pid}`);
+						log(`     + Đang kiểm tra lịch sử giá`);
+						log(`       + ID: ${item.id} PID: ${item.pid}`);
 
 						let beeCost = await myajax({
 							url: `https://apiv2.beecost.com/ecom/product/history`,
@@ -714,40 +716,44 @@
 						})
 
 						if (beeCost.status === "error") {
-							log("   + Không thể lấy lịch sử giá Item");
-							log(`     + MSG : ${beeCost.meta.message || "Không Rõ"}`);
-							log(`     + Bỏ qua lỗi: true`);
+							log("     + Không thể lấy lịch sử giá Item");
+							log(`       + MSG : ${beeCost.meta.message || "Không Rõ"}`);
+							log(`       + Bỏ qua lỗi: true`);
 						} else {
 							let costData = beeCost.data.price_classification;
 							let min = costData ? costData.min_price : Math.min.apply(this, beeCost.data.item_history.price);
 							log(`   + GIÁ THẤP NHẤT: ${min}`);
 
 							let priceRatio = min / item.price;
-							log(`   + PRICE RATIO: ${priceRatio.toFixed(2)}`);
+							log(`   + PRICE RATIO: ${priceRatio}`);
 
 							if (priceRatio >= settings.autobuyRatio) {
 								log(`   + BẮT ĐẦU ĐẶT MUA`);
 
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
-									let item = accountList[orderNth];
+									let account = accountList[orderNth];
 				
 									runInfo({ itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`, itemStatusColor: "yellow" });
 									heartbeat();
 									log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
 				
 									try {
+										debugger;
 										await __doOrder({
-											id: item.id,
+											id: item.pid,
 											count: 1,
-											username: item.u,
-											password: item.p
+											username: account.u,
+											password: account.p
 										});
+									} catch(e) {
+										heartbeat({ color: "red" });
+										log(`Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+										clog("ERRR", `Mua ${account.u} [${item.pid}]`, e);
+										continue;
 									} finally {
-										successCount++;
+										heartbeat();
+										log(`Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 									}
-				
-									heartbeat();
-									log(`Mua thành công cho tài khoản ${item.u}! (${orderNth + 1}Nth)`);
 								}
 
 								chrome.notifications.create({
@@ -801,20 +807,14 @@
 
 			log(`Đang đăng nhập vào tài khoản \"${username}\"`);
 			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
-			
-			let CSRF_LOGIN = (await command("queryInput", { query: `input[name="TIKI_CSRF_TOKEN"]` })).value;
-			log(` + CSRF: ${CSRF_LOGIN}`);
-			
-			let loginData = {}
 
 			try {
-				loginData = await command("ajax", {
+				await command("ajax", {
 					url: "/customer/account/ajaxLogin",
 					method: "POST",
 					form: {
 						email: username,
-						password: password,
-						TIKI_CSRF_TOKEN: CSRF_LOGIN
+						password: password
 					}
 				});
 			} catch(e) {
@@ -856,7 +856,7 @@
 			if (addData.error) {
 				await errored("Lỗi khi thêm Item vào Giỏ");
 				log(" + Không thể thêm Item vào Giỏ");
-				log(`    + Code: -1`);
+				log(`    + Code: ${addData.error.code}`);
 				log(`    + MSG : ${addData.error.message || "Không rõ"}`);
 				throw { code: -1, description: "Không thể thêm Item vào Giỏ", data: addData.error }
 			}

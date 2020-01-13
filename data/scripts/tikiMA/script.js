@@ -392,20 +392,14 @@
 
 			log(`Đang đăng nhập vào tài khoản \"${username}\"`);
 			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
-			
-			let CSRF_LOGIN = (await command("queryInput", { query: `input[name="TIKI_CSRF_TOKEN"]` })).value;
-			log(` + CSRF: ${CSRF_LOGIN}`);
-			
-			let loginData = {}
 
 			try {
-				loginData = await command("ajax", {
+				await command("ajax", {
 					url: "/customer/account/ajaxLogin",
 					method: "POST",
 					form: {
 						email: username,
-						password: password,
-						TIKI_CSRF_TOKEN: CSRF_LOGIN
+						password: password
 					}
 				});
 			} catch(e) {
