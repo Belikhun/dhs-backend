@@ -603,5 +603,16 @@
             "username": "belivipro9x99",
             "ip": "::1"
         }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579000981,
+        "time": "14\/01\/2020 18:23:01",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [b0af27e79622afe9ad4df6dd030d977d]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
     }
 ]
