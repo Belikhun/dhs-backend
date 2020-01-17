@@ -1,7 +1,7 @@
 {
-    "name": "Tiki",
-    "description": "Tự động mua hàng cho Tiki",
+    "name": "Tiki Instant",
+    "description": "Mua hàng 1 click cho Tiki",
     "site": "tiki.vn/",
-    "match": "tiki\\.vn.*",
-    "version": 11
+    "match": "tiki\\.vn\/.*\\-p\\d+\\.html.*",
+    "version": 0
 }

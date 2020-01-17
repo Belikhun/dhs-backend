@@ -1,0 +1,7 @@
+{
+    "name": "Shopee Upcoming Deal List",
+    "description": "Liệt kê các deal sắp tới cho Shopee",
+    "site": "shopee.vn/",
+    "match": "shopee\\.vn.*",
+    "version": 1
+}

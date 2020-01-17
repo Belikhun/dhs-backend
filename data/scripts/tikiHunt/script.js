@@ -1058,7 +1058,7 @@
 			heartbeat();
 			log(` + Phát hiện ${deleteNodeList.length} item hiện đang trong giỏ hàng`);
 
-			let CSRF_CART = paymentDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
+			let CSRF_CART = placeOrderDOM.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
 			log(` + CSRF: ${CSRF_CART}`);
 
 			for (let item of deleteNodeList) {

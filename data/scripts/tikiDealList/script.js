@@ -356,6 +356,11 @@
 			}
 
 			CURRENT_PAGE = page;
+
+			delete total;
+			delete maxPage;
+			delete from;
+			delete to;
 		}
 
 		allListHeaderPageForward.addEventListener("mouseup", e => changeAllListPage("last"));
@@ -365,7 +370,7 @@
 		
 		changeAllListPage(CURRENT_PAGE);
 
-		runInfo({ checkDetail: "Đã Chạy Xong" })
+		runInfo({ checkDetail: "Đã Chạy Xong", dataType: "time" })
 		await complete();
 	} catch(e) {
 		triggerError(e);

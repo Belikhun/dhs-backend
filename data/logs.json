@@ -614,5 +614,368 @@
             "username": null,
             "ip": "::1"
         }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579256454,
+        "time": "17\/01\/2020 17:20:54",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [dc2662a626802073e46b2cf47c0d208e]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579270180,
+        "time": "17\/01\/2020 21:09:40",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [4f5d3e3283410d73730ff66d691598ea]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579270526,
+        "time": "17\/01\/2020 21:15:26",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [bb848b43385aa3f7f352c3b76c42ee66]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579271750,
+        "time": "17\/01\/2020 21:35:50",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [1a12f880c26e8a3f791659d688e16500]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579273443,
+        "time": "17\/01\/2020 22:04:03",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [50f1e80e38860729d4730853cbeeb6f3]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579273894,
+        "time": "17\/01\/2020 22:11:34",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [58ea79956f1f8c3814f38a7c8ab6af1f]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579275875,
+        "time": "17\/01\/2020 22:44:35",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [5cd527a81bd9b34224d404aece5e6a7b]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579275941,
+        "time": "17\/01\/2020 22:45:41",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [1f598d7d2d57f9c73023b58c5c1ab7dd]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579276559,
+        "time": "17\/01\/2020 22:55:59",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [495468e3496b76ffe30bd69a173499b9]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579276913,
+        "time": "17\/01\/2020 23:01:53",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [5d05068782ec86b1627a3d6fecbefac0]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579277067,
+        "time": "17\/01\/2020 23:04:27",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [a42a23c2d1193a448a36ed8415d5d29d]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579277104,
+        "time": "17\/01\/2020 23:05:04",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [1f7fa83176d893688be156d4994ddfe9]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579277156,
+        "time": "17\/01\/2020 23:05:56",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [44195aa228ae0c562ba50701a0b4e8ed]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579277311,
+        "time": "17\/01\/2020 23:08:31",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [08d4ab82d0da54211cc9cbf7fbd72462]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579277376,
+        "time": "17\/01\/2020 23:09:36",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [d3049b93b96d6961a6be48c9a5a9b5b0]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579277534,
+        "time": "17\/01\/2020 23:12:14",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [0aab0c627246791c7123fc0356d1ab1d]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579277648,
+        "time": "17\/01\/2020 23:14:08",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [6e37b070c3dc5c1c6b46386afd011e20]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579278423,
+        "time": "17\/01\/2020 23:27:03",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [52477a596982224eeb3e136166b94ec0]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579278442,
+        "time": "17\/01\/2020 23:27:22",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [f4b2f5c6a482f20e47ef5b4b958565fc]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579279530,
+        "time": "17\/01\/2020 23:45:30",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [e68e9d78d78d004fae604d04c5b97cbb]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579279643,
+        "time": "17\/01\/2020 23:47:23",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [ad4758362e4e56c4ddf856961bc8e92f]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579279698,
+        "time": "17\/01\/2020 23:48:18",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [7807791919e3e7566c6fb7bda104e059]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579279732,
+        "time": "17\/01\/2020 23:48:52",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [168a52f0d9a0da54bc4994f14d5f28b7]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579280230,
+        "time": "17\/01\/2020 23:57:10",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [d78046854eb86e4d6a0884b3802ff28b]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579280294,
+        "time": "17\/01\/2020 23:58:14",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [340edf1652af8a169461f4caeb14e7eb]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579280496,
+        "time": "18\/01\/2020 00:01:36",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [7c4450929e0e5f55eae305404411e4aa]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579280635,
+        "time": "18\/01\/2020 00:03:55",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [ef313e351831f8f40ab98e4c5ca88b44]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579280738,
+        "time": "18\/01\/2020 00:05:38",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [41ecfccc5a9101b7f0f63b01048ebf29]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579281230,
+        "time": "18\/01\/2020 00:13:50",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [9f0bdf4807ac7619064ac8e07238457f]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "WARN",
+        "unixtime": 1579281247,
+        "time": "18\/01\/2020 00:14:07",
+        "text": "Got statuscode \"404 Not Found\" when trying to access: \/api\/scripts\/fetch",
+        "module": "belibrary.php:382",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "OKAY",
+        "unixtime": 1579281347,
+        "time": "18\/01\/2020 00:15:47",
+        "text": "\u0110\u00e3 c\u1ea5p quy\u1ec1n truy c\u1eadp cho \"Test\" [11a934b3c64095fa504fceb0a9119e84]",
+        "module": "auth.php:43",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "WARN",
+        "unixtime": 1579281354,
+        "time": "18\/01\/2020 00:15:54",
+        "text": "Got statuscode \"404 Not Found\" when trying to access: \/api\/scripts\/fetch",
+        "module": "belibrary.php:382",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
+    },
+    {
+        "level": "WARN",
+        "unixtime": 1579281356,
+        "time": "18\/01\/2020 00:15:56",
+        "text": "Got statuscode \"404 Not Found\" when trying to access: \/api\/scripts\/fetch",
+        "module": "belibrary.php:382",
+        "client": {
+            "username": null,
+            "ip": "::1"
+        }
     }
 ]
