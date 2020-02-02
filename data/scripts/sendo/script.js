@@ -134,7 +134,7 @@
 				PHC.classList.remove("noData");
 			}
 
-			PHChart.innerHTML = "";
+			emptyNode(PHChart);
 
 			//? PH deltaTime
 			var PHChartDeltaTime = document.createElement("span");

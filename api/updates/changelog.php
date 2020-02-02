@@ -1,31 +1,29 @@
-<h2>Thay đổi trong v2.2 (2/1/2020)</h3>
+<h2>Thay đổi trong v2.3 (02/02/2020)</h2>
+
+<h3>TL;DR</h3>
+<ul>
+	<li>Tự động lưu cài đặt của từng Script</li>
+	<li>Thêm chức năng chạy Script tự động cho tool</li>
+	<li>Thêm Script <pre>tikiInstant</pre></li>
+	<li>Thêm Script <pre>shopeeDealList</pre></li>
+	<li>Sửa một số lỗi nhỏ khác và thay đổi thiết kế một số UI</li>
+</ul>
 
 <h3>Script <i>(scripts)</i></h3>
 <ul>
-	<li>Thêm trường <b>Mã giảm giá</b> cho Sendo <pre>(sendo#1)</pre></li>
-	<li>Thêm tính năng <b>Mua theo áp mã</b> cho Sendo <pre>(sendo#2)</pre></li>
-	<li>Chuyển sang kiểm tra giá trong <b>thanh toán</b> thay vì kiểm tra giá tại <b>thông tin hàng</b> khi mua theo giá tại Sendo <pre>(sendo#3)</pre></li>
-	<li>Thêm tính năng <b>Mua theo áp mã</b> cho Shopee <pre>(shopee#1)</pre></li>
+	<li>Thêm Script <pre>tikiInstant</pre></li>
+	<li>Thêm Script <pre>shopeeDealList</pre></li>
 </ul>
 
 <h3>Extension <i>(frontend)</i></h3>
 <ul>
-	<li>Add <b>Open Sans</b> font</li>
-	<li>Add system clock in navbar</li>
-	<li>Show changelog page on startup</li>
-	<li>Show announcement on startup page</li>
-	<li>Show account's tag in navbar</li>
-	<li>Redesign info page</li>
-	<li>Redesign landing page</li>
-	<li>Rewrite universal popup module</li>
-	<li>Unload triangles background on layout change</li>
-	<li>Unload some hidden element</li>
-	<li>Unload license key clock when hidden</li>
+	<li>Added Support for Autorun Script</li>
+	<li>Auto Save Settings of Script</li>
+	<li>Fix Clock's <i>Day of Week</i> dispaly as <pre>unknown</pre></li>
 	<li>Fix all leftover bugs and stylings</li>
 </ul>
 
 <h3>Authorize Server <i>(backend)</i></h3>
 <ul>
-	<li>Increase system stability</li>
-	<li>Implement key tagging feature</li>
+	<li>Nothing Changed 😅</li>
 </ul>

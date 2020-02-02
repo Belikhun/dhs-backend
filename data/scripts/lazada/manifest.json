@@ -3,5 +3,5 @@
     "description": "Tự động mua hàng cho Lazada",
     "site": "lazada.vn/",
     "match": "lazada\\.vn.*",
-    "version": 7
+    "version": 8
 }

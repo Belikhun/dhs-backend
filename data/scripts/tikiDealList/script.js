@@ -246,7 +246,7 @@
 		allListHeaderInfo.innerText = "Toàn Bộ";
 
 		let allListHeaderPage = document.createElement("span");
-		allListHeaderPage.classList.add("pageChange");
+		allListHeaderPage.classList.add("buttonBox");
 
 		var allListHeaderPageForward = document.createElement("span");
 		allListHeaderPageForward.classList.add("forward");
@@ -348,7 +348,7 @@
 			if (page > maxPage || page < 1)
 				return;
 
-			allListItem.innerHTML = "";
+			emptyNode(allListItem);
 			
 			for (let i = from; i < to; i++) {
 				allListItem.appendChild(createItemBox(itemList.sortedList[i], e => addToBlackList(e.target.getAttribute("item-id"))));

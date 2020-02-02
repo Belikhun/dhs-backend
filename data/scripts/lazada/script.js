@@ -16,9 +16,9 @@
 
     try {
         log(`|===========================|`);
-        log(`|      Lazada Auto v007     |`);
+        log(`|      Lazada Auto v008     |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 20:49:33 31/10/2019  |`);
+        log(`|  LU: 23:00:21 18/01/2020  |`);
         log(`|===========================|`);
     
         const __fetchItemData = async () => {
@@ -143,7 +143,7 @@
 				PHC.classList.remove("noData");
 			}
 
-			PHChart.innerHTML = "";
+			emptyNode(PHChart);
 
 			//? PH deltaTime
 			var PHChartDeltaTime = document.createElement("span");
@@ -421,8 +421,13 @@
                     await waitFor(
                         async (tryNth) => {
                             heartbeat({ color: "blue" });
-                            let _t = await command("click", { query: "#automation-payment-method-item-127" });
-                            return (_t.clicked === true);
+                            try {
+                                await command("clickWithText", { query: "#paymentMethodList_XxX10001 > div > div.pay-method-item", text: "Thanh toán khi nhận hàng" });
+                            } catch (e) {
+                                return false;
+                            }
+
+                            return true;
                         },
                         async () => {
                             runInfo({ progress: 80, progWarn: false });

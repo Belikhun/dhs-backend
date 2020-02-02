@@ -389,7 +389,7 @@
 		allListHeaderInfo.innerText = "Toàn Bộ";
 
 		let allListHeaderPage = document.createElement("span");
-		allListHeaderPage.classList.add("pageChange");
+		allListHeaderPage.classList.add("buttonBox");
 
 		var allListHeaderPageForward = document.createElement("span");
 		allListHeaderPageForward.classList.add("forward");
@@ -453,7 +453,7 @@
 				value: true
 			}
 
-		let pageListSetup = await setup(pageListSetupData, { confirm: "Tiếp" });
+		let pageListSetup = await setup(pageListSetupData, { confirm: "Tiếp", saveKey: "pageList" });
 
 		log("DANH SÁCH TRANG:");
 
@@ -486,7 +486,7 @@
 			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 1000 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 80 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "160px", value: blackList.join(";") }
-		}, { confirm: "Tiếp" })
+		}, { confirm: "Tiếp", saveKey: "preSetup" })
 
 		log("PRE SETUP:");
 
@@ -522,7 +522,7 @@
 			if (page > maxPage || page < 1)
 				return;
 
-			allListItem.innerHTML = "";
+			emptyNode(allListItem);
 			let blackList = await getBlackList();
 			
 			for (let i = from; i < to; i++) {

@@ -106,7 +106,7 @@
 				PHC.classList.remove("noData");
 			}
 
-			PHChart.innerHTML = "";
+			emptyNode(PHChart);
 
 			//? PH deltaTime
 			var PHChartDeltaTime = document.createElement("span");
@@ -161,16 +161,17 @@
 		}
 	
 		try {
-			ID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value)
+			ID = parseInt((await command("queryInput", { query: "input#product_id" })).value)
 		} catch(e) {
 			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(ID not found)</i>");
 			return;
 		}
 	
+		runInfo({ progress: 20 });
 		log(`Item ID: ${ID}`);
 
 		try {
-			PID = parseInt((await command("queryInput", { query: "input#product_id" })).value)
+			PID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value)
 		} catch(e) {
 			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(PID not found)</i>");
 			return;
@@ -180,7 +181,7 @@
 		
 		await fetchItemData();
 
-		await updatePriceHistory(3, PID, ID);
+		await updatePriceHistory(3, ID, PID);
 		log("Đã lấy thông tin Item");
 	
 		// Check for id change
@@ -189,8 +190,8 @@
 			let _PID = null;
 	
 			try {
-				_ID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value);
-				_PID = parseInt((await command("queryInput", { query: "input#product_id" })).value);
+				_ID = parseInt((await command("queryInput", { query: "input#product_id" })).value);
+				_PID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value);
 			} catch(e) {
 				rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy!");
 				return;
@@ -203,7 +204,7 @@
 				ID = _ID;
 				PID = _PID
 				
-				await updatePriceHistory(3, PID, ID);
+				await updatePriceHistory(3, ID, PID);
 				await fetchItemData();
 			}
 		}, 1000);
@@ -214,7 +215,7 @@
 		// Wait for Account List
 		const account = await setup({
 			note: { type: "note", level: "info", text: "Mỗi tài khoản một dòng, ngăn cách tên tài khoản và mật khẩu bằng <b>:</b> (ex: \"username:password\")" },
-			list: { type: "textarea", label: "Danh sách tài khoản", height: "180px", value: prevAccountList, required: true }
+			list: { type: "textarea", label: "Danh sách tài khoản", height: "180px", value: prevAccountList, required: true, save: false }
 		}, { confirm: "Tiếp" });
 
 		log(" + Đang lưu danh sách tài khoản");
@@ -268,7 +269,7 @@
 			let data = {}
 			try {
 				data = await command("ajax", {
-					url: `/api/v2/products/${ID}/info`,
+					url: `/api/v2/products/${PID}/info`,
 					method: "GET"
 				});
 			} catch(e) {
@@ -322,18 +323,19 @@
 
 					try {
 						await __doOrder({
-							id: ID,
+							id: PID,
 							count: settings.orderCount,
 							coupon: settings.coupon,
 							paymentMethod: settings.paymentMethod,
 							username: item.u,
 							password: item.p
 						});
-					} finally {
-						successCount++;
+					} catch(e) {
+						clog("ERRR", `doOrder ${item.u} [${item.pid}]`, e);
+						continue;
 					}
-
-					heartbeat();
+					
+					successCount++;
 					log(`Mua thành công cho tài khoản ${item.u}! (${orderNth + 1}Nth)`);
 				}
 	
@@ -433,10 +435,7 @@
 						qty: count
 					}
 				});
-			} catch(e) {
-				triggerError(e);
-				return false;
-			}
+			} catch(e) { throw e }
 	
 			if (addData.error) {
 				await errored("Lỗi khi thêm Item vào Giỏ");
