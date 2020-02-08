@@ -557,7 +557,7 @@
 			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 138 },
 			pageCount: { type: "number", label: "Số Trang Lấy Mỗi Loại", value: 1 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 },
-			blackList: { type: "textarea", label: "Danh Sách Đen", height: "160px", value: blackList.join(";") }
+			blackList: { type: "textarea", label: "Danh Sách Đen", height: "160px", value: blackList.join(";"), save: false }
 		}, { confirm: "Tiếp", saveKey: "preSetup" })
 
 		log("PRE SETUP:");

@@ -497,7 +497,7 @@
 			},
 			scanPage: { type: "number", label: "Số Trang Quét Mỗi Loại", value: 1 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 0 },
-			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";") }
+			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";"), save: false }
 		}, { confirm: "Tiếp", saveKey: "preSetup" })
 
 		log("PRE SETUP:");

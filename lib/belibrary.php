@@ -2,7 +2,7 @@
     //? |-----------------------------------------------------------------------------------------------|
     //? |  /lib/belibrary.php                                                                           |
     //? |                                                                                               |
-    //? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+    //? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
     //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
     //? |-----------------------------------------------------------------------------------------------|
 
@@ -139,6 +139,7 @@
             "swf" => "application/x-shockwave-flash",
             "crx" => "application/x-chrome-extension",
             "flv" => "video/x-flv",
+            "log" => "text/x-log",
     
             // images
             "png" => "image/png",

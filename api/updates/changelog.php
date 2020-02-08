@@ -1,4 +1,4 @@
-<h2>Thay đổi trong v2.3 (02/02/2020)</h2>
+<h2>Thay đổi trong v2.4 (05/02/2020)</h2>
 
 <h3>TL;DR</h3>
 <ul>
@@ -21,9 +21,10 @@
 	<li>Auto Save Settings of Script</li>
 	<li>Fix Clock's <i>Day of Week</i> dispaly as <pre>unknown</pre></li>
 	<li>Fix all leftover bugs and stylings</li>
+	<li>Enhance security</li>
 </ul>
 
 <h3>Authorize Server <i>(backend)</i></h3>
 <ul>
-	<li>Nothing Changed 😅</li>
+	<li>Log User Activity 👀</li>
 </ul>

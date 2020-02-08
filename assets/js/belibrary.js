@@ -900,7 +900,7 @@ function clog(level, ...args) {
 			out[n] = `font-size: ${size}px; font-family: ${font}; color: ${flatc("black")}`;
 			n += 1;
 		} else if (typeof item === "object") {
-			if (!item.text) {
+			if (typeof item.text === "undefined") {
 				out[n] = item;
 				n += 1;
 

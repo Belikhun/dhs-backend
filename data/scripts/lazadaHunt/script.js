@@ -458,7 +458,7 @@
 			},
 			scanPage: { type: "number", label: "Số Trang Quét Mỗi Loại", value: 1 },
 			coolDown: { type: "number", label: "Thời gian chờ", value: 3000 },
-			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";") }
+			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";"), save: false }
 		}, { confirm: "Tiếp", saveKey: "preSetup" })
 
 		log("PRE SETUP:");
