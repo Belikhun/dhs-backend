@@ -2,7 +2,7 @@
     //? |-----------------------------------------------------------------------------------------------|
     //? |  /api/auth.php                                                                                |
     //? |                                                                                               |
-    //? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+    //? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
     //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
     //? |-----------------------------------------------------------------------------------------------|
 
@@ -18,7 +18,6 @@
     $key = reqForm("key");
 
     $keyDB = new ezsql(DB_TABLE);
-    
     $query = "SELECT * FROM `keylist` WHERE `key` = ?";
     $result = $keyDB -> query($query, $key);
 
@@ -26,9 +25,21 @@
         stop(50, "Key không tồn tại trong máy chủ!", 403, Array( "key" => $key ));
 
     $result = $result[0];
+    $curTime = time();
+    $result["licenses"] = unserialize($result["licenses"]);
+    $result["tags"] = unserialize($result["tags"]);
+    $result["expired"] = true;
 
-    if (time() > $result["expire"])
-        stop(51, "Key đã hết hạn!", 403, Array( "key" => $key, "expire" => $result["expire"], "expired" => time() - $result["expire"] ));
+    foreach ($result["licenses"] as &$item) {
+        $item["valid"] = $item["expire"] - $curTime;
+        $item["expired"] = $item["valid"] < 0 ? true : false;
+
+        if ($item["expired"] === false)
+            $result["expired"] = false;
+    }
+
+    if ($result["expired"] === true)
+        stop(51, "Key đã hết hạn!", 403, Array( "key" => $key, "licenses" => $result["licenses"] ));
 
     if (!isset($_SESSION["authKey"]) || $_SESSION["authKey"] !== $key) {
         $_SESSION["apiToken"] = bin2hex(random_bytes(64));
@@ -37,8 +48,6 @@
     
     $keyDB -> query("UPDATE `keylist` SET `lastused` = ? WHERE `key` = ?", time(), $key);
     session_regenerate_id();
-
-    $result["tags"] = unserialize($result["tags"]);
 
     writeLog("OKAY", "Đã cấp quyền truy cập cho \"". $result["name"] ."\" [". session_id() ."]");
     stop(0, "Đã cấp quyền truy cập", 200, Array(

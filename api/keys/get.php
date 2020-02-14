@@ -2,7 +2,7 @@
     //? |-----------------------------------------------------------------------------------------------|
     //? |  /api/keys/list.php                                                                           |
     //? |                                                                                               |
-    //? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+    //? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
     //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
     //? |-----------------------------------------------------------------------------------------------|
 
@@ -23,22 +23,35 @@
     if ($_SESSION["id"] !== "admin")
         stop(31, "Access Denied!", 403);
 
-    $keyDB = new ezsql(DB_TABLE);
-    
-    $query = "SELECT * FROM `keylist`";
-    $result = $keyDB -> query($query);
-
+    $singleMode = false;
     $keyID = getForm("id");
+    $keyDB = new ezsql(DB_TABLE);
+    $query = "SELECT * FROM `keylist`";
 
-    array_walk($result, function(&$v) {
-        $v["valid"] = $v["expire"] - time();
-        $v["expired"] = $v["valid"] < 0 ? true : false;
+    if (!empty($keyID) || $keyID === "0") {
+        $singleMode = true;
+        $query = "SELECT * FROM `keylist` WHERE `id` = ?";
+        $result = $keyDB -> query($query, $keyID);
+    } else
+        $result = $keyDB -> query($query);
+
+    $curTime = time();
+
+    foreach ($result as &$v) {
+        $v["licenses"] = unserialize($v["licenses"]);
         $v["tags"] = unserialize($v["tags"]);
-    });
+        $v["expired"] = true;
 
-    if (!empty($keyID)) {
-        $pos = array_search($keyID, array_column($result, "id"));
-        $result = $result[$pos];
+        foreach ($v["licenses"] as &$n) {
+            $n["valid"] = $n["expire"] - $curTime;
+            $n["expired"] = $n["valid"] < 0 ? true : false;
+
+            if ($n["expired"] === false)
+                $v["expired"] = false;
+        }
     }
+
+    if ($singleMode)
+        $result = $result[0];
 
     stop(0, "Lấy danh sách thành công!", 200, $result);

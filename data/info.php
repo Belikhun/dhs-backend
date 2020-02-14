@@ -2,13 +2,13 @@
     //? |-----------------------------------------------------------------------------------------------|
     //? |  /data/info.php                                                                               |
     //? |                                                                                               |
-    //? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+    //? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
     //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
     //? |-----------------------------------------------------------------------------------------------|
 
 	define("APPNAME", "Deal Hunter Suite");
 	define("AUTHOR", "Team DHS");
-	define("VERSION", "0.6.0");
+	define("VERSION", "0.7.0");
 	define("VERSION_TAG", "release");
 	define("REPO_ADDRESS", "");
 	define("REPORT_ERROR", REPO_ADDRESS . "/issues");
@@ -26,7 +26,7 @@
 	define("HOST_NAME", "dealhunter.000webhostapp.com");
 
 	define("EXTENSION_ID", "ooeeakiohlmkbdmdpfkhkkafgappoijd");
-	define("EXTENSION_VERSION", "2.4");
+	define("EXTENSION_VERSION", "3.0");
 	define("EXTENSION_ZIP_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.zip");
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 

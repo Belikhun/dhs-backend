@@ -2,7 +2,7 @@
     //? |-----------------------------------------------------------------------------------------------|
     //? |  /api/scripts/list.php                                                                        |
     //? |                                                                                               |
-    //? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+    //? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
     //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
     //? |-----------------------------------------------------------------------------------------------|
 
@@ -22,13 +22,14 @@
     $key = $_SESSION["authKey"];
     $keyDB = new ezsql(DB_TABLE);
     
-    $query = "SELECT * FROM `keylist` WHERE `key` = ?";
+    $query = "SELECT `licenses` FROM `keylist` WHERE `key` = ?";
     $result = $keyDB -> query($query, $key);
 
     if (empty($result))
         stop(-1, "Key không tồn tại trong máy chủ!", 403, Array( "key" => $key ));
 
-    $allow = explode(";", $result[0]["allow"]);
+    $licensesList = unserialize($result[0]["licenses"]);
+    $curTime = time();
 
     $scriptData = Array();
     $list = glob(SCRIPTS_DIR ."/*", GLOB_ONLYDIR);
@@ -40,7 +41,17 @@
 
         $scriptData[$id] = $data;
         $scriptData[$id]["id"] = $id;
-        $scriptData[$id]["allow"] = (in_array($id, $allow) || $result[0]["allow"] === "*");
+
+        $scriptData[$id]["allow"] = false;
+
+        foreach ($licensesList as $license) {
+            $allow = explode(";", $license["allow"]);
+        
+            if (($license["allow"] === "*" || in_array($id, $allow)) && (($license["expire"] - $curTime) > 0)) {
+                $scriptData[$id]["allow"] = true;
+                break;
+            }
+        }
     }
 
     stop(0, "Thành công!", 200, $scriptData);

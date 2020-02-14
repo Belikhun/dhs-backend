@@ -2,7 +2,7 @@
     //? |-----------------------------------------------------------------------------------------------|
     //? |  /api/keys/add.php                                                                            |
     //? |                                                                                               |
-    //? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+    //? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
     //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
     //? |-----------------------------------------------------------------------------------------------|
 
@@ -18,21 +18,32 @@
     if (!isLogedIn())
         stop(11, "Bạn chưa đăng nhập!", 403);
 
-    checkToken();
-
     if ($_SESSION["id"] !== "admin")
         stop(31, "Access Denied!", 403);
 
-    $name = reqForm("name");
-    $key = reqForm("key");
-    $allow = reqForm("allow");
-    $expire = reqForm("expire");
-    $tags = serialize(preg_split("/ /", getForm("tags", ""), -1, PREG_SPLIT_NO_EMPTY));
+    $formData = reqData("json");
+    checkToken(reqKey($formData, "token"));
+
+    $name = reqKey($formData, "name");
+    $key = reqKey($formData, "key");
+    $licenses = reqKey($formData, "licenses");
+    $tags = getKey($formData, "tags", []);
+
+    // VERIFY DATA
+    if (!is_array($licenses))
+        stop(3, "Licenses is not an array", 400);
+
+    if (!is_array($tags))
+        stop(3, "Tags is not an array", 400);
+
+    foreach ($licenses as $index => $value)
+        if ((!isset($value["allow"])) || (!isset($value["expire"]) || !is_numeric($value["expire"]) || !is_string($value["allow"])))
+            stop(-1, "Inaccurate Data", 400, Array( "index" => $index ));
 
     $keyDB = new ezsql(DB_TABLE);
     
-    $query = "INSERT INTO `keylist` (`name`, `key`, `allow`, `createdate`, `lastused`, `expire`, `tags`) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    $result = $keyDB -> query($query, $name, $key, $allow, time(), time(), $expire, $tags);
+    $query = "INSERT INTO `keylist` (`name`, `key`, `licenses`, `createdate`, `lastused`, `tags`) VALUES (?, ?, ?, ?, ?, ?)";
+    $result = $keyDB -> query($query, $name, $key, serialize($licenses), time(), time(), serialize($tags));
 
-    writeLog("OKAY", "Đã thêm key vào cơ sở dữ liệu: ". $key);
-    stop(0, "Thêm key vào cơ sở dữ liệu thành công!", 200, Array( "name" => $name, "key" => $key, "expire" => $expire ));
+    writeLog("OKAY", "Đã thêm key vào cơ sở dữ liệu: $name [$key]");
+    stop(0, "Thêm key vào cơ sở dữ liệu thành công!", 200, Array( "name" => $name, "key" => $key, "licenses" => $licenses ));

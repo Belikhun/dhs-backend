@@ -2,7 +2,7 @@
 ? |-----------------------------------------------------------------------------------------------|
 ? |  /assets/css/accountPage.css                                                                  |
 ? |                                                                                               |
-? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
 ? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 ? |-----------------------------------------------------------------------------------------------|
 */
@@ -16,20 +16,29 @@ body:not(.embeded) {
     display: contents;
 }
 
+#keysContainer .group {
+    transition: background-color 0.3s ease;
+}
+
+#keysContainer .group.showEditor {
+    background-color: rgba(245, 245, 246, 0.4);
+}
+
+#keysContainer .group.showEditor .storedKeyList:hover {
+    background-color: unset;
+}
+
+#keysContainer .storedKeyList.expired,
+#keysContainer .group.showEditor .storedKeyList.expired:hover {
+    background-color: rgba(255, 170, 170, 0.2);
+}
+
 #keysContainer .storedKeyList {
     position: relative;
     display: flex;
     flex-direction: row;
-
-    transition: background-color 0.3s ease;
-}
-
-#keysContainer .group.showEditor .storedKeyList {
-    background-color: rgba(128, 128, 128, 0.1);
-}
-
-#keysContainer .storedKeyList.expired {
-    background-color: rgba(255, 170, 170, 0.2);
+    flex-flow: wrap;
+    justify-content: center;
 }
 
 #keysContainer .storedKeyList .id {
@@ -103,6 +112,7 @@ body:not(.embeded) {
     font-size: 12px;
     font-weight: lighter;
     color: #676f79;
+    margin-top: 10px;
 
     word-wrap: break-word;
     -webkit-user-select: text;
@@ -115,41 +125,88 @@ body:not(.embeded) {
     margin-top: 10px;
 }
 
-#keysContainer .storedKeyList .detail {
+#keysContainer .storedKeyList .info .detail {
     position: relative;
     flex-grow: 0;
     flex-shrink: 0;
-    margin: unset;
-    padding: 0 20px;
+    margin: 10px 0 0 0;
+    padding: unset;
     list-style: none;
 
     font-size: 13px;
-    text-align: right;
     color: rgb(75, 75, 75);
 }
 
-#keysContainer .storedKeyList .detail > li::after {
+#keysContainer .storedKeyList .info .detail > li::before {
     content: "\f111";
     position: relative;
     display: inline-block;
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
     font-size: 13px;
-    margin-left: 10px;
+    margin-right: 10px;
     color: rgb(124, 124, 124);
     transition: color 0.1s ease;
 }
 
-#keysContainer .storedKeyList .detail > .create::after {
+#keysContainer .storedKeyList .info .detail > .create::before {
     content: "\f055";
 }
 
-#keysContainer .storedKeyList .detail > .lastUsed::after {
+#keysContainer .storedKeyList .info .detail > .lastUsed::before {
     content: "\f144";
 }
 
-#keysContainer .storedKeyList .detail > .expire::after {
-    content: "\f017";
+#keysContainer .storedKeyList .licenses {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex-grow: 0;
+    flex-shrink: 1;
+
+    margin: 10px;
+    padding: unset;
+}
+
+#keysContainer .storedKeyList .licenses .license {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 10px;
+
+    max-width: 260px;
+}
+
+#keysContainer .storedKeyList .licenses .license .allow {
+    font-weight: bold;
+    font-size: 16px;
+    color: rgb(44, 44, 44);
+
+    word-wrap: break-word;
+    text-align: right;
+}
+
+#keysContainer .storedKeyList .licenses .license .allow::before {
+    content: "Cho Phép";
+    display: block;
+    font-size: 12px;
+    font-weight: normal;
+    text-transform: uppercase;
+}
+
+#keysContainer .storedKeyList .licenses .license .timeDesc {
+    margin-top: 10px;
+    font-family: "Open Sans";
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #383838;
+}
+
+#keysContainer .storedKeyList .licenses .license.expired .timer {
+    color: rgb(255, 68, 68);
 }
 
 #keysContainer .storedKeyList .button {
@@ -158,6 +215,7 @@ body:not(.embeded) {
     display: flex;
     flex-direction: row;
     align-items: center;
+    margin: 10px 0;
 }
 
 #keysContainer .storedKeyList .button span {
@@ -199,16 +257,16 @@ body:not(.embeded) {
 
 .keyEditor {
     position: relative;
-    display: block;
+    display: flex;
 
-    height: 0;
+    max-height: 0;
     overflow: hidden;
-    transition: height 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    transition: max-height 0.8s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .keyEditor.showEditor,
 #keysContainer .group.showEditor .keyEditor {
-    height: 200px;
+    max-height: 360px;
 }
 
 .keyEditor .editor {
@@ -216,14 +274,21 @@ body:not(.embeded) {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: center;
     width: 100%;
+    max-height: 100%;
     padding: 0 10px;
     box-sizing: border-box;
+}
+
+.keyEditor .editor line {
+    margin: 10px 20px;
 }
 
 .keyEditor .editor .column {
     position: relative;
     display: flex;
+    max-height: 100%;
     flex-shrink: 1;
     flex-direction: column;
     align-items: center;
@@ -238,8 +303,8 @@ body:not(.embeded) {
     position: relative;
     display: flex;
     flex-direction: row;
-    width: 100%;
     align-items: center;
+    width: 100%;
     margin: 5px 0;
 }
 
@@ -251,6 +316,24 @@ body:not(.embeded) {
 .keyEditor .editor .column .row .large {
     flex-grow: 1;
     margin: 0 10px;
+}
+
+.keyEditor .editor .addLicense {
+    padding: 10px 20px;
+}
+
+.keyEditor .editor .licensesContainer {
+    flex-flow: wrap;
+    overflow-y: auto;
+}
+
+.keyEditor .editor .licensesContainer > .row {
+    justify-content: center;
+    flex-flow: wrap;
+}
+
+.keyEditor .editor .licensesContainer > .row.expired {
+    background-color: rgba(255, 170, 170, 0.2);
 }
 
 /* Dark */

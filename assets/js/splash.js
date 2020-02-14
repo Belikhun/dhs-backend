@@ -1,7 +1,7 @@
 //? |-----------------------------------------------------------------------------------------------|
 //? |  /assets/js/splash.js                                                                         |
 //? |                                                                                               |
-//? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+//? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
 //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 //? |-----------------------------------------------------------------------------------------------|
 
@@ -94,11 +94,11 @@ class splash {
         // Footer
         this.tree.footer.icon.innerHTML = `
             <div class="lazyload chrome">
-                <img onload="this.parentNode.dataset.loaded = 1" src="/assets/img/chrome-icon.png"/>
+                <img onload="this.parentNode.dataset.loaded = 1" src="/assets/img/chrome-icon.webp"/>
                 <div class="simple-spinner"></div>
             </div>
             <div class="lazyload coccoc">
-                <img onload="this.parentNode.dataset.loaded = 1" src="/assets/img/coccoc-icon.png"/>
+                <img onload="this.parentNode.dataset.loaded = 1" src="/assets/img/coccoc-icon.webp"/>
                 <div class="simple-spinner"></div>
             </div>`
         this.tree.footer.text.innerText = "Trang web hoạt động tốt nhất trên trình duyệt chrome và coccoc.";
@@ -134,7 +134,7 @@ class splash {
                 return false;
 
             this.status.innerText = `${text} [${progress.toFixed(2)}%]`;
-            this.bar.style.width = `${50 + progress*0.5}%`;
+            this.bar.style.width = `${50 + progress*0.4}%`;
         }).catch(e => this.__panic(e));
 
         this.loaded = true;

@@ -1,7 +1,7 @@
 //? |-----------------------------------------------------------------------------------------------|
 //? |  /assets/js/statusBar.js                                                                      |
 //? |                                                                                               |
-//? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+//? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
 //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 //? |-----------------------------------------------------------------------------------------------|
 
@@ -107,16 +107,16 @@ class statusBar {
             return true;
         }
         
-        emptyNode(this.center);
+        this.center.innerHTML = "";
         type = type.toLowerCase();
-        const typelist = ["info", "okay", "warn", "errr", "crit", "lcnt"]
+        const typeList = ["info", "okay", "warn", "errr", "crit", "lcnt"]
 
         if (!lock)
             this.__hidetimeout = setTimeout(() => {
                 this.msg(false);
             }, 6000);
 
-        if (typelist.indexOf(type) !== -1) {
+        if (typeList.indexOf(type) !== -1) {
             this.__lasttype = type;
             this.bar.classList.add(type);
         }

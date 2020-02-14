@@ -2,7 +2,7 @@
     //? |-----------------------------------------------------------------------------------------------|
     //? |  index.php                                                                                    |
     //? |                                                                                               |
-    //? |  Copyright (c) 2018-2019 Belikhun. All right reserved                                         |
+    //? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
     //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
     //? |-----------------------------------------------------------------------------------------------|
     
@@ -76,29 +76,16 @@
 
                             <div class="row">
                                 <div class="formGroup blue large sound" data-soundselectsoft>
-                                    <input id="addAllow" type="text" class="formField" autocomplete="off" placeholder="Tên người dùng" required>
-                                    <label for="addAllow">Danh sách script cho phép (ngăn cách bằng ";")</label>
-                                </div>
-
-                                <div class="formGroup blue large sound" data-soundselectsoft>
                                     <input id="addTags" type="text" class="formField" autocomplete="off" placeholder="Thẻ">
                                     <label for="addTags">Thẻ (ngăn cách bằng dấu cách)</label>
                                 </div>
                             </div>
 
                             <div class="row">
-                                <div class="formGroup blue sound grow large" data-soundselectsoft>
-                                    <input id="addKeyExpireDate" type="date" class="formField" autocomplete="off" placeholder="Tên người dùng" required>
-                                    <label for="addKeyExpireDate">Ngày hết hạn</label>
-                                </div>
-
-                                <div class="formGroup blue sound small" data-soundselectsoft>
-                                    <input id="addKeyExpireTime" type="time" class="formField" autocomplete="off" placeholder="ID" required>
-                                    <label for="addKeyExpireTime">Giờ hết hạn</label>
-                                </div>
-
-                                <button id="addKeyExpireNow" class="sq-btn pink small sound" type="button" data-soundhover data-soundselect>Bây giờ</button>
+                                <button id="addKeyLicenses" type="button" class="sq-btn green sound large addLicense" data-soundhover data-soundselect>Thêm</button>
                             </div>
+
+                            <div id="addKeyLicensesList" class="row licensesContainer"></div>
                         </span>
         
                         <span class="column">

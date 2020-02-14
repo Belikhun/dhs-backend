@@ -86,6 +86,29 @@ body.dark pre {
 	color: white;
 }
 
+timer {
+    position: relative;
+    display: inline-block;
+    font-family: Segoe UI;
+    font-weight: bold;
+    font-size: 21px;
+    letter-spacing: .5px;
+    line-height: 22px;
+    user-select: none;
+}
+
+timer > days {
+    font-size: 23px;
+}
+
+timer > ms {
+    font-size: 16px;
+}
+
+timer > ms::before {
+    content: ".";
+}
+
 .lazyload {
 	position: relative;
 	display: inline-block;
@@ -148,6 +171,19 @@ dot {
 	border-radius: 50%;
 	background-color: rgb(88, 88, 88);
 	margin: 0 8px;
+}
+
+line {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 2px;
+	margin: 10px 0;
+	background-color: rgba(56, 56, 56, 0.6);
+}
+
+body.dark line {
+	background-color: rgba(56, 56, 56, 0.6);
 }
 
 .price::after {
@@ -328,12 +364,9 @@ dot {
 	background-color: rgb(204, 204, 204);
 }
 
-.popupContainer .popupWindow .header[theme="light"] .icon::before {
-	color: rgb(204, 204, 204);
-}
-
+.popupContainer .popupWindow .header[theme="light"] .icon::before,
 .popupContainer .popupWindow .header[theme="light"] .text {
-	color: rgb(240, 240, 240);
+	color: rgb(255, 255, 255);
 }
 
 .popupContainer .popupWindow .body {
