@@ -19,6 +19,7 @@
     if (!$data = getUserData($username))
         stop(13, "Không tìm thấy tên người dùng \"$username\"!", 404, Array( "username" => $username ));
 
+    $data = getUserData($username);
     unset($data["password"]);
     unset($data["repass"]);
 

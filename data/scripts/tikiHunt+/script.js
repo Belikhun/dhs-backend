@@ -4,24 +4,24 @@
 	var infoUpdateInterval = null;
 	var timeUpdateInterval = null;
 
-	const HOSTADDRESS = "https://tiki.vn/";
+	const HOSTADDRESS = "https://tiki.vn";
 	var selectedPageList = []
 	const pageList = {
-		phoneTablet:	{ title: "Điện Thoại - Máy Tính Bảng", path: "dien-thoai-may-tinh-bang/c1789" },
-		electronic:		{ title: "Điện Tử - Điện Lạnh", path: "dien-tu-dien-lanh/c4221" },
-		accessories:	{ title: "Phụ Kiện - Thiết Bị Số", path: "thiet-bi-kts-phu-kien-so/c1815" },
-		laptopIT:		{ title: "Laptop - Thiết Bị IT", path: "laptop-may-vi-tinh-linh-kien/c1846" },
-		camera:			{ title: "Máy Ảnh - Quay Phim", path: "may-anh/c1801" },
-		household:		{ title: "Điện Gia Dụng", path: "dien-gia-dung/c1882" },
-		housewares:		{ title: "Nhà Cửa - Đời Sống", path: "nha-cua-doi-song/c1883" },
-		consumerGood:	{ title: "Hàng Tiêu Dùng - Thực Phẩm", path: "bach-hoa-online/c4384" },
-		toys:			{ title: "Đồ Chơi - Mẹ & Bé", path: "do-choi-me-be/c2549" },
-		beauty:			{ title: "Làm Đẹp - Sức Khỏe", path: "lam-dep-suc-khoe/c1520" },
-		fashion:		{ title: "Thời Trang - Phụ Kiện", path: "thoi-trang/c914" },
-		sports:			{ title: "Thể Thao - Dã Ngoại", path: "the-thao-da-ngoai/c1975" },
-		cars:			{ title: "Ô Tô, Xe Máy, Xe Đạp", path: "o-to-xe-may-xe-dap/c8594" },
-		stationery:		{ title: "Sách, VPP & Quà Tặng", path: "nha-sach-tiki/c8322" },
-		international:	{ title: "Hàng Quốc Tế", path: "hang-quoc-te/c17166" },
+		phoneTablet:	{ title: "Điện Thoại - Máy Tính Bảng", path: "/dien-thoai-may-tinh-bang/c1789" },
+		electronic:		{ title: "Điện Tử - Điện Lạnh", path: "/dien-tu-dien-lanh/c4221" },
+		accessories:	{ title: "Phụ Kiện - Thiết Bị Số", path: "/thiet-bi-kts-phu-kien-so/c1815" },
+		laptopIT:		{ title: "Laptop - Thiết Bị IT", path: "/laptop-may-vi-tinh-linh-kien/c1846" },
+		camera:			{ title: "Máy Ảnh - Quay Phim", path: "/may-anh/c1801" },
+		household:		{ title: "Điện Gia Dụng", path: "/dien-gia-dung/c1882" },
+		housewares:		{ title: "Nhà Cửa - Đời Sống", path: "/nha-cua-doi-song/c1883" },
+		consumerGood:	{ title: "Hàng Tiêu Dùng - Thực Phẩm", path: "/bach-hoa-online/c4384" },
+		toys:			{ title: "Đồ Chơi - Mẹ & Bé", path: "/do-choi-me-be/c2549" },
+		beauty:			{ title: "Làm Đẹp - Sức Khỏe", path: "/lam-dep-suc-khoe/c1520" },
+		fashion:		{ title: "Thời Trang - Phụ Kiện", path: "/thoi-trang/c914" },
+		sports:			{ title: "Thể Thao - Dã Ngoại", path: "/the-thao-da-ngoai/c1975" },
+		cars:			{ title: "Ô Tô, Xe Máy, Xe Đạp", path: "/o-to-xe-may-xe-dap/c8594" },
+		stationery:		{ title: "Sách, VPP & Quà Tặng", path: "/nha-sach-tiki/c8322" },
+		international:	{ title: "Hàng Quốc Tế", path: "/hang-quoc-te/c17166" },
 	}
 
 	onCancel(() => {
@@ -37,7 +37,7 @@
 		log(`|===========================|`);
 		log(`|    Tiki Deal Hunter Pro   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 14:03:43 02/02/2020  |`);
+		log(`|  LU: 17:57:13 01/03/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -488,16 +488,16 @@
 				label: "Sắp xếp theo",
 				required: false,
 				list: [
-					{ name: `Tên`, color: "blue", value: "name" },
-					{ name: `Mức giảm giá`, color: "pink", value: "sale", checked: true },
-					{ name: `Có mã giảm giá`, color: "blue", value: "haveCoupon" },
-					{ name: `Giá item (nhỏ đến lớn)`, color: "blue", value: "priceUp" },
-					{ name: `Giá item (lớn đến nhỏ)`, color: "blue", value: "priceDown" }
+					{ name: `T`, color: "blue", value: "name" },
+					{ name: `MGG`, color: "pink", value: "sale", checked: true },
+					{ name: `CMGG`, color: "blue", value: "haveCoupon" },
+					{ name: `G (<)`, color: "blue", value: "priceUp" },
+					{ name: `G (>)`, color: "blue", value: "priceDown" }
 				]
 			},
-			scanPage: { type: "number", label: "Số Trang Quét Mỗi Loại", value: 1 },
-			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 0 },
-			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";"), save: false }
+			scanPage: { type: "number", label: "ST", value: 1 },
+			saleFilter: { type: "number", label: "FIL", value: 0 },
+			blackList: { type: "textarea", label: "BL", height: "180px", value: blackList.join(";"), save: false }
 		}, { confirm: "Tiếp", saveKey: "preSetup" })
 
 		log("PRE SETUP:");
@@ -581,33 +581,29 @@
 		let prevAccountList = (await this.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
 
 		const settings = await setup({
-			delay: { type: "number", label: "Thời Gian Nghỉ", value: 10 },
-			checkPriceHistory: { type: "checkbox", label: "Kiểm Tra Lịch Sử Giá", color: "blue", value: false },
-			autobuy: { type: "checkbox", label: "Tự động mua", color: "pink", value: false, depend: "checkPriceHistory" },
-			autobuyRatio: { type: "number", label: "Tỉ lệ giá", value: 8.5, step: 0.01, depend: "autobuy" },
-			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false, depend: "autobuy" },
-			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
+			delay: { type: "number", label: "TGN", value: 10 },
+			checkPriceHistory: { type: "checkbox", label: "KTLSG", color: "blue", value: false },
+			autobuy: { type: "checkbox", label: "Auto", color: "pink", value: false, depend: "checkPriceHistory" },
+			autobuyRatio: { type: "number", label: "TLG", value: 8.5, step: 0.01, depend: "autobuy" },
+			autoRebuy: { type: "number", label: "TĐML", value: 1, depend: "autobuy" },
+			randomIp: { type: "checkbox", label: "R.IP", color: "blue", value: false, depend: "autobuy" },
+			ip: { type: "text", label: "IP", depend: "randomIp", doubt: true },
 			paymentMethod: {
 				type: "radio",
 				label: "Phương Thức Thanh Toán",
 				required: true,
 				depend: "autobuy",
 				list: [
-					{ name: `Thanh Toán Khi Nhận Hàng`, color: "pink", value: "cod", checked: true },
-					{ name: `Ví Momo`, color: "blue", value: "momo" }
+					{ name: `COD`, color: "pink", value: "cod", checked: true },
+					{ name: `MOMO`, color: "blue", value: "momo" }
 				]
 			},
-			accountList: { type: "textarea", label: "Danh sách tài khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false }
+			accountList: { type: "textarea", label: "ACL", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false }
 		})
 
 		log(" + Đang lưu danh sách tài khoản");
 		await this.dataSave({ "tikiMA.accountList": settings.accountList });
 		var accountList = settings.accountList.split("\n").filter(String).map(a => { let i = a.split(":"); return { u: i[0], p: i[1] } });
-
-		if (settings.autobuy && this.page.url.host !== "tiki.vn") {
-			rejectSetup("Current page is not TIKI.VN");
-			return;
-		}
 
 		log("Đang bắt đầu chạy...");
 		run();
@@ -700,32 +696,18 @@
 					changed++;
 
 					// Send Notifiaction
-					sounds.notification();
+					let sendNotification = false;
 
 					if (itemList.list[item.id]) {
 						log(`   + ITEM Thay Đổi: ${item.id} [${changed}]`);
 						log(`     + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
 						log(`     + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
-
-						chrome.notifications.create({
-							type: "basic",
-							title: "Deal Hunter Suite",
-							message: `Đã thay đổi: ${item.title} [${changed}]`,
-							contextMessage: `${(time() - start).toFixed(2)}s`,
-							iconUrl: "/assets/img/icon@32x32.png"
-						});
+						sendNotification = true;
 					} else {
 						log(`   + ITEM Mới: ${item.id} [${changed}]`);
 						log(`     + GIÁ:  ${item.price}`);
 						log(`     + SALE: ${item.sale.toFixed(2)}%`);
-
-						chrome.notifications.create({
-							type: "basic",
-							title: "Deal Hunter Suite",
-							message: `Đã thêm: ${item.title} [${changed}]`,
-							contextMessage: `${(time() - start).toFixed(2)}s`,
-							iconUrl: "/assets/img/icon@32x32.png"
-						});
+						sendNotification = true;
 					}
 		
 					//? Remove Old Box If Exist
@@ -733,9 +715,7 @@
 					for (let item of existBox)
 						deleteNode(item);
 					
-					let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
-					changedListItem.prepend(itemBox);
-					itemList.list[item.id] = item;
+					let showItemDetail = !settings.checkPriceHistory;
 
 					if (settings.checkPriceHistory) {
 						log(`     + Đang kiểm tra lịch sử giá`);
@@ -765,6 +745,8 @@
 							log(`       + Code : ${beeCost.meta.code || "Không Rõ"}`);
 							log(`       + MSG  : ${beeCost.meta.message || "Không Rõ"}`);
 							log(`       + Bỏ qua lỗi: true`);
+
+							showItemDetail = true;
 						} else {
 							let costData = beeCost.data.price_classification;
 							let min = costData ? costData.min_price : Math.min.apply(this, beeCost.data.item_history.price);
@@ -774,6 +756,7 @@
 							log(`   + PRICE RATIO: ${priceRatio}`);
 
 							if (priceRatio >= settings.autobuyRatio) {
+								showItemDetail = true;
 								log(`   + BẮT ĐẦU ĐẶT MUA`);
 
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
@@ -784,14 +767,20 @@
 									log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
 				
 									try {
-										debugger;
-										await __doOrder({
-											id: item.pid,
-											count: 1,
+										await __switchAccount({
 											username: account.u,
-											password: account.p,
-											paymentMethod: settings.paymentMethod
+											password: account.p
 										});
+
+										for (let time = 1; time <= settings.autoRebuy; time++) {
+											log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
+											sounds.notification();
+											await __doOrder({
+												id: item.pid,
+												count: 1,
+												paymentMethod: settings.paymentMethod
+											});
+										}
 									} catch(e) {
 										heartbeat({ color: "red" });
 										log(`Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
@@ -815,6 +804,23 @@
 							}
 						}
 					}
+
+					if (showItemDetail) {
+						let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
+						changedListItem.prepend(itemBox);
+						itemList.list[item.id] = item;
+
+						if (sendNotification) {
+							sounds.notification();
+							chrome.notifications.create({
+								type: "basic",
+								title: "Deal Hunter Suite",
+								message: `Đã thêm: ${item.title} [${changed}]`,
+								contextMessage: `${(time() - start).toFixed(2)}s`,
+								iconUrl: "/assets/img/icon@32x32.png"
+							});
+						}
+					}
 				}
 			}, (p, now, end) => runInfo({
 				now: `${p.toFixed(0)}%`,
@@ -830,29 +836,23 @@
 			runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công", dataType: "time" });
 		}
 
-		const __doOrder = async ({
-			id = 0,
-			count = 1,
-			coupon = "",
+		const __switchAccount = async ({
 			username = "",
-			password = "",
-			paymentMethod = "cod"
+			password = ""
 		}) => {
-			sounds.notification();
-			let orderTimer = new stopClock();
+			let loginTimer = new stopClock();
 
 			heartbeat();
 			log(`Đang đăng xuất khỏi tài khoản hiện tại`);
 			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang đăng xuất" });
 
-			await command("ajax", {
-				url: "/api/v2/account/logout",
+			await myajax({
+				url: `${HOSTADDRESS}/api/v2/account/logout`,
 				method: "GET",
 				header: {
-					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"]
+					"x-access-token": cookie.get("TIKI_ACCESS_TOKEN")
 				}
 			});
-
 
 			log("Đăng xuất thành công");
 
@@ -860,8 +860,8 @@
 			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
 
 			try {
-				await command("ajax", {
-					url: "/customer/account/ajaxLogin",
+				await myajax({
+					url: `${HOSTADDRESS}/customer/account/ajaxLogin`,
 					method: "POST",
 					form: {
 						email: username,
@@ -882,7 +882,16 @@
 				throw { code: -1, description: "Thất bại khi đăng nhập vào tài khoản", data: e.data.data }
 			}
 
-			log("Đăng nhập thành công");
+			log(`Đăng nhập thành công (${loginTimer.stop}s)`);
+		}
+
+		const __doOrder = async ({
+			id = 0,
+			count = 1,
+			coupon = "",
+			paymentMethod = "cod"
+		}) => {
+			let orderTimer = new stopClock();
 
 			log("Đang thêm Item vào Giỏ Hàng");
 			runInfo({ now: `Bước 3`, progress: 20, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
@@ -890,8 +899,8 @@
 			let addData = {}
 
 			try {
-				addData = await command("ajax", {
-					url: "/checkout/cart/ajaxAdd",
+				addData = await myajax({
+					url: `${HOSTADDRESS}/checkout/cart/ajaxAdd`,
 					method: "POST",
 					form: {
 						id: id,
@@ -919,8 +928,8 @@
 				runInfo({ progress: 30, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 
 				log(` + Đang áp dụng Coupon: ${coupon}`)
-				await command("ajax", {
-					url: "/checkout/cart/ajaxCoupon",
+				await myajax({
+					url: `${HOSTADDRESS}/checkout/cart/ajaxCoupon`,
 					method: "POST",
 					form: {
 						coupon_code: coupon
@@ -935,8 +944,8 @@
 			log(`Đang chọn địa chỉ Giao Hàng`);
 
 			log(` + Đang lấy thông tin địa chỉ`);
-			let shippingRAW = await command("ajax", {
-				url: "/checkout/shipping",
+			let shippingRAW = await myajax({
+				url: `${HOSTADDRESS}/checkout/shipping`,
 				method: "GET",
 				type: "text"
 			})
@@ -953,8 +962,8 @@
 			log(` + Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
-			let selectAddress = await command("ajax", {
-				url: "/checkout/shipping/ajaxSave",
+			let selectAddress = await myajax({
+				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
 				method: "POST",
 				form: {
 					address_id: shippingID,
@@ -967,8 +976,8 @@
 			heartbeat();
 
 			log(` + Đang nhận thông tin`);
-			let paymentRAW = await command("ajax", {
-				url: "/checkout/payment",
+			let paymentRAW = await myajax({
+				url: `${HOSTADDRESS}/checkout/payment`,
 				method: "GET",
 				type: "text"
 			})
@@ -1025,11 +1034,11 @@
 			heartbeat();
 
 			log(` + Đang nhận thông tin`);
-			let placeOrder = await command("ajax", {
-				url: "/checkout/payment/ajax_check_place_order",
+			let placeOrder = await myajax({
+				url: `${HOSTADDRESS}/checkout/payment/ajax_check_place_order`,
 				method: "POST",
 				header: {
-					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
+					"x-access-token": cookie.get("TIKI_ACCESS_TOKEN"),
 					apikey: null
 				},
 				form: {
@@ -1066,8 +1075,8 @@
 			log(`Đang lấy danh sách giỏ hàng`);
 			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang lấy danh sách" });
 
-			let placeOrderHTML = await command("ajax", {
-				url: "/checkout/cart",
+			let placeOrderHTML = await myajax({
+				url: `${HOSTADDRESS}/checkout/cart`,
 				method: "GET",
 				type: "text"
 			});
@@ -1086,11 +1095,11 @@
 				log(` + Đang xóa đơn hàng ID ${id}`);
 
 				try {
-					await command("ajax", {
-						url: "/checkout/cart/ajax_delete",
+					await myajax({
+						url: `${HOSTADDRESS}/checkout/cart/ajax_delete`,
 						method: "POST",
 						header: {
-							"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
+							"x-access-token": cookie.get("TIKI_ACCESS_TOKEN"),
 							apikey: null
 						},
 						form: {

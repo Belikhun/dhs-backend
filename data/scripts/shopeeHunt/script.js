@@ -554,8 +554,8 @@
 			searchAlgo: { type: "switch", label: "API Tìm Kiếm", name: "algorithm", color: "pink", value: false },
 			searchKeyNote: { type: "note", level: "info", text: "Mỗi từ khóa một dòng" },
 			searchKey: { type: "textarea", label: "Từ Khóa", height: "100px", depend: "algorithm:searchAlgo" },
-			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 138 },
 			pageCount: { type: "number", label: "Số Trang Lấy Mỗi Loại", value: 1 },
+			fetchCount: { type: "number", label: "Số Lượng Item Lấy Mỗi Loại", value: 138 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "160px", value: blackList.join(";"), save: false }
 		}, { confirm: "Tiếp", saveKey: "preSetup" })
@@ -585,8 +585,8 @@
 		var itemList = await scanItem({
 			algo: firstScanSetup.algorithm,
 			sortBy: firstScanSetup.sortBy,
-			listLimit: firstScanSetup.fetchCount,
 			pageCount: firstScanSetup.pageCount,
+			listLimit: firstScanSetup.fetchCount,
 			recommendType: firstScanSetup.recommendType,
 			saleFilter: firstScanSetup.saleFilter,
 			keyword: firstScanSetup.searchKey

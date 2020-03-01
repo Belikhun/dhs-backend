@@ -39,7 +39,7 @@
 
 		// Define
 		const fetchItemData = async () => {
-			let data = await command("ajax", {
+			let data = await myajax({
 				url: `https://tiki.vn/api/v2/products/${ID}/info`,
 				method: "GET",
 				changeState: false
@@ -268,8 +268,8 @@
 			let reqStart = time();
 			let data = {}
 			try {
-				data = await command("ajax", {
-					url: `/api/v2/products/${PID}/info`,
+				data = await myajax({
+					url: `https://tiki.vn/api/v2/products/${PID}/info`,
 					method: "GET"
 				});
 			} catch(e) {
@@ -382,8 +382,8 @@
 			log(`Đang đăng xuất khỏi tài khoản hiện tại`);
 			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang đăng xuất" });
 
-			await command("ajax", {
-				url: "/api/v2/account/logout",
+			await myajax({
+				url: "https://tiki.vn/api/v2/account/logout",
 				method: "GET",
 				header: {
 					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"]
@@ -396,8 +396,8 @@
 			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
 
 			try {
-				await command("ajax", {
-					url: "/customer/account/ajaxLogin",
+				await myajax({
+					url: "https://tiki.vn/customer/account/ajaxLogin",
 					method: "POST",
 					form: {
 						email: username,
@@ -427,8 +427,8 @@
 			let addData = {}
 
 			try {
-				addData = await command("ajax", {
-					url: "/checkout/cart/ajaxAdd",
+				addData = await myajax({
+					url: "https://tiki.vn/checkout/cart/ajaxAdd",
 					method: "POST",
 					form: {
 						id: id,
@@ -452,8 +452,8 @@
 				runInfo({ progress: 30, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 
 				log(` + Đang áp dụng Coupon: ${coupon}`)
-				await command("ajax", {
-					url: "/checkout/cart/ajaxCoupon",
+				await myajax({
+					url: "https://tiki.vn/checkout/cart/ajaxCoupon",
 					method: "POST",
 					form: {
 						coupon_code: coupon
@@ -468,8 +468,8 @@
 			log(`Đang chọn địa chỉ Giao Hàng`);
 
 			log(` + Đang lấy thông tin địa chỉ`);
-			let shippingRAW = await command("ajax", {
-				url: "/checkout/shipping",
+			let shippingRAW = await myajax({
+				url: "https://tiki.vn/checkout/shipping",
 				method: "GET",
 				type: "text"
 			})
@@ -486,8 +486,8 @@
 			log(` + Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
-			let selectAddress = await command("ajax", {
-				url: "/checkout/shipping/ajaxSave",
+			let selectAddress = await myajax({
+				url: "https://tiki.vn/checkout/shipping/ajaxSave",
 				method: "POST",
 				form: {
 					address_id: shippingID,
@@ -500,8 +500,8 @@
 			heartbeat();
 
 			log(` + Đang nhận thông tin`);
-			let paymentRAW = await command("ajax", {
-				url: "/checkout/payment",
+			let paymentRAW = await myajax({
+				url: "https://tiki.vn/checkout/payment",
 				method: "GET",
 				type: "text"
 			})
@@ -558,8 +558,8 @@
 			heartbeat();
 
 			log(` + Đang nhận thông tin`);
-			let placeOrder = await command("ajax", {
-				url: "/checkout/payment/ajax_check_place_order",
+			let placeOrder = await myajax({
+				url: "https://tiki.vn/checkout/payment/ajax_check_place_order",
 				method: "POST",
 				header: {
 					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],

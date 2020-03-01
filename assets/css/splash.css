@@ -1,4 +1,4 @@
-/* 
+/*
 ? |-----------------------------------------------------------------------------------------------|
 ? |  /assets/css/splash.css                                                                       |
 ? |                                                                                               |
@@ -72,7 +72,10 @@
     margin: auto;
     text-align: center;
     color: #2c3e50;
-    font-weight: bold;
+    font-family: Exo;
+    font-size: 20px;
+    letter-spacing: 1.2px;
+    font-weight: 800;
     text-transform: uppercase;
 }
 
@@ -80,10 +83,12 @@
     position: relative;
     display: block;
     text-align: center;
-    margin: 4px auto 22px auto;
+    margin: 4px auto 22px;
     color: #40566d;
-    font-weight: bold;
-    font-size: 10px;
+    font-family: "Open Sans";
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .4px;
     text-transform: uppercase;
 }
 
@@ -131,7 +136,7 @@
 }
 
 .splash .middle .tips::before {
-    content: "Tips: ";
+    content: "Tip: ";
     font-weight: bold;
 }
 

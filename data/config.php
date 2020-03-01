@@ -15,22 +15,30 @@
 
 	date_default_timezone_set($config["time"]["zone"]);
 
+	$customVarList = Array(
+		"name" => APPNAME,
+		"version" => VERSION,
+		"author" => AUTHOR,
+		"contestName" => $config["app"]["title"],
+		"root" => $_SERVER["DOCUMENT_ROOT"],
+		"currentDate" => date("d/m/Y"),
+		"currentTime" => date("H:i:s")
+	);
+
 	function applyCustomVar(&$string) {
+		global $customVarList;
 		global $config;
 		$s = $string;
-		$list = Array(
-			"name" => APPNAME,
-			"version" => VERSION,
-			"author" => AUTHOR
-		);
 
-		foreach ($list as $key => $value)
+		foreach ($customVarList as $key => $value)
 			if (!empty($value))
 				$s = str_replace("%". $key ."%", $value, $s);
 
 		$string = $s;
 	}
 
+	applyCustomVar($config["app"]["title"]);
+	applyCustomVar($config["app"]["description"]);
 	applyCustomVar($config["pageTitle"]);
 
 	function saveConfig(Array $config) {
