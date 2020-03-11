@@ -651,6 +651,18 @@
 			if (paymentDoc.getElementById("plan-3")) {
 				log(` + Phát hiện Tiki Now!`);
 				paymentData.shipping_plan = parseInt(paymentDoc.getElementById("plan-3").value);
+				paymentData.transaction_type = "sale,create_payment_token";
+				delete paymentData.payment_method_tikixu;
+				delete paymentData.card_number;
+				delete paymentData["input-card-type"];
+				delete paymentData.card_expiry_date;
+				delete paymentData.card_cvn;
+				delete paymentData.card_type;
+
+				paymentData["atm-id"] = "";
+				paymentData.signature = "";
+				paymentData.gift_message = "";
+				paymentData.tax_company_address = "";
 			}
 
 			log(` + Phương thức giao hàng: ${["Bình thường", null, "Tiki Now"][paymentData.shipping_plan - 1] || `PLAN#${paymentData.shipping_plan}` }`);

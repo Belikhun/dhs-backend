@@ -52,6 +52,9 @@
                 break;
             }
         }
+
+        if (!$scriptData[$id]["allow"] && isset($scriptData[$id]["hide"]) && $scriptData[$id]["hide"] === true)
+            unset($scriptData[$id]);
     }
 
     stop(0, "Thành công!", 200, $scriptData);

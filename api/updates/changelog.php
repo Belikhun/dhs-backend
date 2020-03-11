@@ -1,14 +1,15 @@
-<h2>Thay đổi trong v3.0 (14/02/2020)</h2>
+<h2>Thay đổi trong v3.1 (01/03/2020)</h2>
 
 <h3>TL;DR</h3>
 <ul>
-	<li>Hỗ trợ nhiều bản quyền với thời gian hết hạn khác nhau</li>
-	<li>Sửa một số lỗ hổng liên quan tới <pre>backend</pre></li>
+	<li>Tự động Optimize khi tool chạy quá chậm</li>
+	<li>Cập nhật <pre>backend</pre></li>
 </ul>
 
 <h3>Script <i>(scripts)</i></h3>
 <ul>
-	<li>Nothing 😶</li>
+	<li>Thêm <pre>tikiHuntShop</pre></li>
+	<li>Chỉnh sửa <pre>tikiHunt+</pre></li>
 </ul>
 
 <h3>Extension <i>(frontend)</i></h3>
@@ -21,6 +22,7 @@
 
 <h3>Authorize Server <i>(backend)</i></h3>
 <ul>
+	<li>Library Updated from TWI v0.6.0</li>
 	<li>Added Support for Multiple License</li>
 	<li>Fixed a bug where <b>Super Permission</b> can bypass expireTime</li>
 	<li>Reindexed Keys List</li>
