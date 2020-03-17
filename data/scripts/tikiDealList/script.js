@@ -19,7 +19,7 @@
 		log(`|===========================|`);
 		log(`|  Tiki Upcoming Deal List  |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 21:42:39 09/11/2019  |`);
+		log(`|  LU: 00:14:07 18/03/2020  |`);
 		log(`|===========================|`);
 
 		const scanItem = async ({

@@ -3,5 +3,6 @@
     "description": "Liệt kê các deal sắp tới cho Shopee",
     "site": "shopee.vn/",
     "match": "shopee\\.vn.*",
-    "version": 1
+    "version": 1,
+    "hide": true
 }

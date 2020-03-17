@@ -14,7 +14,7 @@
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
-    if (!isLogedIn())
+    if (!isLoggedIn())
         stop(11, "Bạn chưa đăng nhập.", 401);
         
     checkToken();
@@ -24,7 +24,7 @@
     $password = password_hash(reqForm("p"), PASSWORD_DEFAULT);
     $name = htmlspecialchars(strip_tags(reqForm("n")));
 
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/data/xmldb/account.php";
     if (getUserData($_SESSION["username"])["id"] !== "admin")
         stop(31, "Access Denied!", 403);
 

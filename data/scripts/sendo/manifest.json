@@ -3,5 +3,6 @@
     "description": "Tự động mua hàng cho Sendo",
     "site": "sendo.vn/",
     "match": "sendo\\.vn.*",
-    "version": 7
+    "version": 7,
+    "hide": true
 }

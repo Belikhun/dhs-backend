@@ -16,7 +16,7 @@
 		log(`|===========================|`);
 		log(`|       Tiki Auto v011      |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:19:45 09/11/2019  |`);
+		log(`|  LU: 00:14:33 18/03/2020  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -650,6 +650,24 @@
 
 			if (paymentDoc.getElementById("plan-3")) {
 				log(` + Phát hiện Tiki Now!`);
+				log(`   + Đang cập nhật thông tin giỏ`);
+
+				await command("ajax", {
+					url: "/checkout/payment/ajax_update_cart",
+					method: "POST",
+					header: {
+						"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
+						apikey: null
+					},
+					form: {
+						selected_payment_method: paymentData.selected_payment_method,
+						shipping_plan_id: 3,
+						is_tikinow_free_trial: 0,
+						is_using_reward_point: 0,
+						TIKI_CSRF_TOKEN: CSRF_PAYMENT
+					}
+				});
+
 				paymentData.shipping_plan = parseInt(paymentDoc.getElementById("plan-3").value);
 				paymentData.transaction_type = "sale,create_payment_token";
 				delete paymentData.payment_method_tikixu;

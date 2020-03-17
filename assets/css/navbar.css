@@ -57,9 +57,10 @@
 
 .navBar .top .left .title .main {
     position: relative;
-    font-family: Exo;
+    font-family: Nunito;
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 750;
+    letter-spacing: .8px;
     color: #425161;
     overflow: hidden;
     white-space: nowrap;
@@ -166,7 +167,7 @@
 
 .navBar .top .right .info .tag {
     position: relative;
-    font-family: Exo;
+    font-family: Nunito;
     font-size: 12px;
     letter-spacing: 0.4px;
     color: #546e7a;
@@ -174,9 +175,10 @@
 
 .navBar .top .right .info .name {
     position: relative;
-    font-family: Exo;
+    font-family: Nunito;
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 750;
+    font-style: italic;
     color: #425161;
 }
 

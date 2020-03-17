@@ -20,7 +20,7 @@
 		log(`|===========================|`);
 		log(`|      Tiki Shop Hunter     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 18:52:36 01/03/2020  |`);
+		log(`|  LU: 00:12:45 18/03/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -977,7 +977,37 @@
 
 			if (paymentDoc.getElementById("plan-3")) {
 				log(` + Phát hiện Tiki Now!`);
+				log(`   + Đang cập nhật thông tin giỏ`);
+
+				await myajax({
+					url: "/checkout/payment/ajax_update_cart",
+					method: "POST",
+					header: {
+						"x-access-token": cookie.get("TIKI_ACCESS_TOKEN"),
+						apikey: null
+					},
+					form: {
+						selected_payment_method: paymentData.selected_payment_method,
+						shipping_plan_id: 3,
+						is_tikinow_free_trial: 0,
+						is_using_reward_point: 0,
+						TIKI_CSRF_TOKEN: CSRF_PAYMENT
+					}
+				});
+
 				paymentData.shipping_plan = parseInt(paymentDoc.getElementById("plan-3").value);
+				paymentData.transaction_type = "sale,create_payment_token";
+				delete paymentData.payment_method_tikixu;
+				delete paymentData.card_number;
+				delete paymentData["input-card-type"];
+				delete paymentData.card_expiry_date;
+				delete paymentData.card_cvn;
+				delete paymentData.card_type;
+
+				paymentData["atm-id"] = "";
+				paymentData.signature = "";
+				paymentData.gift_message = "";
+				paymentData.tax_company_address = "";
 			}
 
 			log(` + Phương thức giao hàng: ${["Bình thường", null, "Tiki Now"][paymentData.shipping_plan - 1] || `PLAN#${paymentData.shipping_plan}` }`);

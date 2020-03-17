@@ -53,9 +53,9 @@ body.dark {
 }
 
 .leftPanel .footer .title {
-    font-family: Exo;
+    font-family: Nunito;
     font-size: 23px;
-    font-weight: 400;
+    font-weight: 600;
     word-spacing: 1px;
     color: #fff;
 }
@@ -120,8 +120,10 @@ body.dark {
 
 .rightPanel .header .info .name {
     position: relative;
-    font-family: Exo;
+    font-family: Nunito;
     font-size: 16px;
+    font-weight: 750;
+    letter-spacing: .8px;
     color: #425161;
     overflow: hidden;
     white-space: nowrap;
@@ -228,7 +230,7 @@ body.dark {
     display: inline-block;
     width: 100px;
     padding-top: 24px;
-    font-family: Exo;
+    font-family: Nunito;
     font-size: 12px;
     text-align: center;
     counter-increment: indicatorItem;
@@ -360,10 +362,10 @@ body.dark {
 }
 
 .rightPanel .center .formBox .inputForm .complete .title {
-    font-family: Exo;
-    font-size: 16px;
-    font-weight: bold;
-    letter-spacing: .4px;
+    font-family: Nunito;
+    font-size: 17px;
+    font-weight: 750;
+    letter-spacing: .6px;
     color: rgb(46, 46, 46);
     text-transform: uppercase;
     text-align: center;

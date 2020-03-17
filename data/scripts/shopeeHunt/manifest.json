@@ -3,5 +3,6 @@
     "description": "Tìm item giá lỗi cho Shopee và Shopee Mall",
     "site": "shopee.vn/",
     "match": "*",
-    "version": 4
+    "version": 4,
+    "hide": true
 }

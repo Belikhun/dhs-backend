@@ -1,0 +1,8 @@
+{
+    "name": "Bách Hóa Xanh",
+    "description": "Tự động mua hàng cho Bách Hóa Xanh",
+    "site": "bachhoaxanh.com/",
+    "match": ".*bachhoaxanh\\.com.*",
+    "version": 1,
+    "hide": true
+}

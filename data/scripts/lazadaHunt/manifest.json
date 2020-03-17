@@ -3,5 +3,6 @@
     "description": "Tìm item giá lỗi cho Lazada",
     "site": "lazada.vn/",
     "match": "*",
-    "version": 1
+    "version": 1,
+    "hide": true
 }

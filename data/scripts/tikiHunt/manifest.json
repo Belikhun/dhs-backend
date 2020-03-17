@@ -3,5 +3,6 @@
     "description": "Tìm item giá lỗi cho Tiki",
     "site": "tiki.vn/",
     "match": "*",
-    "version": 1
+    "version": 2,
+    "hide": true
 }
