@@ -14,7 +14,7 @@
         log(`|===========================|`);
         log(`|       Lazada Voucher      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 00:44:03 08/11/2019  |`);
+        log(`|  LU: 00:27:19 24/03/2020  |`);
         log(`|===========================|`);
 
 		info({ hide: true });
@@ -180,8 +180,7 @@
 						
 								return {
 									ua: document.body.dataset.ua,
-									umid: document.body.dataset.umid,
-									sign: /_m_h5_tk=(.+)_\\d+;/gm.exec(document.cookie)[1]
+									umid: document.body.dataset.umid
 								}
 							}())
 						`
@@ -189,6 +188,24 @@
 
 					let result = {}
 					try {
+						let payloadData = JSON.stringify({
+							group: "LAZADA",
+							domain: "campaignTools",
+							scene: "module",
+							asac: "LAZADA2018100000000006",
+							promotionType: "MCP",
+							sellerId: item.sellerID,
+							spreadId: item.spreadID,
+							applyValue: 1,
+							voucherId: item.id
+						})
+
+						let time = (new Date()).getTime();
+						let token = (await this.getCookie("https://lazada.vn", "_m_h5_tk")).value.split("_")[0];
+						log(` 🔑: ${token}`);
+						let MD5Sign = CryptoJS.MD5([token, time, 24677475, payloadData].join("&"));
+						log(` 🔏: ${MD5Sign}`);
+
 						log(`   + Sending POST request`);
 						result = await command("ajax", {
 							url: "https://acs-m.lazada.vn/h5/mtop.lazada.promotion.voucher.spread/1.0/",
@@ -204,8 +221,8 @@
 							query: {
 								jsv: "2.5.1",
 								appKey: 24677475,
-								t: time() * 1000,
-								sign: tokens.sign,
+								t: time,
+								sign: MD5Sign,
 								api: "mtop.lazada.promotion.voucher.spread",
 								v: "1.0",
 								type: "originaljson",
@@ -219,17 +236,7 @@
 								"x-i18n-regionID": "VN"
 							},
 							form: {
-								data: JSON.stringify({
-									group: "LAZADA",
-									domain: "campaignTools",
-									scene: "module",
-									asac: "LAZADA2018100000000006",
-									promotionType: "MCP",
-									sellerId: item.sellerID,
-									spreadId: item.spreadID,
-									applyValue: 1,
-									voucherId: item.id
-								})
+								data: payloadData
 							}
 						});
 					} catch(e) {

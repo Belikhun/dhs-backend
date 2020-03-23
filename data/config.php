@@ -19,7 +19,7 @@
 		"name" => APPNAME,
 		"version" => VERSION,
 		"author" => AUTHOR,
-		"contestName" => $config["app"]["title"],
+		"appTitle" => $config["app"]["title"],
 		"root" => $_SERVER["DOCUMENT_ROOT"],
 		"currentDate" => date("d/m/Y"),
 		"currentTime" => date("H:i:s")

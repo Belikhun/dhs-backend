@@ -24,7 +24,7 @@
     $password = getForm("p");
     $name = getForm("n");
 
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/data/xmldb/account.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
     if (getUserData($_SESSION["username"])["id"] !== "admin")
         stop(31, "Access Denied!", 403);
 

@@ -10,6 +10,71 @@
 
 	const log = (text) => writeLog(text);
 
+	//* ================================= BEGIN ENCRYPT/DECRYPT =================================
+
+	const C = { LEFT: 0, RIGHT: 1 }
+	const calcOffset = (hash) => Array.from({ length: 8 }).map((v, i) => Math.max(Math.pow(2, i) - 1, 0)).reduce((a, v) => a + hash[v].charCodeAt(0), 0) % 32;
+
+	const rejoinString = (data, { offset, direction = C.LEFT } = {}) => {
+		if (!offset)
+			return data;
+	
+		if (direction === C.LEFT)
+			return "" + data.substr(offset) + data.substr(0, offset);
+	
+		if (direction === C.RIGHT)
+			return "" + data.substr(data.length - offset) + data.substr(0, data.length - offset);
+	
+		return data;
+	}
+
+	const encrypt = (t, hash, r) => {
+		var n = rejoinString(hash.substr(0, 16) + hash.substr(hash.length - 16), { direction: C.LEFT, offset: calcOffset(hash) });
+		log("🔑 ENCRYPT SECRET:");
+		log(`  + ${n}`);
+
+		var _ = undefined;
+		var E = "0123456789abcdef";
+		n = CryptoJS.enc.Utf8.parse(n);
+		var a = CryptoJS.enc.Utf8.parse(t);
+		CryptoJS.pad.Pkcs7.pad(a, 4);
+		var c, s = CryptoJS.enc.Hex.stringify(a), f = r || (c = 32, Array.from({ length: c }).map(() => E[Math.floor(16 * Math.random())]).join("")),
+			_ = CryptoJS.enc.Hex.parse(f + s),
+			h = CryptoJS.enc.Hex.parse(CryptoJS.lib.Hasher._createHelper(CryptoJS.algo.SHA256)(_).toString().substr(0, 32)),
+			m = _.concat(h), O = CryptoJS.enc.Utf8.parse("\0".repeat(32));
+	
+		return CryptoJS.AES.encrypt(m, n, {
+			iv: O,
+			padding: CryptoJS.pad.NoPadding
+		}).ciphertext.toString()
+	}
+
+	const decrypt = (e, hash) => {
+		let sec = rejoinString(hash.substr(48, 32), { direction: C.RIGHT, offset: calcOffset(hash) });
+		log("🔑 DECRYPT SECRET:");
+		log(`  + ${sec}`);
+
+		let t = CryptoJS.enc.Utf8.parse(sec);
+		let n = CryptoJS.enc.Hex.parse(e)
+		let r = CryptoJS.AES.decrypt({ ciphertext: n }, t, {
+			iv: CryptoJS.enc.Utf8.parse("\0".repeat(32)),
+			padding: CryptoJS.pad.NoPadding
+		}).toString(CryptoJS.enc.Hex);
+	
+		let a = r.slice(r.length - 32)
+		let c = r.slice(0, r.length - 32);
+	
+		if (a !== CryptoJS.lib.Hasher._createHelper(CryptoJS.algo.SHA256)(CryptoJS.enc.Hex.parse(c)).toString().substr(0, 32))
+			throw { code: -1, description: "Checksum does not match for decrypted message", data: r }
+	
+		let s = CryptoJS.enc.Hex.parse(c.slice(32));
+		CryptoJS.pad.Pkcs7.unpad(s);
+	
+		return s.toString(CryptoJS.enc.Utf8);
+	}
+
+	//* ================================= END ENCRYPT/DECRYPT =================================
+
 	try {
 		log(`|===========================|`);
 		log(`|      Shopee Auto v009     |`);
@@ -246,11 +311,9 @@
 			url: "/api/v2/voucher_wallet/get_recommend_vouchers",
 			method: "POST",
 			header: {
-				"sec-fetch-mode": "cors",
-				"sec-fetch-site": "same-origin",
-				"x-api-source": "pc",
-				"x-csrftoken": CSRF,
-				"x-requested-with": "XMLHttpRequest"
+				"X-API-SOURCE": "pc",
+				"X-CSRFToken": CSRF,
+				"X-Requested-With": "XMLHttpRequest"
 			},
 			json: {
 				check_voucher_payment_criteria: false,
@@ -349,8 +412,6 @@
 		var checkNth = 0;
 		var start = time();
 
-
-
 		//* ======================
 		//* DO ORDER MAIN FUNCTION
 		//* ======================
@@ -376,18 +437,16 @@
 					url: "/api/v2/cart/add_to_cart",
 					method: "POST",
 					header: {
-						"sec-fetch-mode": "cors",
-						"sec-fetch-site": "same-origin",
-						"x-api-source": APISource,
-						"x-csrftoken": CSRF,
-						"x-requested-with": "XMLHttpRequest"
+						"X-API-SOURCE": APISource,
+						"X-CSRFToken": CSRF,
+						"X-Requested-With": "XMLHttpRequest"
 					},
 					json: {
 						quantity: count,
 						checkout: true,
 						update_checkout_only: false,
 						donot_add_quantity: false,
-						source: `{"refer_urls":["","",""]}`,
+						source: `{"refer_urls":[]}`,
 						shopid: shopId,
 						itemid: id,
 						..._mIdObj
@@ -406,61 +465,124 @@
 				throw { code: -1, description: addCartData.error_msg, data: addCartData };
 			}
 
-			log(` + Thêm Item vào Giỏ thành công!`);
-			runInfo({ now: `Bước 2`, progress: 20, progWarn: false, checkDetail: "Đang thêm item vào danh sách thanh toán" });
-			heartbeat();
-			log("Đang lấy thông tin Item");
-
-			log(" + Fetching /checkout/get");
-			CHECKOUT_GET = await command("ajax", {
-				url: "/api/v2/checkout/get",
+			await command("ajax", {
+				url: "/api/v1/account_info",
 				method: "POST",
 				header: {
-					"sec-fetch-mode": "cors",
-					"sec-fetch-site": "same-origin",
-					"x-api-source": APISource,
-					"x-csrftoken": CSRF,
-					"x-requested-with": "XMLHttpRequest"
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest"
 				},
 				json: {
-					"shoporders": [{
-						"shop": {
-							"shopid": shopId
-						},
-						"items": [{
-							"itemid": id,
-							"add_on_deal_id": null,
-							"is_add_on_sub_item": null,
-							"item_group_id": null,
-							..._mIdObj
-						}],
-						"logistics": {
-							"recommended_channelids": null
-						},
-						"buyer_address_data": {}
-					}],
-					"selected_payment_channel_data": {},
-					"promotion_data": {
-						"voucher_code": coupon,
-						"use_coins": false,
-						"free_shipping_voucher_info": {}
-					},
-					"device_info": {
-						"device_id": "",
-						"device_fingerprint": "",
-						"tongdun_blackbox": "",
-						"buyer_payment_info": {}
-					}
+					need_cart: 1,
+					skip_address: 0
 				}
 			})
 
-			if (CHECKOUT_GET.error) {
-				await errored("Lỗi khi tiến hành Thanh Toán Item");
-				log(" + Errored while checking out Items");
-				log(`    + Code: ${CHECKOUT_GET.error}`);
-				log(`    + EC  : ${CHECKOUT_GET.error_empty_cart}`);
-				log(`    + MSG : ${CHECKOUT_GET.error_msg || "Không Rõ"}`);
-				throw { code: -1, description: "Không thể tiến hành Checkout", data: CHECKOUT_GET };
+			let ordersData = await command("ajax", {
+				url: "/api/v2/cart/get_orders",
+				method: "GET",
+				header: {
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest"
+				}
+			})
+
+			for (let i = 0; i < ordersData.data.shoporders.length; i++)
+				for (let j = 0; j < ordersData.data.shoporders[i].iteminfos.length; j++)
+					ordersData.data.shoporders[i].iteminfos[j].checkout = true;
+
+			await command("ajax", {
+				url: "/api/v2/cart/get_shop_item_data",
+				method: "POST",
+				header: {
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest"
+				},
+				json: {
+					shop_item_ids: [{
+						shopid: shopId,
+						itemid: id
+					}],
+					normalize_promotion_rules: true
+				}
+			})
+
+			await command("ajax", {
+				url: "/api/v2/shop/get_list",
+				method: "POST",
+				header: {
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest"
+				},
+				json: {
+					shop_ids: [shopId],
+					need_detail: 1
+				}
+			})
+
+			await command("ajax", {
+				url: "/api/v2/checkout/coupon",
+				method: "POST",
+				header: {
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest"
+				},
+				json: {
+					promotion_data: {
+						auto_apply_vouchers: true,
+						free_shipping_voucher_info: {
+							free_shipping_voucher_id: null
+						},
+						use_coins: false,
+						voucher_code: ""
+					},
+
+					shoporders: ordersData.data.shoporders
+				}
+			})
+
+			log(` + Thêm Item vào Giỏ thành công!`);
+			runInfo({ now: `Bước 2`, progress: 20, progWarn: false, checkDetail: "Đang lấy thông tin Item" });
+			heartbeat();
+			log("Đang lấy thông tin Item");
+			let checkoutPayload = {
+				shoporders: [{
+					shop: {
+						shopid: shopId
+					},
+					items: [{
+						itemid: id,
+						add_on_deal_id: null,
+						is_add_on_sub_item: null,
+						item_group_id: null,
+						quantity: count,
+						..._mIdObj
+					}],
+					logistics: {
+						recommended_channelids: null
+					},
+					buyer_address_data: {}
+				}],
+				selected_payment_channel_data: {},
+				promotion_data: {
+					voucher_code: coupon,
+					use_coins: false,
+					free_shipping_voucher_info: {}
+				},
+				device_info: {
+					device_id: "",
+					device_fingerprint: "",
+					tongdun_blackbox: "",
+					buyer_payment_info: {}
+				},
+				tax_info: {
+					tax_id: ""
+				}
 			}
 
 			heartbeat();
@@ -469,11 +591,9 @@
 				url: "/api/v0/buyer/cart/check_promotion_and_verify/",
 				method: "POST",
 				header: {
-					"sec-fetch-mode": "cors",
-					"sec-fetch-site": "same-origin",
-					"x-api-source": APISource,
-					"x-csrftoken": CSRF,
-					"x-requested-with": "XMLHttpRequest"
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest"
 				},
 				form: {
 					skip_prep_checkout: true,
@@ -496,9 +616,42 @@
 			})
 
 			if (cartVerifyData.err_code !== 0) {
-				await errored("Lỗi Khi Tiến Hành Thanh Toán Item");
+				await errored("Lỗi khi tiến hành kiểm tra và xác nhận đơn hàng");
 				log(` + Code: ${cartVerifyData.err_code}`);
-				throw { code: cartVerifyData.err_code, description: `Lỗi Khi Tiến Hành Thanh Toán Item` };
+				throw { code: cartVerifyData.err_code, description: `Lỗi khi tiến hành kiểm tra và xác nhận đơn hàng`, data: cartVerifyData };
+			}
+
+			log(" + Fetching /checkout/get_quick");
+			await command("ajax", {
+				url: "/api/v2/checkout/get_quick",
+				method: "POST",
+				header: {
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest"
+				},
+				json: checkoutPayload
+			})
+
+			log(" + Fetching /checkout/get");
+			CHECKOUT_GET = await command("ajax", {
+				url: "/api/v2/checkout/get",
+				method: "POST",
+				header: {
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest"
+				},
+				json: checkoutPayload
+			})
+
+			if (CHECKOUT_GET.error) {
+				await errored("Lỗi khi tiến hành Lấy Thông Tin item");
+				log(" + Errored while checking out Item");
+				log(`    + Code: ${CHECKOUT_GET.error}`);
+				log(`    + EC  : ${CHECKOUT_GET.error_empty_cart}`);
+				log(`    + MSG : ${CHECKOUT_GET.error_msg || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể tiến hành Checkout", data: CHECKOUT_GET };
 			}
 		}
 
@@ -517,11 +670,9 @@
 					url: "/api/v2/cart/get_orders",
 					method: "GET",
 					header: {
-						"sec-fetch-mode": "cors",
-						"sec-fetch-site": "same-origin",
-						"x-api-source": APISource,
-						"x-csrftoken": CSRF,
-						"x-requested-with": "XMLHttpRequest"
+						"X-API-SOURCE": APISource,
+						"X-CSRFToken": CSRF,
+						"X-Requested-With": "XMLHttpRequest"
 					}
 				})
 
@@ -535,11 +686,9 @@
 					url: "/api/v2/checkout/coupon",
 					method: "POST",
 					header: {
-						"sec-fetch-mode": "cors",
-						"sec-fetch-site": "same-origin",
-						"x-api-source": APISource,
-						"x-csrftoken": CSRF,
-						"x-requested-with": "XMLHttpRequest"
+						"X-API-SOURCE": APISource,
+						"X-CSRFToken": CSRF,
+						"X-Requested-With": "XMLHttpRequest"
 					},
 					json: {
 						promotion_data: {
@@ -588,18 +737,64 @@
 			heartbeat();
 			log(`Bắt đầu đặt hàng`);
 
-			let placeOrder = await command("ajax", {
-				url: "/api/v2/checkout/place_order",
-				method: "POST",
-				header: {
-					"sec-fetch-mode": "cors",
-					"sec-fetch-site": "same-origin",
-					"x-api-source": APISource,
-					"x-csrftoken": CSRF,
-					"x-requested-with": "XMLHttpRequest"
-				},
-				json: CHECKOUT_GET
-			})
+			CHECKOUT_GET.headers = {}
+			CHECKOUT_GET.timestamp = Math.floor(time()) + 2;
+			CHECKOUT_GET.shipping_orders[0].buyer_ic_number = "";
+			CHECKOUT_GET.shoporders[0].buyer_ic_number = "";
+			CHECKOUT_GET.shoporders[0].ext_ad_info_mappings = []
+			delete CHECKOUT_GET.payment_channel_info;
+			delete CHECKOUT_GET.shipping_orders[0].logistics;
+			delete CHECKOUT_GET.shoporders[0].logistics;
+
+			log(` + Đang mã hóa dữ liệu`);
+			let HASH = randString(128, "0123456789abcdef");
+			let placeOrder = "";
+
+			try {
+				placeOrder = await command("ajax", {
+					url: "/api/v2/checkout/place_order",
+					method: "POST",
+					type: "text",
+					header: {
+						"Content-Type": "text/plain;charset=UTF-8",
+						"X-API-SOURCE": APISource,
+						"X-CSRFToken": CSRF,
+						"X-Requested-With": "XMLHttpRequest",
+						"X-CV-ID": 100,
+						"X-Track-Id": HASH,
+						"If-None-Match-": `55b03-08d47a57630009d06d3011de11a9df6c`
+					},
+					raw: encrypt(JSON.stringify(CHECKOUT_GET), HASH)
+				})
+			} catch(e) {
+				log(" + Request Errored");
+				log(`    + Code: ${e.data.code}`);
+				log(`    + MSG : ${e.data.description || "Không rõ"}`);
+				placeOrder = e.data.data;
+			}
+
+			log(` + Đang giải mã dữ liệu`);
+			let decrypted = ""
+
+			try {
+				decrypted = decrypt(placeOrder, HASH);
+			} catch(e) {
+				await errored("Lỗi Khi Tiến Hành Giải Mã Dữ Liệu");
+				log(" + Cannot Decrypt Data");
+				log(`    + Code: ${e.code}`);
+				log(`    + MSG : ${e.description || "Không rõ"}`);
+				log(`    + CS  : ${e.data}`);
+				throw { code: e.code, description: `Lỗi Khi Tiến Hành Giải Mã Dữ Liệu`, data: e };
+			}
+
+			try {
+				placeOrder = JSON.parse(decrypted);
+			} catch(e) {
+				await errored("Lỗi Khi Tiến Hành Giải Mã Dữ Liệu");
+				log(" + Cannot Parse Decrypted Data");
+				log(`    + Decrypted : ${decrypted || "Không rõ"}`);
+				throw { code: -1, description: `Cannot Parse Decrypted Data`, data: decrypted };
+			}
 
 			if (placeOrder.error && placeOrder.error !== 0) {
 				await errored("Lỗi Khi Tiến Hành Đặt Mua Item");
@@ -659,11 +854,9 @@
 					url: "/api/v2/cart/get_orders",
 					method: "GET",
 					header: {
-						"sec-fetch-mode": "cors",
-						"sec-fetch-site": "same-origin",
-						"x-api-source": settings.APISource,
-						"x-csrftoken": CSRF,
-						"x-requested-with": "XMLHttpRequest"
+						"X-API-SOURCE": settings.APISource,
+						"X-CSRFToken": CSRF,
+						"X-Requested-With": "XMLHttpRequest"
 					}
 				})
 
@@ -682,11 +875,9 @@
 							url: "/api/v2/checkout/coupon",
 							method: "POST",
 							header: {
-								"sec-fetch-mode": "cors",
-								"sec-fetch-site": "same-origin",
-								"x-api-source": settings.APISource,
-								"x-csrftoken": CSRF,
-								"x-requested-with": "XMLHttpRequest"
+								"X-API-SOURCE": settings.APISource,
+								"X-CSRFToken": CSRF,
+								"X-Requested-With": "XMLHttpRequest"
 							},
 							json: {
 								promotion_data: {

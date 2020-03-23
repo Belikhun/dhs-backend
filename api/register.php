@@ -26,7 +26,7 @@
 	if (!isset($_SESSION["captcha"]) || $captcha !== $_SESSION["captcha"])
 		stop(8, "Sai Captcha", 403);
 
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/data/xmldb/account.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
 	$res = addUser(sprintf("r%04d", randBetween(0, 9999)), $username, password_hash($password, PASSWORD_DEFAULT), $username);
 	
 	if ($res === USER_ADD_SUCCESS) {

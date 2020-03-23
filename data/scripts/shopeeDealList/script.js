@@ -35,7 +35,6 @@
 
 		log(`CSRF: ${CSRF}`);
 
-
 		let promotionList = await myajax({
 			url: HOSTADDRESS.session,
 			method: "GET"
@@ -450,7 +449,7 @@
 			});
 
 			let total = filtered.length;
-			let maxPage = (showCount === 0) ? 1 : Math.floor(total / showCount);
+			let maxPage = (showCount === 0) ? 1 : Math.max(1, Math.floor(total / showCount));
 
 			if (page === "last")
 				page = maxPage;

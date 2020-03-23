@@ -18,7 +18,7 @@
 	
 	$username = reqForm("username");
 	$password = reqForm("password");
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/data/xmldb/account.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
 
 	$res = simpleLogin($username, $password);
 	if ($res === LOGIN_SUCCESS) {

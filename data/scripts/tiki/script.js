@@ -216,7 +216,7 @@
 			priceHistory: { type: "customNode", node: PHC },
 			note: { type: "note", level: "warning", text: "Chọn loại hàng trên trang sản phẩm. Tool sẽ tự động làm mới loại hàng và giá" },
 			orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
-			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true },
+			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, save: false },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
 			reCheckPrice: { type: "number", label: "Kiểm tra lại giá", value: 5, depend: "orderBy:orderByPrice" },
 			orderByCoupon: { type: "switch", label: "Mua theo áp mã giảm giá", name: "orderBy" },

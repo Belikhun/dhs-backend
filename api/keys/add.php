@@ -15,7 +15,7 @@
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ezsql.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
-    if (!isLogedIn())
+    if (!isLoggedIn())
         stop(11, "Bạn chưa đăng nhập!", 403);
 
     if ($_SESSION["id"] !== "admin")

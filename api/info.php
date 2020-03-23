@@ -14,7 +14,7 @@
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
 
     $username = reqQuery("u");
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/data/xmldb/account.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
 
     if (!$data = getUserData($username))
         stop(13, "Không tìm thấy tên người dùng \"$username\"!", 404, Array( "username" => $username ));

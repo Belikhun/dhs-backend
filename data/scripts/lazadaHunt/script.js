@@ -45,7 +45,7 @@
 		log(`|===========================|`);
 		log(`|     Lazada Deal Hunter    |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:40:22 31/10/2019  |`);
+		log(`|  LU: 00:32:22 24/03/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -77,6 +77,21 @@
 				log(`   + Đang tải: ${item.title}`);
 				
 				for (let page = 1; page <= pageCount; page++) {
+					runInfo({
+						status: "Đang chạy",
+						now: page,
+						end: pageCount,
+						progress: (page / pageCount) * 100,
+						progWarn: false,
+						itemStatus: item.title,
+						itemStatusColor: "yellow",
+						dataType: "time",
+						current: page,
+						target: pageCount,
+						saved: (page / pageCount) * 100,
+						checkDetail: `Trang ${page}`
+					})
+
 					heartbeat({ color: "yellow" });
 					let result = await myajax({
 						url: HOSTADDRESS + item.path,
@@ -89,11 +104,20 @@
 						type: "json"
 					});
 
+					if (result.ret) {
+						heartbeat({ color: "red", beat: false });
+						log(`⚠ REQUEST ERRORED <a href="${result.data.url}" target="_blank">[DETAIL]</a>`);
+						for (let i of result.ret)
+							log(` + ${i}`);
+
+						log("⚠ TẠM DỪNG 60 GIÂY!");
+						await delayAsync(60000);
+						page--;
+						continue;
+					}
+
 					heartbeat();
-		
-					let itemList = result.mods.listItems;
-	
-					for (let item of itemList) {
+					for (let item of result.mods.listItems) {
 						if (list[item.itemId] || blackList.indexOf(item.itemId) !== -1)
 							continue;
 
@@ -469,6 +493,18 @@
 		// Save BlackList
 		await saveBlackList(firstScanSetup.blackList.split(";"));
 
+		// Change Layout
+		run();
+
+		runInfo({
+			end: "100%",
+			current: "0",
+			itemStatus: `Đang quét lần đầu`,
+			itemStatusColor: "green",
+			dataType: "time",
+			checkDetail: "INITIALIZING"
+		})
+
 		// Start Scanning Item
 		var itemList = await scanItem(firstScanSetup.sortBy, firstScanSetup.scanPage, firstScanSetup.coolDown);
 		var CURRENT_PAGE = 1;
@@ -477,7 +513,7 @@
 			showCount = 10
 		} = {}) => {
 			let total = itemList.sortedList.length;
-			let maxPage = (showCount === 0) ? 1 : Math.floor(total / showCount);
+			let maxPage = (showCount === 0) ? 1 : Math.max(1, Math.floor(total / showCount));
 
 			if (page === "last")
 				page = maxPage;

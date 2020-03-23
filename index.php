@@ -25,11 +25,11 @@
     <title>Quản lý license keys | <?php print APPNAME ." v". VERSION; ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/material-font.css?v=<?php print VERSION; ?>" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/fontawesome.css?v=<?php print VERSION; ?>" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/calibri.css?v=<?php print VERSION; ?>" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/opensans.css?v=<?php print VERSION; ?>" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/exo.css?v=<?php print VERSION; ?>" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/materialicons/materialicons.css?v=<?php print VERSION; ?>" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/fontawesome/fontawesome.css?v=<?php print VERSION; ?>" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/calibri/calibri.css?v=<?php print VERSION; ?>" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/opensans/opensans.css?v=<?php print VERSION; ?>" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/fonts/nunito/nunito.css?v=<?php print VERSION; ?>" />
 
     <link rel="stylesheet" type="text/css" media="screen" href="/assets/css/default.css?v=<?php print VERSION; ?>" />
     <link rel="stylesheet" type="text/css" media="screen" href="/assets/css/statusBar.css?v=<?php print VERSION; ?>" />
@@ -39,7 +39,7 @@
     <link rel="stylesheet" type="text/css" media="screen" href="/assets/css/button.css?v=<?php print VERSION; ?>" />
     <link rel="stylesheet" type="text/css" media="screen" href="/assets/css/spinner.css?v=<?php print VERSION; ?>" />
     <link rel="stylesheet" type="text/css" media="screen" href="/assets/css/menu.css?v=<?php print VERSION; ?>" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/assets/css/keysManager.css?v=<?php print VERSION; ?>" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/static/css/keysManager.css?v=<?php print VERSION; ?>" />
 </head>
 
 <body id="container">
@@ -121,10 +121,10 @@
         const API_TOKEN = `<?php print isset($_SESSION["apiToken"]) ? $_SESSION["apiToken"] : null; ?>`;
         const USERNAME = `<?php print $_SESSION["username"]; ?>`;
     </script>
-    <script src="assets/js/belibrary.js?v=<?php print VERSION; ?>"></script>
-    <script src="assets/js/statusBar.js?v=<?php print VERSION; ?>"></script>
-    <script src="assets/js/sounds.js?v=<?php print VERSION; ?>"></script>
-    <script src="assets/js/keysManager.js?v=<?php print VERSION; ?>"></script>
+    <script src="/assets/js/belibrary.js?v=<?php print VERSION; ?>"></script>
+    <script src="/assets/js/statusBar.js?v=<?php print VERSION; ?>"></script>
+    <script src="/assets/js/sounds.js?v=<?php print VERSION; ?>"></script>
+    <script src="/static/js/keysManager.js?v=<?php print VERSION; ?>"></script>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=<?php print TRACK_ID; ?>"></script>

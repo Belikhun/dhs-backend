@@ -3,6 +3,6 @@
     "description": "Tự động thêm voucher vào ví cho lazada",
     "site": "lazada.vn/",
     "match": "pages\\.lazada\\.vn.*",
-    "version": 2,
+    "version": 3,
     "hide": true
 }

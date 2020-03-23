@@ -536,12 +536,11 @@
 		}));
 
 		var CURRENT_PAGE = 1;
-
 		const changeAllListPage = async (page, {
 			showCount = 10
 		} = {}) => {
 			let total = itemList.sortedList.length;
-			let maxPage = (showCount === 0) ? 1 : Math.floor(total / showCount);
+			let maxPage = (showCount === 0) ? 1 : Math.max(1, Math.floor(total / showCount));
 
 			if (page === "last")
 				page = maxPage;

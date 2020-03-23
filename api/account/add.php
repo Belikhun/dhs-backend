@@ -24,7 +24,7 @@
     $password = password_hash(reqForm("p"), PASSWORD_DEFAULT);
     $name = htmlspecialchars(strip_tags(reqForm("n")));
 
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/data/xmldb/account.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
     if (getUserData($_SESSION["username"])["id"] !== "admin")
         stop(31, "Access Denied!", 403);
 
