@@ -6,6 +6,7 @@
 #? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 #? |-----------------------------------------------------------------------------------------------|
 set -e
+pushd .. > /dev/null
 
 echo -e "\033[1;35mDEPLOYING \033[30m(Build $TRAVIS_BUILD_NUMBER)\033[m"
 start=$(date +%s.%N)
@@ -19,6 +20,8 @@ git remote add origin https://${GH_TOKEN}@github.com/dealHunterSuiteBackend.git 
 git push --set-upstream origin production
 	
 end=$(date +%s.%N)
-echo -e " \033[1;37m→ \033[1;33m$(echo "$end - $start" | bc)s"
+echo -e " \033[1;37m→ \033[1;33m$(php -r "echo $end - $start;")s"
 echo -e "\033[1;32m✓\033[0m Done!"
+
+popd > /dev/null
 exit 0
