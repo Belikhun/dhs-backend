@@ -60,7 +60,7 @@
 					tags: [
 						`status: ${data.inventory_status}`,
 						`Deal: ${data.is_deal ? "Có" : "Không"}`,
-						`Số lượng: ${data.stock_item.qty}`,
+						`Số lượng: ${(data.stock_item) ? data.stock_item.qty : "?"}`,
 						`freeShip: ${data.is_free_shipping ? "Có" : "Không"}`,
 						data.warranty_lifetime || "Không Bảo Hành"
 					]
@@ -97,17 +97,35 @@
 
 						if (item.id !== PID) {
 							log(`PID Change: ${PID} -> ${item.id}`);
-							PID = item.id;
+							PID = parseInt(item.id);
 						}
 					}
 			} else {
 				itemPrice = data.price;
 				itemStatus = data.inventory_status;
-				itemQTY = data.stock_item.qty;
 
-				if (data.current_seller.product_id !== PID) {
-					log(`PID Change: ${PID} -> ${data.current_seller.product_id}`);
-					PID = data.current_seller.product_id;
+				if (data.stock_item)
+					itemQTY = data.stock_item.qty;
+
+				let _pid = PID;
+
+				if (data.current_seller)
+					_pid = parseInt(data.current_seller.product_id);
+				else {
+					heartbeat({ color: "red" });
+					let itemPage = await myajax({
+						url: `${HOSTADDRESS}/${data.url_path}`,
+						method: "GET",
+						type: "text"
+					})
+
+					let itemDOM = (new DOMParser()).parseFromString(itemPage, "text/html");
+					_pid = parseInt(itemDOM.getElementById("product_id_add_cart").value);
+				}
+
+				if (_pid !== PID) {
+					log(`PID Change: ${PID} -> ${_pid}`);
+					PID = _pid;
 				}
 			}
 
@@ -124,7 +142,7 @@
 					tags: [
 						`status: ${itemStatus}`,
 						`Deal: ${data.is_deal ? "Có" : "Không"}`,
-						`Số lượng: ${data.stock_item.qty}`,
+						`Số lượng: ${(data.stock_item) ? data.stock_item.qty : "?"}`,
 						`freeShip: ${data.is_free_shipping ? "Có" : "Không"}`,
 						data.warranty_lifetime || "Không Bảo Hành",
 						`CFID: ${CFID}`,
@@ -163,12 +181,12 @@
 				}
 			})
 
-			let costData = { max_price: 0, min_price: 0, avg_price: 0 }
+			let costData = { max: 0, min: 0, avg: 0 }
 			let costHistory = []
 			let costHistoryTime = []
 			let costHistoryTimeDelta = 0;
 
-			if (beeCost.status === "error") {
+			if (beeCost.status === "error" || !beeCost.data) {
 				log(" + Lỗi đã xảy ra khi lấy thông tin giá Item");
 				log(`    + MSG : ${beeCost.meta.message || "Không Rõ"}`);
 				log(`    + Bỏ qua lỗi: true`);

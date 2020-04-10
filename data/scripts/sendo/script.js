@@ -119,12 +119,12 @@
 				}
 			})
 
-			let costData = { max_price: 0, min_price: 0, avg_price: 0 }
+			let costData = { max: 0, min: 0, avg: 0 }
 			let costHistory = []
 			let costHistoryTime = []
 			let costHistoryTimeDelta = 0;
 
-			if (beeCost.status === "error") {
+			if (beeCost.status === "error" || !beeCost.data) {
 				log(" + Lỗi đã xảy ra khi lấy thông tin giá Item");
 				log(`    + MSG : ${beeCost.meta.message || "Không Rõ"}`);
 				log(`    + Bỏ qua lỗi: true`);
