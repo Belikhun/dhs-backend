@@ -1,0 +1,8 @@
+{
+    "name": "Bách Hóa Xanh Deal Hunter",
+    "description": "Tìm item giá lỗi cho Bách Hóa Xanh",
+    "site": "bachhoaxanh.com/",
+    "match": "*",
+    "version": 1,
+    "hide": true
+}

@@ -742,13 +742,13 @@
 							}
 						}
 
+						showItemDetail = true;
+						
 						if (beeCost.status === "error") {
 							log("     + Không thể lấy lịch sử giá Item");
 							log(`       + Code : ${beeCost.meta.code || "Không Rõ"}`);
 							log(`       + MSG  : ${beeCost.meta.message || "Không Rõ"}`);
 							log(`       + Bỏ qua lỗi: true`);
-
-							showItemDetail = true;
 						} else {
 							let costData = beeCost.data.price_classification;
 							let min = costData ? costData.min_price : Math.min.apply(this, beeCost.data.item_history.price);
@@ -759,10 +759,10 @@
 
 							if (item.price < settings.autobuyFrom) {
 								log(`   + GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
+								return;
 							}
 
 							if (priceRatio >= settings.autobuyRatio) {
-								showItemDetail = true;
 								log(`   + BẮT ĐẦU ĐẶT MUA`);
 
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {

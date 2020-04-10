@@ -5,6 +5,11 @@
     var STEP_SLEEP = 200;
     var RETRY = 60
 
+    const HOST = {
+        main: "https://www.sendo.vn",
+        checkout: "https://checkout.sendo.vn"
+    }
+
     onCancel(() => {
         clearInterval(infoUpdateInterval);
         doCheck = false;
@@ -14,9 +19,9 @@
 
     try {
         log(`|===========================|`);
-        log(`|      Sendo Auto v007      |`);
+        log(`|      Sendo Auto v008      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 13:11:29 01/01/2020  |`);
+        log(`|  LU: 12:42:03 25/03/2020  |`);
         log(`|===========================|`);
 
         // Get itemName
@@ -45,8 +50,8 @@
 
         // Define
         const updateItemData = async () => {
-            let data = await command("ajax", {
-                url: `/m/wap_v2/full/san-pham/${ITEMURL}`,
+            let data = await myajax({
+                url: `${HOST.main}/m/wap_v2/full/san-pham/${ITEMURL}`,
                 method: "GET"
             });
 
@@ -126,10 +131,15 @@
 
 				PHC.classList.add("noData");
 			} else {
-				costData = beeCost.data.price_classification;
 				costHistory = beeCost.data.item_history.price;
 				costHistoryTime = beeCost.data.item_history.price_ts;
 				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
+
+				costData = {
+					min: Math.min( ...costHistory ),
+					max: Math.max( ...costHistory ),
+					avg: costHistory.reduce((a, b) => a + b) / costHistory.length
+				}
 
 				PHC.classList.remove("noData");
 			}
@@ -147,10 +157,10 @@
 				let timeStamp = new Date(costHistoryTime[i]);
 
 				let bar = document.createElement("span");
-				let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
-				bar.classList.add("bar", (value === costData.max_price)
+				let _p = ((value - costData.min) / (costData.max - costData.min));
+				bar.classList.add("bar", (value === costData.max)
 					? "max"
-					: (value === costData.min_price)
+					: (value === costData.min)
 						? "min"
 						:(value === itemInitPrice)
 							? "cur"
@@ -167,21 +177,21 @@
 			//? PH Line
 			var PHChartAvgLine = document.createElement("span");
 			PHChartAvgLine.classList.add("avgLine");
-			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max - costData.avg) / (costData.max - costData.min)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
 			PHChart.appendChild(PHChartAvgLine);
 
 			PHInfo.innerHTML = `
 				<span class="col max">
 					<t>Cao Nhất</t>
-					<span class="price">${priceFormat(costData.max_price)}</span>
+					<span class="price">${priceFormat(costData.max)}</span>
 				</span>
 				<span class="col avg">
 					<t>Trung Bình</t>
-					<span class="price">${priceFormat(costData.avg_price)}</span>
+					<span class="price">${priceFormat(costData.avg)}</span>
 				</span>
 				<span class="col min">
 					<t>Thấp Nhất</t>
-					<span class="price">${priceFormat(costData.min_price)}</span>
+					<span class="price">${priceFormat(costData.min)}</span>
 				</span>
 			`
 
@@ -327,8 +337,8 @@
                     let info = {}
 
 					try {
-						info = await command("ajax", {
-                            url: "/api/checkout/info",
+						info = await myajax({
+                            url: `${HOST.checkout}/api/checkout/info`,
                             method: "POST",
                             json: {
                                 "shop_id": SHOPID,
@@ -460,11 +470,14 @@
                     if (runTime <= 0) {
                         doCheck = false;
                         order();
-            
+
                         await __doOrder({
+                            id: ID,
                             shopId: SHOPID,
+                            count: settings.orderCount,
+                            productOptions: PRODUCT_OPTIONS,
                             coupon: settings.coupon,
-                            delay: 0
+                            delay: settings.orderDelay
                         });
             
                         complete();
@@ -507,34 +520,11 @@
                     checkNth++;
                     let reqStart = time();
                     let data = {}
-                    let info = {}
         
                     try {
-                        data = await command("ajax", {
-                            url: `https://sendo.vn/m/wap_v2/full/san-pham/${ITEMURL}`,
+                        data = await myajax({
+                            url: `${HOST.main}/m/wap_v2/full/san-pham/${ITEMURL}`,
                             method: "GET"
-                        });
-
-                        info = await command("ajax", {
-                            url: "/api/checkout/info",
-                            method: "POST",
-                            json: {
-                                "shop_id": SHOPID,
-                                "product_hashes": [PRODUCT_HASH],
-                                "sendo_platform": settings.platform,
-                                "current_voucher": { "enable_suggest_voucher": true },
-                                "current_receive_email_info": {
-                                    "is_disable_suggest_email": false,
-                                    "receive_email": ""
-                                },
-                                "current_ticket_info": {
-                                    "is_validate_date": false,
-                                    "use_date": 0
-                                },
-                                "enable_tracking": true,
-                                "ignore_invalid_product": -1,
-                                "version": 3.1
-                            }
                         })
                     } catch(e) {
                         heartbeat({ color: "red" });
@@ -557,7 +547,7 @@
                         return;
                     }
         
-                    let price = info.data.products_checkout.total_price;
+                    let price = data.result.data.final_price;
                     let stock = data.result.data.stock_status;
         
                     if (HAVE_VARIATIONS && VARIANT_KEY) {
@@ -589,7 +579,10 @@
                         order();
         
                         await __doOrder({
+                            id: ID,
                             shopId: SHOPID,
+                            count: settings.orderCount,
+                            productOptions: PRODUCT_OPTIONS,
                             coupon: settings.coupon,
                             delay: settings.orderDelay
                         });
@@ -635,20 +628,23 @@
             setTimeout(() => __checkHandler(), checkPer - ((time() - timeStart) * 1000));
         }
 
-        const __preDoOrder = async ({
+        const __doOrder = async ({
             id = 0,
             shopId = 0,
             count = 1,
             productOptions = {},
+            coupon = "",
+            delay = 200
         }) => {
+            let orderTimer = new stopClock();
             log("Đang thêm Item vào Giỏ Hàng");
-            runInfo({ now: `Bước 1`, end: `Bước 3`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
+            runInfo({ now: `Bước 1`, end: `Bước 4`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
             heartbeat();
             let addCartData = null;
 
             try {
-                addCartData = await command("ajax", {
-                    url: "/m/wap_v2/cart/add",
+                addCartData = await myajax({
+                    url: `${HOST.main}/m/wap_v2/cart/add`,
                     method: "POST",
                     header: {
                         "x-requested-with": "XMLHttpRequest"
@@ -683,7 +679,7 @@
             }
 
             log(` + Thêm Item vào Giỏ thành công!`);
-            runInfo({ now: `Bước 2`, progress: 33, progWarn: false, checkDetail: "Lấy thông tin item" });
+            runInfo({ now: `Bước 2`, progress: 25, progWarn: false, checkDetail: "Lấy thông tin item" });
             heartbeat();
             
             log("Đang lấy thông tin Item");
@@ -691,8 +687,8 @@
 
             log(" + Fetching /m/wap_v2/cart/list/travel");
             try {
-                itemData = await command("ajax", {
-                    url: `/m/wap_v2/cart/list/travel?v=1`,
+                itemData = await myajax({
+                    url: `${HOST.main}/m/wap_v2/cart/list/travel?v=1`,
                     method: "GET"
                 });
             } catch(e) {
@@ -700,51 +696,20 @@
                 return;
             }
 
-            runInfo({ now: `Bước 3`, progress: 66, progWarn: false, checkDetail: "Chuyển Tới Trang Thanh Toán" });
-            heartbeat();
-            log("Đang chuyển tới trang Thanh Toán");
             PRODUCT_HASH = itemData.result.data[0].product_list[0].data[0].hash;
-            command("changeLocation", { href: `https://checkout.sendo.vn/?product=${PRODUCT_HASH}&sendo_platform=desktop2&shop=${shopId}` })
-            
-            log(" + Đang chờ trang tải xong");
-            await waitFor(async (tryNth) => {
-                heartbeat({ color: "blue" });
-                let _t = await command("queryText", { query: "button.button_fKtq > span" });
-                return (_t.text === "Đặt hàng");
-            }, () => {}, RETRY, STEP_SLEEP,
-                async (tryNth) => {
-                    await errored("Lỗi khi chuyển sang trang Thanh Toán");
-                    log(` + waitFor timed out after ${tryNth} retrys`);
-                    log(`    + Code: -1`);
-                    throw { code: -1, description: "waitFor Timed Out", data: { try: tryNth } };
-                }
-            );
-
-            log(" + Đã tải xong");
-            runInfo({ now: `Bước 3`, progress: 100, progWarn: false, checkDetail: "Đã chuyển tới trang thanh toán" });
-        }
-        
-        const __doOrder = async ({
-            shopId = 0,
-            coupon = "",
-            delay = 200
-        }) => {
-            sounds.notification();
-            let orderTimer = new stopClock();
-            heartbeat();
             let voucherJson = { "enable_suggest_voucher": true }
+            heartbeat();
 
             // Set coupon preInit
             if (typeof coupon === "string" && coupon !== "") {
-                runInfo({ now: `Bước 1`, end: `Bước 2`, progress: 0, progWarn: false, checkDetail: "Đang áp dụng mã giảm giá" });
-                heartbeat();
+                runInfo({ now: `Bước 3`, progress: 50, progWarn: false, checkDetail: "Đang áp dụng mã giảm giá" });
                 log(`Đang áp dụng Coupon: ${coupon}`);
 
                 voucherJson = { voucher_code: coupon }
             }
 
-            let info = await command("ajax", {
-                url: "/api/checkout/info",
+            let info = await myajax({
+                url: `${HOST.checkout}/api/checkout/info`,
                 method: "POST",
                 json: {
                     "shop_id": shopId,
@@ -765,6 +730,15 @@
                 }
             })
 
+            if (info.errors) {
+                await errored("Lỗi Khi Tiến Hành Đặt Hàng");
+                log(" + Cannot Get Checkout Info");
+                log(`    + Type: ${info.errors[0].type}`);
+                log(`    + Code: ${info.errors[0].code}`);
+                log(`    + MSG : ${info.errors[0].message || "Không Rõ"}`);
+                throw { code: info.errors[0].code, description: info.errors[0].message, data: info.errors };
+            }
+
             // Set coupon Check
             if (typeof coupon === "string" && coupon !== "") {
                 runInfo({ progress: 75, progWarn: false });
@@ -780,15 +754,15 @@
                 log(` + Mã giảm giá hợp lệ`);
             }
 
-            runInfo({ now: `Bước 2`, progress: 50, progWarn: false, checkDetail: "Đang đặt hàng" });
+            runInfo({ now: `Bước 4`, progress: 80, progWarn: false, checkDetail: "Đang đặt hàng" });
             heartbeat();
             log(`Bắt đầu đặt hàng`);
             log(` + Tạm dừng chạy ${delay}ms`);
 
             await delayAsync(delay);
 
-            let placeOrder = await command("ajax", {
-                url: "/api/checkout/save-order",
+            let placeOrder = await myajax({
+                url: `${HOST.checkout}/api/checkout/save-order`,
                 method: "POST",
                 header: {
                     "x-requested-with": "XMLHttpRequest"
@@ -818,7 +792,7 @@
             }
 
             heartbeat();
-            runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Đặt hàng thành công" });
+            runInfo({ now: `Bước 5`, progress: 100, progWarn: false, checkDetail: "Đặt hàng thành công" });
             log(" + doOrder đã hoàn thành! Đang chuyển tới chi tiết đơn...");
             log("=========== KẾT QUẢ ===========");
             log(` + CheckoutID  : ${placeOrder.increment_id}`);
@@ -827,13 +801,6 @@
 
             command("changeLocation", { href: `https://profile.sendo.vn/chi-tiet-don-hang/${placeOrder.increment_id}` });
         }
-    
-        await __preDoOrder({
-            id: ID,
-            shopId: SHOPID,
-            count: settings.orderCount,
-            productOptions: PRODUCT_OPTIONS
-        });
 
         __checkHandler();
         log("Bắt đầu kiểm tra giá");

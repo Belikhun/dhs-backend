@@ -1,11 +1,11 @@
 // Script begin here
 (async () => {
-	var updateInfoInterval = null;
 	var infoUpdateInterval = null;
 	var doCheck = true;
 
+	const HOSTADDRESS = "https://tiki.vn";
+
 	onCancel(() => {
-		clearInterval(updateInfoInterval);
 		clearInterval(infoUpdateInterval);
 		doCheck = false;
 	})
@@ -14,9 +14,9 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|       Tiki Auto v011      |`);
+		log(`|       Tiki Auto v013      |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 00:14:33 18/03/2020  |`);
+		log(`|  LU: 15:45:52 10/04/2020  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -31,31 +31,108 @@
 	
 		log("itemName: " + itemName);
 		info({ title: itemName });
-		var itemInitPrice = 0;
+		var itemInitPrice = null;
 	
 		// Get ID
 		var ID = null;
 		var PID = null;
+		var CFID = null;
 
 		// Define
-		const fetchItemData = async () => {
-			let data = await command("ajax", {
-				url: `/api/v2/products/${ID}/info`,
+		const getToken = async () => (await this.getCookie(HOSTADDRESS, "TIKI_ACCESS_TOKEN")).value
+
+		const fetchItemData = async (updateInfo = true) => {
+			let data = await myajax({
+				url: `${HOSTADDRESS}/api/v2/products/${ID}`,
 				method: "GET",
 				changeState: false
 			});
 	
-			itemInitPrice = data.price;
-			info({
-				id: ID,
-				price: priceFormat(data.price),
-				tags: [
-					`status: ${data.inventory_status}`,
-					`Deal: ${data.is_deal ? "Có" : "Không"}`,
-					`freeShip: ${data.is_free_shipping ? "Có" : "Không"}`,
-					data.warranty_lifetime || "Không Bảo Hành"
-				]
-			})
+			ID = data.id;
+			let itemPrice = null;
+			let itemStatus = null;
+			let itemQTY = null;
+
+			if (updateInfo)
+				info({
+					id: ID,
+					price: priceFormat(data.price),
+					tags: [
+						`status: ${data.inventory_status}`,
+						`Deal: ${data.is_deal ? "Có" : "Không"}`,
+						`Số lượng: ${data.stock_item.qty}`,
+						`freeShip: ${data.is_free_shipping ? "Có" : "Không"}`,
+						data.warranty_lifetime || "Không Bảo Hành"
+					]
+				})
+
+			if (!CFID && data.configurable_products) {
+				let configList = []
+
+				for (let item of data.configurable_products)
+					configList.push({
+							name: item.name,
+							color: "pink",
+							value: item.child_id
+						});
+
+				let select = await setup({
+					config: {
+						type: "radio",
+						label: "Chọn loại hàng",
+						required: true,
+						list: configList
+					}
+				}, { confirm: "Tiếp" });
+
+				CFID = parseInt(select.config);
+				log(`Config ID: ${CFID}`);
+
+				await delayAsync(400);
+
+				for (let item of data.configurable_products)
+					if (item.child_id === CFID) {
+						itemPrice = item.price;
+						itemStatus = item.inventory_status;
+
+						if (item.id !== PID) {
+							log(`PID Change: ${PID} -> ${item.id}`);
+							PID = item.id;
+						}
+					}
+			} else {
+				itemPrice = data.price;
+				itemStatus = data.inventory_status;
+				itemQTY = data.stock_item.qty;
+
+				if (data.current_seller.product_id !== PID) {
+					log(`PID Change: ${PID} -> ${data.current_seller.product_id}`);
+					PID = data.current_seller.product_id;
+				}
+			}
+
+			if (!PID)
+				throw { code: -1, description: "Không xác định được PID của sản phẩm" }
+
+			if (!itemInitPrice)
+				itemInitPrice = itemPrice;
+
+			if (updateInfo)
+				info({
+					id: ID,
+					price: priceFormat(itemPrice),
+					tags: [
+						`status: ${itemStatus}`,
+						`Deal: ${data.is_deal ? "Có" : "Không"}`,
+						`Số lượng: ${data.stock_item.qty}`,
+						`freeShip: ${data.is_free_shipping ? "Có" : "Không"}`,
+						data.warranty_lifetime || "Không Bảo Hành",
+						`CFID: ${CFID}`,
+						`PID: ${PID}`
+					]
+				})
+
+			return { price: itemPrice, status: itemStatus, qty: itemQTY };
 		}
 
 		//? PRICE HISTORY CONTAINER
@@ -98,10 +175,15 @@
 
 				PHC.classList.add("noData");
 			} else {
-				costData = beeCost.data.price_classification;
 				costHistory = beeCost.data.item_history.price;
 				costHistoryTime = beeCost.data.item_history.price_ts;
 				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
+
+				costData = {
+					min: Math.min( ...costHistory ),
+					max: Math.max( ...costHistory ),
+					avg: costHistory.reduce((a, b) => a + b) / costHistory.length
+				}
 
 				PHC.classList.remove("noData");
 			}
@@ -119,10 +201,10 @@
 				let timeStamp = new Date(costHistoryTime[i]);
 
 				let bar = document.createElement("span");
-				let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
-				bar.classList.add("bar", (value === costData.max_price)
+				let _p = ((value - costData.min) / (costData.max - costData.min));
+				bar.classList.add("bar", (value === costData.max)
 					? "max"
-					: (value === costData.min_price)
+					: (value === costData.min)
 						? "min"
 						:(value === itemInitPrice)
 							? "cur"
@@ -139,21 +221,21 @@
 			//? PH Line
 			var PHChartAvgLine = document.createElement("span");
 			PHChartAvgLine.classList.add("avgLine");
-			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max - costData.avg) / (costData.max - costData.min)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
 			PHChart.appendChild(PHChartAvgLine);
 
 			PHInfo.innerHTML = `
 				<span class="col max">
 					<t>Cao Nhất</t>
-					<span class="price">${priceFormat(costData.max_price)}</span>
+					<span class="price">${priceFormat(costData.max)}</span>
 				</span>
 				<span class="col avg">
 					<t>Trung Bình</t>
-					<span class="price">${priceFormat(costData.avg_price)}</span>
+					<span class="price">${priceFormat(costData.avg)}</span>
 				</span>
 				<span class="col min">
 					<t>Thấp Nhất</t>
-					<span class="price">${priceFormat(costData.min_price)}</span>
+					<span class="price">${priceFormat(costData.min)}</span>
 				</span>
 			`
 
@@ -161,60 +243,21 @@
 		}
 
 		//? GET ITEM ID
-	
 		try {
-			ID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value)
+			ID = parseInt((await command("queryInput", { query: "input#product_id" })).value)
 		} catch(e) {
 			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(ID not found)</i>");
 			return;
 		}
-	
-		log(`Item ID: ${ID}`);
-
-		try {
-			PID = parseInt((await command("queryInput", { query: "input#product_id" })).value)
-		} catch(e) {
-			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(PID not found)</i>");
-			return;
-		}
-	
-		log(`Product ID: ${PID}`);
 		
 		await fetchItemData();
-
-		await updatePriceHistory(3, PID, ID);
+		await updatePriceHistory(3, ID, PID);
 		log("Đã lấy thông tin Item");
-	
-		// Check for id change
-		updateInfoInterval = setInterval(async () => {
-			let _ID = null;
-			let _PID = null;
-	
-			try {
-				_ID = parseInt((await command("queryInput", { query: "input#product_id_add_cart" })).value);
-				_PID = parseInt((await command("queryInput", { query: "input#product_id" })).value);
-			} catch(e) {
-				rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy!");
-				return;
-			}
-			
-			if (ID !== _ID || PID !== _PID) {
-				log(`Phát hiện thay đổi`);
-				log(` + ID : ${ID} -> ${_ID}`);
-				log(` + PID: ${PID} -> ${_PID}`);
-				ID = _ID;
-				PID = _PID
-				
-				await updatePriceHistory(3, PID, ID);
-				await fetchItemData();
-			}
-		}, 1000);
 	
 		log("Đang chờ cài đặt từ người dùng");
 		// Wait for settings
 		const settings = await setup({
 			priceHistory: { type: "customNode", node: PHC },
-			note: { type: "note", level: "warning", text: "Chọn loại hàng trên trang sản phẩm. Tool sẽ tự động làm mới loại hàng và giá" },
 			orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
 			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, save: false },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
@@ -243,7 +286,6 @@
 			log(` + ` + pleft(key, 18, true) + ` = ${settings[key]}`);
 
 		log("Đang bắt đầu chạy...");
-		clearInterval(updateInfoInterval);
 		run();
 		
 		// Start
@@ -255,7 +297,6 @@
 			//! |==========================|
 			//! |   Order By Price Check   |
 			//! |==========================|
-
 			case "orderByPrice":
 				runInfo({
 					end: settings.checkInterval + "ms",
@@ -268,10 +309,7 @@
 					let reqStart = time();
 					let data = {}
 					try {
-						data = await command("ajax", {
-							url: `/api/v2/products/${ID}/info`,
-							method: "GET"
-						});
+						data = await fetchItemData(false);
 					} catch(e) {
 						heartbeat({ color: "red" });
 						log(" + Lỗi đã xảy ra khi lấy thông tin Item");
@@ -291,26 +329,25 @@
 
 						return;
 					}
-			
+					
 					var currentPrice = data ? data.price : null;
 					let reqTime = ((time() - reqStart) * 1000);
 					let reqTimeAT = (reqTime / settings.checkInterval) * 100;
 					let successCount = 0;
-					let itemLeft = (data.qty - data.qty_ordered) || "?"
 			
 					runInfo({
 						progress: reqTimeAT,
 						now: reqTime.toFixed(2) + "ms",
 						current: currentPrice ? currentPrice : "Không Rõ",
 						saved: ((currentPrice - itemInitPrice) / itemInitPrice) * 100,
-						itemStatus: (data.inventory_status === "available") ? `CÓ HÀNG (${itemLeft})` : `KHÔNG CÒN HÀNG (${itemLeft})`,
-						itemStatusColor: (data.inventory_status === "available") ? "green" : "red",
+						itemStatus: (data.status === "available") ? `CÓ HÀNG` : `KHÔNG CÒN HÀNG (${data.status})`,
+						itemStatusColor: (data.status === "available") ? "green" : "red",
 						checkDetail: `Lần thử <b>${checkNth}</b>. Last request took <b>${reqTime.toFixed(2)}ms</b>`
 					})
 
 					heartbeat({ color: (reqTimeAT > 80) ? "red" : ((reqTimeAT > 50) ? "yellow" : "green") });
 
-					if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && data.inventory_status === "available") {
+					if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && data.status === "available") {
 						log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
 						doCheck = false;
 						order();
@@ -327,10 +364,7 @@
 									var _cp = {};
 
 									try {
-										_cp = await command("ajax", {
-											url: `/api/v2/products/${ID}/info`,
-											method: "GET"
-										});
+										_cp = await fetchItemData(false);
 
 										runInfo({
 											current: _cp.price,
@@ -356,7 +390,7 @@
 
 								try {
 									await __doOrder({
-										id: ID,
+										id: PID,
 										count: settings.orderCount,
 										paymentMethod: settings.paymentMethod
 									});
@@ -369,7 +403,7 @@
 							}
 						else
 							await __doOrder({
-								id: ID,
+								id: PID,
 								count: settings.orderCount,
 								coupon: settings.coupon,
 								paymentMethod: settings.paymentMethod
@@ -384,7 +418,7 @@
 							checkDetail: "Đặt hàng thành công"
 						});
 
-						await command("changeLocation", { href: "/sales/order/history" });
+						await command("changeLocation", { href: `${HOSTADDRESS}/sales/order/history` });
 						log("CHẠY KẾT THÚC");
 						return;
 					}
@@ -408,9 +442,7 @@
 			//! |==========================|
 			//! |   Order By Coupon Check  |
 			//! |==========================|
-
 			case "orderByCoupon":
-
 				runInfo({
 					end: settings.checkInterval + "ms",
 					target: settings.orderPrice
@@ -423,16 +455,16 @@
 					var currentPrice = null;
 
 					try {
-						await command("ajax", {
-							url: "/checkout/cart/ajaxCoupon",
+						await myajax({
+							url: `${HOSTADDRESS}/checkout/cart/ajaxCoupon`,
 							method: "POST",
 							form: {
 								coupon_code: settings.coupon
 							}
 						})
 
-						let checkoutHTML = await command("ajax", {
-							url: "/checkout/cart",
+						let checkoutHTML = await myajax({
+							url: `${HOSTADDRESS}/checkout/cart`,
 							method: "GET",
 							type: "text"
 						})
@@ -490,7 +522,7 @@
 							checkDetail: "Đặt hàng thành công"
 						});
 
-						await command("changeLocation", { href: "/sales/order/history" });
+						await command("changeLocation", { href: HOSTADDRESS + "/sales/order/history" });
 						log("CHẠY KẾT THÚC");
 						return;
 					}
@@ -524,8 +556,8 @@
 			let addData = {}
 
 			try {
-				addData = await command("ajax", {
-					url: "/checkout/cart/ajaxAdd",
+				addData = await myajax({
+					url: `${HOSTADDRESS}/checkout/cart/ajaxAdd`,
 					method: "POST",
 					form: {
 						id: id,
@@ -573,8 +605,8 @@
 					runInfo({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 	
 					log(` + Đang áp dụng Coupon: ${coupon}`)
-					await command("ajax", {
-						url: "/checkout/cart/ajaxCoupon",
+					await myajax({
+						url: `${HOSTADDRESS}/checkout/cart/ajaxCoupon`,
 						method: "POST",
 						form: {
 							coupon_code: coupon
@@ -590,8 +622,8 @@
 			log(`Đang chọn địa chỉ Giao Hàng`);
 
 			log(` + Đang lấy thông tin địa chỉ`);
-			let shippingRAW = await command("ajax", {
-				url: "/checkout/shipping",
+			let shippingRAW = await myajax({
+				url: `${HOSTADDRESS}/checkout/shipping`,
 				method: "GET",
 				type: "text"
 			})
@@ -608,8 +640,8 @@
 			log(` + Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
-			let selectAddress = await command("ajax", {
-				url: "/checkout/shipping/ajaxSave",
+			let selectAddress = await myajax({
+				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
 				method: "POST",
 				form: {
 					address_id: shippingID,
@@ -624,8 +656,8 @@
 			heartbeat();
 
 			log(` + Đang nhận thông tin`);
-			let paymentRAW = await command("ajax", {
-				url: "/checkout/payment",
+			let paymentRAW = await myajax({
+				url: `${HOSTADDRESS}/checkout/payment`,
 				method: "GET",
 				type: "text"
 			})
@@ -652,11 +684,11 @@
 				log(` + Phát hiện Tiki Now!`);
 				log(`   + Đang cập nhật thông tin giỏ`);
 
-				await command("ajax", {
-					url: "/checkout/payment/ajax_update_cart",
+				await myajax({
+					url: `${HOSTADDRESS}/checkout/payment/ajax_update_cart`,
 					method: "POST",
 					header: {
-						"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
+						"X-Access-Token": await getToken(),
 						apikey: null
 					},
 					form: {
@@ -712,11 +744,11 @@
 			heartbeat();
 
 			log(` + Đang nhận thông tin`);
-			let placeOrder = await command("ajax", {
-				url: "/checkout/payment/ajax_check_place_order",
+			let placeOrder = await myajax({
+				url: `${HOSTADDRESS}/checkout/payment/ajax_check_place_order`,
 				method: "POST",
 				header: {
-					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
+					"X-Access-Token": await getToken(),
 					apikey: null
 				},
 				form: {
@@ -754,7 +786,7 @@
 		if (settings.orderBy === "orderByCoupon") {
 			runInfo({ now: `Bước 1`, end: `Bước 1`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
 			heartbeat();
-			await addIntoCart({ id: ID, count: settings.orderCount });
+			await addIntoCart({ id: PID, count: settings.orderCount });
 			heartbeat();
 			runInfo({ now: `Bước 1`, end: `Bước 1`, progress: 100, checkDetail: "Thêm vào Giỏ Hàng thành công!" });
 		}

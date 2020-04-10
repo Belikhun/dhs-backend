@@ -135,10 +135,15 @@
 
 				PHC.classList.add("noData");
 			} else {
-				costData = beeCost.data.price_classification;
 				costHistory = beeCost.data.item_history.price;
 				costHistoryTime = beeCost.data.item_history.price_ts;
 				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
+
+				costData = {
+					min: Math.min( ...costHistory ),
+					max: Math.max( ...costHistory ),
+					avg: costHistory.reduce((a, b) => a + b) / costHistory.length
+				}
 
 				PHC.classList.remove("noData");
 			}
@@ -156,10 +161,10 @@
 				let timeStamp = new Date(costHistoryTime[i]);
 
 				let bar = document.createElement("span");
-				let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
-				bar.classList.add("bar", (value === costData.max_price)
+				let _p = ((value - costData.min) / (costData.max - costData.min));
+				bar.classList.add("bar", (value === costData.max)
 					? "max"
-					: (value === costData.min_price)
+					: (value === costData.min)
 						? "min"
 						:(value === itemInitPrice)
 							? "cur"
@@ -176,21 +181,21 @@
 			//? PH Line
 			var PHChartAvgLine = document.createElement("span");
 			PHChartAvgLine.classList.add("avgLine");
-			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max - costData.avg) / (costData.max - costData.min)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
 			PHChart.appendChild(PHChartAvgLine);
 
 			PHInfo.innerHTML = `
 				<span class="col max">
 					<t>Cao Nhất</t>
-					<span class="price">${priceFormat(costData.max_price)}</span>
+					<span class="price">${priceFormat(costData.max)}</span>
 				</span>
 				<span class="col avg">
 					<t>Trung Bình</t>
-					<span class="price">${priceFormat(costData.avg_price)}</span>
+					<span class="price">${priceFormat(costData.avg)}</span>
 				</span>
 				<span class="col min">
 					<t>Thấp Nhất</t>
-					<span class="price">${priceFormat(costData.min_price)}</span>
+					<span class="price">${priceFormat(costData.min)}</span>
 				</span>
 			`
 

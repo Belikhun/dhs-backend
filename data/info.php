@@ -36,13 +36,16 @@
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 
 	ob_start(); ?>
-		<b>Tự động mua cho Shopee</b> hiện không thể tự động tiến hành thanh toán do thay đổi phương thức gọi API. Hiện vẫn đang điều tra nguyên nhân
+		<ul style="margin: unset;">
+			<li>Tốc độ mua của <b>Sendo</b> đã được cải thiện</li>
+			<li><b>Shopee</b> hiện không thể tự động tiến hành thanh toán. Nguyên nhân vẫn đang được điều tra</li>
+		</ul>
 	<?php
 	$ANNOUNCEMENT = ob_get_clean();
 
 	define("EXTENSION_ANNOUNCEMENT", Array(
 		"enabled" => true,
-		"level" => "warning",
+		"level" => "info",
 		"message" => $ANNOUNCEMENT
 	));
 

@@ -197,10 +197,15 @@
 
 				PHC.classList.add("noData");
 			} else {
-				costData = beeCost.data.price_classification;
 				costHistory = beeCost.data.item_history.price;
 				costHistoryTime = beeCost.data.item_history.price_ts;
 				costHistoryTimeDelta = (costHistoryTime[costHistoryTime.length - 1] - costHistoryTime[0]) / 2592000000;
+
+				costData = {
+					min: Math.min( ...costHistory ),
+					max: Math.max( ...costHistory ),
+					avg: costHistory.reduce((a, b) => a + b) / costHistory.length
+				}
 
 				PHC.classList.remove("noData");
 			}
@@ -218,10 +223,10 @@
 				let timeStamp = new Date(costHistoryTime[i]);
 
 				let bar = document.createElement("span");
-				let _p = ((value - costData.min_price) / (costData.max_price - costData.min_price));
-				bar.classList.add("bar", (value === costData.max_price)
+				let _p = ((value - costData.min) / (costData.max - costData.min));
+				bar.classList.add("bar", (value === costData.max)
 					? "max"
-					: (value === costData.min_price)
+					: (value === costData.min)
 						? "min"
 						:(value === itemInitPrice)
 							? "cur"
@@ -238,21 +243,21 @@
 			//? PH Line
 			var PHChartAvgLine = document.createElement("span");
 			PHChartAvgLine.classList.add("avgLine");
-			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max_price - costData.avg_price) / (costData.max_price - costData.min_price)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
+			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max - costData.avg) / (costData.max - costData.min)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
 			PHChart.appendChild(PHChartAvgLine);
 
 			PHInfo.innerHTML = `
 				<span class="col max">
 					<t>Cao Nhất</t>
-					<span class="price">${priceFormat(costData.max_price)}</span>
+					<span class="price">${priceFormat(costData.max)}</span>
 				</span>
 				<span class="col avg">
 					<t>Trung Bình</t>
-					<span class="price">${priceFormat(costData.avg_price)}</span>
+					<span class="price">${priceFormat(costData.avg)}</span>
 				</span>
 				<span class="col min">
 					<t>Thấp Nhất</t>
-					<span class="price">${priceFormat(costData.min_price)}</span>
+					<span class="price">${priceFormat(costData.min)}</span>
 				</span>
 			`
 
@@ -465,194 +470,7 @@
 				throw { code: -1, description: addCartData.error_msg, data: addCartData };
 			}
 
-			await command("ajax", {
-				url: "/api/v1/account_info",
-				method: "POST",
-				header: {
-					"X-API-SOURCE": APISource,
-					"X-CSRFToken": CSRF,
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				json: {
-					need_cart: 1,
-					skip_address: 0
-				}
-			})
-
-			let ordersData = await command("ajax", {
-				url: "/api/v2/cart/get_orders",
-				method: "GET",
-				header: {
-					"X-API-SOURCE": APISource,
-					"X-CSRFToken": CSRF,
-					"X-Requested-With": "XMLHttpRequest"
-				}
-			})
-
-			for (let i = 0; i < ordersData.data.shoporders.length; i++)
-				for (let j = 0; j < ordersData.data.shoporders[i].iteminfos.length; j++)
-					ordersData.data.shoporders[i].iteminfos[j].checkout = true;
-
-			await command("ajax", {
-				url: "/api/v2/cart/get_shop_item_data",
-				method: "POST",
-				header: {
-					"X-API-SOURCE": APISource,
-					"X-CSRFToken": CSRF,
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				json: {
-					shop_item_ids: [{
-						shopid: shopId,
-						itemid: id
-					}],
-					normalize_promotion_rules: true
-				}
-			})
-
-			await command("ajax", {
-				url: "/api/v2/shop/get_list",
-				method: "POST",
-				header: {
-					"X-API-SOURCE": APISource,
-					"X-CSRFToken": CSRF,
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				json: {
-					shop_ids: [shopId],
-					need_detail: 1
-				}
-			})
-
-			await command("ajax", {
-				url: "/api/v2/checkout/coupon",
-				method: "POST",
-				header: {
-					"X-API-SOURCE": APISource,
-					"X-CSRFToken": CSRF,
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				json: {
-					promotion_data: {
-						auto_apply_vouchers: true,
-						free_shipping_voucher_info: {
-							free_shipping_voucher_id: null
-						},
-						use_coins: false,
-						voucher_code: ""
-					},
-
-					shoporders: ordersData.data.shoporders
-				}
-			})
-
 			log(` + Thêm Item vào Giỏ thành công!`);
-			runInfo({ now: `Bước 2`, progress: 20, progWarn: false, checkDetail: "Đang lấy thông tin Item" });
-			heartbeat();
-			log("Đang lấy thông tin Item");
-			let checkoutPayload = {
-				shoporders: [{
-					shop: {
-						shopid: shopId
-					},
-					items: [{
-						itemid: id,
-						add_on_deal_id: null,
-						is_add_on_sub_item: null,
-						item_group_id: null,
-						quantity: count,
-						..._mIdObj
-					}],
-					logistics: {
-						recommended_channelids: null
-					},
-					buyer_address_data: {}
-				}],
-				selected_payment_channel_data: {},
-				promotion_data: {
-					voucher_code: coupon,
-					use_coins: false,
-					free_shipping_voucher_info: {}
-				},
-				device_info: {
-					device_id: "",
-					device_fingerprint: "",
-					tongdun_blackbox: "",
-					buyer_payment_info: {}
-				},
-				tax_info: {
-					tax_id: ""
-				}
-			}
-
-			heartbeat();
-			log(" + Fetching /cart/checkPromotionAndVerify/");
-			let cartVerifyData = await command("ajax", {
-				url: "/api/v0/buyer/cart/check_promotion_and_verify/",
-				method: "POST",
-				header: {
-					"X-API-SOURCE": APISource,
-					"X-CSRFToken": CSRF,
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				form: {
-					skip_prep_checkout: true,
-					orders: JSON.stringify([
-						{
-							shopid: shopId,
-							items: [
-								{
-									quantity: count,
-									is_wholesale_item: false,
-									checkout: true,
-									shopid: shopId,
-									itemid: id,
-									..._mIdObj
-								}
-							]
-						}
-					])
-				}
-			})
-
-			if (cartVerifyData.err_code !== 0) {
-				await errored("Lỗi khi tiến hành kiểm tra và xác nhận đơn hàng");
-				log(` + Code: ${cartVerifyData.err_code}`);
-				throw { code: cartVerifyData.err_code, description: `Lỗi khi tiến hành kiểm tra và xác nhận đơn hàng`, data: cartVerifyData };
-			}
-
-			log(" + Fetching /checkout/get_quick");
-			await command("ajax", {
-				url: "/api/v2/checkout/get_quick",
-				method: "POST",
-				header: {
-					"X-API-SOURCE": APISource,
-					"X-CSRFToken": CSRF,
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				json: checkoutPayload
-			})
-
-			log(" + Fetching /checkout/get");
-			CHECKOUT_GET = await command("ajax", {
-				url: "/api/v2/checkout/get",
-				method: "POST",
-				header: {
-					"X-API-SOURCE": APISource,
-					"X-CSRFToken": CSRF,
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				json: checkoutPayload
-			})
-
-			if (CHECKOUT_GET.error) {
-				await errored("Lỗi khi tiến hành Lấy Thông Tin item");
-				log(" + Errored while checking out Item");
-				log(`    + Code: ${CHECKOUT_GET.error}`);
-				log(`    + EC  : ${CHECKOUT_GET.error_empty_cart}`);
-				log(`    + MSG : ${CHECKOUT_GET.error_msg || "Không Rõ"}`);
-				throw { code: -1, description: "Không thể tiến hành Checkout", data: CHECKOUT_GET };
-			}
 		}
 
 		const __applyCoupon = async ({
@@ -714,105 +532,42 @@
 			}
 		}
 		
-		const __doOrder = async ({
-			APISource = "pc"
-		}) => {
-			runInfo({ now: `Bước 4`, progress: 60, progWarn: false, checkDetail: "Đang chọn phương thức thanh toán" });
-			heartbeat();
-			log("Đang chọn phương thức thanh toán")
-			log(` + Sử dụng AirPay: ${settings.useAirPay}`);
-
-			CHECKOUT_GET.selected_payment_channel_data = settings.useAirPay
-				? {
-					channel_id: 5001800,
-					channel_item_option_info: {},
-					version: 2,
-				}
-				: {
-					payment_channelid: 59000,
-					version: 1
-				}
-
-			runInfo({ now: `Bước 5`, progress: 80, progWarn: false, checkDetail: "Đang đặt hàng" });
-			heartbeat();
-			log(`Bắt đầu đặt hàng`);
-
-			CHECKOUT_GET.headers = {}
-			CHECKOUT_GET.timestamp = Math.floor(time()) + 2;
-			CHECKOUT_GET.shipping_orders[0].buyer_ic_number = "";
-			CHECKOUT_GET.shoporders[0].buyer_ic_number = "";
-			CHECKOUT_GET.shoporders[0].ext_ad_info_mappings = []
-			delete CHECKOUT_GET.payment_channel_info;
-			delete CHECKOUT_GET.shipping_orders[0].logistics;
-			delete CHECKOUT_GET.shoporders[0].logistics;
-
-			log(` + Đang mã hóa dữ liệu`);
-			let HASH = randString(128, "0123456789abcdef");
-			let placeOrder = "";
+		const __doOrder = async () => {
+			await command("changeLocation", { href: "https://shopee.vn/cart/" })
 
 			try {
-				placeOrder = await command("ajax", {
-					url: "/api/v2/checkout/place_order",
-					method: "POST",
-					type: "text",
-					header: {
-						"Content-Type": "text/plain;charset=UTF-8",
-						"X-API-SOURCE": APISource,
-						"X-CSRFToken": CSRF,
-						"X-Requested-With": "XMLHttpRequest",
-						"X-CV-ID": 100,
-						"X-Track-Id": HASH,
-						"If-None-Match-": `55b03-08d47a57630009d06d3011de11a9df6c`
+				await waitFor(
+					async (tryNth) => {
+						log(`Đang kiểm tra... [${tryNth}]`);
+						return (await command("click", { query: "button.shopee-button-solid.shopee-button-solid--primary" })).clicked
 					},
-					raw: encrypt(JSON.stringify(CHECKOUT_GET), HASH)
-				})
+					() => {},
+					50,
+					200,
+					() => { throw { code: 1, description: "ERROR: Stage 1 > Cannot find Place Order Button" } }
+				)
+	
+				log("Đang chuyển sang trang Thanh Toán...");
+	
+				await waitFor(
+					async (tryNth) => {
+						log(`Đang kiểm tra... [${tryNth}]`);
+	
+						if (!(await command("queryExist", { query: "div.checkout-payment-method-view__current-type" })).exist)
+							return false;
+	
+						return (await command("click", { query: "button.stardust-button.stardust-button--primary.stardust-button--large" })).clicked
+					},
+					() => {
+						log("Thanh Toán thành công!");
+					},
+					50,
+					200,
+					() => { throw { code: 2, description: "ERROR: Stage 2 > Cannot find Place Order Button" } }
+				)
 			} catch(e) {
-				log(" + Request Errored");
-				log(`    + Code: ${e.data.code}`);
-				log(`    + MSG : ${e.data.description || "Không rõ"}`);
-				placeOrder = e.data.data;
+				throw e;
 			}
-
-			log(` + Đang giải mã dữ liệu`);
-			let decrypted = ""
-
-			try {
-				decrypted = decrypt(placeOrder, HASH);
-			} catch(e) {
-				await errored("Lỗi Khi Tiến Hành Giải Mã Dữ Liệu");
-				log(" + Cannot Decrypt Data");
-				log(`    + Code: ${e.code}`);
-				log(`    + MSG : ${e.description || "Không rõ"}`);
-				log(`    + CS  : ${e.data}`);
-				throw { code: e.code, description: `Lỗi Khi Tiến Hành Giải Mã Dữ Liệu`, data: e };
-			}
-
-			try {
-				placeOrder = JSON.parse(decrypted);
-			} catch(e) {
-				await errored("Lỗi Khi Tiến Hành Giải Mã Dữ Liệu");
-				log(" + Cannot Parse Decrypted Data");
-				log(`    + Decrypted : ${decrypted || "Không rõ"}`);
-				throw { code: -1, description: `Cannot Parse Decrypted Data`, data: decrypted };
-			}
-
-			if (placeOrder.error && placeOrder.error !== 0) {
-				await errored("Lỗi Khi Tiến Hành Đặt Mua Item");
-				log(" + Cannot Place Order");
-				log(`    + Code: ${placeOrder.error}`);
-				log(`    + MSG : ${placeOrder.error_msg || "Không rõ"}`);
-				throw { code: placeOrder.error, description: `Lỗi Khi Tiến Hành Đặt Mua Item`, data: placeOrder };
-			}
-
-			runInfo({ progress: 100, progWarn: false, checkDetail: "Đặt hàng thành công" });
-			heartbeat();
-			log(" + doOrder đã hoàn thành! Đang chuyển tới chi tiết đơn...");
-			log("=========== KẾT QUẢ ===========");
-			log(` + CheckoutID  : ${placeOrder.checkoutid}`);
-			log(` + paymentType : ${placeOrder.payment_type}`);
-			log(` + Order ID    : ${placeOrder.orderids.join(", ")}`);
-
-			command("changeLocation", { href: placeOrder.redirect_url });
 		}
 
 		//* ========
@@ -820,7 +575,6 @@
 		//* ========
 
 		switch (settings.orderBy) {
-
 			//! |==========================|
 			//! |   Order By Coupon Check  |
 			//! |==========================|
@@ -938,9 +692,7 @@
 						order();
 						sounds.notification();
 
-						await __doOrder({
-							APISource: settings.APISource
-						});
+						await __doOrder();
 						
 						log(` + Thời gian   : ${orderTimer.stop}s`);
 						complete();
@@ -1063,9 +815,7 @@
 							APISource: settings.APISource
 						});
 
-						await __doOrder({
-							APISource: settings.APISource
-						});
+						await __doOrder();
 						
 						log(` + Thời gian   : ${orderTimer.stop}s`);
 						complete();

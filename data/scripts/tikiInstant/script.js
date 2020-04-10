@@ -35,9 +35,6 @@
 		}
 	
 		log("itemName: " + itemName);
-
-		log("Đang lấy danh sách tài khoản");
-		let prevAccountList = (await core.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
 	
 		// Get ID
 		var ID = null;
@@ -106,7 +103,7 @@
 					{ name: `Ví Momo`, color: "blue", value: "momo" }
 				]
 			},
-			accountList: { type: "textarea", label: "Danh sách tài khoản", height: "180px", value: prevAccountList, required: true, save: false }
+			accountList: { type: "textarea", label: "Danh sách tài khoản", height: "180px", value: "", required: true }
 		});
 
 		runInfo({ info: "Đang tạo nút",  progress: 80 });

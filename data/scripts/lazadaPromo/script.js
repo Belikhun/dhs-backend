@@ -56,7 +56,7 @@
 		log(`|===========================|`);
 		log(`|   Lazada Promotion List   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 00:27:37 24/03/2020  |`);
+		log(`|  LU: 11:28:49 24/03/2020  |`);
 		log(`|===========================|`);
 
 		const scanItem = async ({ sortBy = "sale", pageCount = 1, coolDown = 3000, wordList = ["nhận", "quà tặng"] } = {}, updateList = () => {}) => {
@@ -247,21 +247,15 @@
 										let link = "https:" + item.link;
 										let thumbnail = item.image;
 					
-										let price = parseInt(item.price.priceNumber);
-										let oldPrice = (item.comboPrice.priceLeft) ? parseInt(item.comboPrice.priceNumber) : price;
-										let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
-					
 										list[item.itemId] = {
 											id: item.itemId,
 											nid: item.skuId,
 											title: item.title,
 											link: link,
-											price,
-											priceSale,
+											price: item.price.priceNumber,
 											thumbnail,
-											oldPrice,
-											sale: priceSale,
-											promotion: promotionData.title
+											promotion: promotionData.title,
+											time: time / 1000
 										}
 					
 										sortedList.push(list[item.itemId]);
@@ -271,12 +265,12 @@
 										log(`         + UPDATING`);
 
 										switch (sortBy) {
-											case "sale":
-												sortedList.sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
-												break;
-										
 											case "name":
 												sortedList.sort((a, b) => (a.title < b.title) ? 1 : (a.title > b.title) ? -1 : 0);
+												break;
+
+											case "scanTime":
+												sortedList.sort((a, b) => (a.time < b.time) ? 1 : (a.time > b.time) ? -1 : 0);
 												break;
 							
 											case "haveCoupon":
@@ -352,16 +346,8 @@
 			let currentPrice = document.createElement("t");
 			currentPrice.classList.add("current", "price");
 			currentPrice.innerText = priceFormat(itemData.price);
-
-			let oldPrice = document.createElement("t");
-			oldPrice.classList.add("old", "price");
-			oldPrice.innerText = priceFormat(itemData.oldPrice);
-
-			let discount = document.createElement("t");
-			discount.classList.add("discount");
-			discount.innerText = `${(-itemData.priceSale).toFixed(2)}%`;
 			
-			priceInfo.append(currentPrice, oldPrice, discount);
+			priceInfo.append(currentPrice);
 
 			let dealInfo = document.createElement("span");
 			dealInfo.classList.add("dealInfo");
@@ -478,7 +464,7 @@
 				required: false,
 				list: [
 					{ name: `Tên`, color: "blue", value: "name" },
-					{ name: `Mức giảm giá`, color: "pink", value: "sale", checked: true },
+					{ name: `Mới quét được`, color: "pink", value: "scanTime", checked: true },
 					{ name: `Thời gian mở bán`, color: "blue", value: "openTime" },
 					{ name: `Giá item (nhỏ đến lớn)`, color: "blue", value: "priceUp" },
 					{ name: `Giá item (lớn đến nhỏ)`, color: "blue", value: "priceDown" }
@@ -513,7 +499,7 @@
 		var itemList = [];
 
 		const changeAllListPage = async (page, {
-			showCount = 10
+			showCount = 30
 		} = {}) => {
 			let total = itemList.sortedList.length;
 			let maxPage = (showCount === 0) ? 1 : Math.max(1, Math.floor(total / showCount));
@@ -556,6 +542,7 @@
 			wordList: settings.wordList.split(";")
 		}, data => {
 			itemList = data;
+			sounds.notification();
 			changeAllListPage(CURRENT_PAGE);
 		})
 
