@@ -6,7 +6,7 @@
 #? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 #? |-----------------------------------------------------------------------------------------------|
 set -e
-pushd .. > /dev/null
+pushd ..
 
 echo -e "\033[1;35mDEPLOYING \033[30m(Build $TRAVIS_BUILD_NUMBER)\033[m"
 start=$(date +%s.%N)

@@ -9,6 +9,6 @@ before_script:
   - sudo chmod ugo+x build.sh
   - sudo chmod ugo+x deploy.sh
 
-script: ./build.sh
-
-after_script: ./deploy.sh
+script:
+  - ./build.sh
+  - ./deploy.sh
