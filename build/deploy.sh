@@ -16,7 +16,7 @@ git config --global user.name "Belikhun"
 git checkout -b production
 git add .
 git commit --message "🛠 BUILD: $TRAVIS_BUILD_NUMBER"
-git remote add prod_origin https://belivipro9x99:${GH_TOKEN}@github.com/dealHunterSuiteBackend.git
+git remote add prod_origin https://belivipro9x99:${GH_TOKEN}@github.com/belivipro9x99/dealHunterSuiteBackend.git
 git push --set-upstream prod_origin production
 	
 end=$(date +%s.%N)
