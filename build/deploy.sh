@@ -7,7 +7,7 @@
 #? |-----------------------------------------------------------------------------------------------|
 set -e
 
-echo -e "\033[1;35mDEPLOYING\033[m"
+echo -e "\033[1;35mDEPLOYING \033[30m(Build $TRAVIS_BUILD_NUMBER)\033[m"
 start=$(date +%s.%N)
 
 git config --global user.email "belivipro9x99@gmail.com"
