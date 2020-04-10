@@ -7,6 +7,7 @@ before_script:
   - cd build
   # add executeable flag
   - sudo chmod ugo+x build.sh
+  - sudo chmod ugo+x deploy.sh
 
 script: ./build.sh
 
