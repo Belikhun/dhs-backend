@@ -16,7 +16,7 @@ git checkout -b production
 git add .
 git commit --message "🛠 BUILD: $TRAVIS_BUILD_NUMBER"
 git remote add origin https://${GH_TOKEN}@github.com/dealHunterSuiteBackend.git > /dev/null 2>&1
-git push --quiet --set-upstream origin production
+git push --set-upstream origin production
 	
 end=$(date +%s.%N)
 echo -e " \033[1;37m→ \033[1;33m$(echo "$end - $start" | bc)s"
