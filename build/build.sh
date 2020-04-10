@@ -23,10 +23,10 @@ pushd ../data/scripts > /dev/null
 for dir in */ ; do
 	res1=$(date +%s.%N)
     echo -e " \033[1;37m● \033[m$dir"
-	javascript-obfuscator "$dir\script.js" --compact true --string-array true --self-defending true --unicode-escape-sequence true -o "$dir\script.min.js"
+	javascript-obfuscator "$(dir)script.js" --compact true --string-array true --self-defending true --unicode-escape-sequence true -o "$(dir)script.min.js"
 	res2=$(date +%s.%N)
 
-	echo -e "   \033[1;37m→ \033[1;33m$(( res2 - res1 ))s"
+	echo -e "   \033[1;37m→ \033[1;33m$((res2 - res1))s"
 done
 
 popd > /dev/null
