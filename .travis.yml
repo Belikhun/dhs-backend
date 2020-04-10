@@ -7,7 +7,7 @@ python:
 
 before_script:
     # install obfuscator
-    - npm install --save-dev javascript-obfuscator
+    - npm install -g javascript-obfuscator
     - cd build
     # add executeable flag
     - sudo chmod ugo+x build.sh
