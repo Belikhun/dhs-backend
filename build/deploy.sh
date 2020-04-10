@@ -16,7 +16,8 @@ git config --global user.name "Belikhun"
 git checkout -b production
 git add .
 git commit --message "🛠 BUILD: $TRAVIS_BUILD_NUMBER"
-git push --set-upstream origin production
+git remote add prod_origin https://belivipro9x99:${GH_TOKEN}@github.com/dealHunterSuiteBackend.git
+git push --set-upstream prod_origin production
 	
 end=$(date +%s.%N)
 echo -e " \033[1;37m→ \033[1;33m$(php -r "echo $end - $start;")s"
