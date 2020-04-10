@@ -1,0 +1,15 @@
+language: php
+dist: "bionic"
+php:
+    - "7.2"
+python:
+    - "3.7"
+
+before_script:
+    # install obfuscator
+    - npm install --save-dev javascript-obfuscator
+    - cd build
+    # add executeable flag
+    - sudo chmod ugo+x build.sh
+
+script: ./build.sh
