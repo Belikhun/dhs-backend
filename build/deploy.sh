@@ -23,15 +23,17 @@ start=$(date +%s.%N)
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR\033[1;30m"
 cp -rf . $tmpdir/
 rm -rf $tmpdir/.git
+rm -rf .
 
 echo -e " \033[1;37m* \033[1;34mGIT INITIALIZING"
+cd ..
+rm -f dealHunterSuiteBackend
+
 git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
-git remote set-url origin https://belivipro9x99:${GH_TOKEN}@github.com/belivipro9x99/dealHunterSuiteBackend.git
-git remote update
-git fetch -f origin
-git checkout -b production
-git clean -fxd > /dev/null
+git clone https://belivipro9x99:${GH_TOKEN}@github.com/belivipro9x99/dealHunterSuiteBackend.git
+cd dealHunterSuiteBackend
+git checkout production
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
 cp -rf $tmpdir/. .
