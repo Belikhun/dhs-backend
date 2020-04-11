@@ -489,7 +489,7 @@
 				required: false,
 				list: [
 					{ name: `Tên`, color: "blue", value: "name" },
-					{ name: `Mã Giảm Giá`, color: "pink", value: "sale", checked: true },
+					{ name: `Mức Giảm Giá`, color: "pink", value: "sale", checked: true },
 					{ name: `Có Mã Giảm Giá`, color: "blue", value: "haveCoupon" },
 					{ name: `Giá từ thấp đến cao (<)`, color: "blue", value: "priceUp" },
 					{ name: `Giá từ cao đến thấp (>)`, color: "blue", value: "priceDown" }
