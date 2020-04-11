@@ -32,7 +32,7 @@ git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
 git clone https://belivipro9x99:${GH_TOKEN}@github.com/belivipro9x99/dealHunterSuiteBackend.git
 cd dealHunterSuiteBackend
-git checkout production
+git checkout -B production --track origin/production
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
 cp -rf $tmpdir/. .
