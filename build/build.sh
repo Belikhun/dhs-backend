@@ -17,6 +17,9 @@ fi
 echo -e "\033[1;34mCopying dbinfo.php"
 cp -f production/dbinfo.php ../data/dbinfo.php
 
+echo -e "\033[1;35mCopying .gitignore"
+cp -f production/.gitignore ../.gitignore
+
 echo -e "\033[1;36mObfuscating Scripts"
 pushd ../data/scripts > /dev/null
 

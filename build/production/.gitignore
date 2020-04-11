@@ -1,0 +1,11 @@
+data/logs.json
+data/avatar/*
+!data/avatar/avt.default
+!data/avatar/change.php
+!data/avatar/get.php
+.cache
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+log.txt

@@ -79,7 +79,7 @@
             ID = data.id;
             SKUID = data.skuid;
             itemName = data.name;
-            itemInitPrice = data.offers.price;
+            itemInitPrice = data.offers.highPrice;
 
             info({
                 id: data.sku,
@@ -340,7 +340,7 @@
                         return;
                     }
             
-                    var currentPrice = data.offers.price;
+                    var currentPrice = data.offers.highPrice;
                     let reqTime = ((time() - reqStart) * 1000);
                     let reqTimeAT = (reqTime / settings.checkInterval) * 100;
             
