@@ -14,7 +14,7 @@ popd
 pushd ..
 
 echo -e "\033[1;30m + CURRENT DIR: $(pwd)"
-echo -e "\033[1;30m + TEMPORARY DIR: $(tmpdir)"
+echo -e "\033[1;30m + TEMPORARY DIR: $tmpdir"
 echo ""
 
 echo -e "\033[1;35mDEPLOYING \033[30m(Build $TRAVIS_BUILD_NUMBER)\033[m"
