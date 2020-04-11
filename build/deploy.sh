@@ -20,7 +20,7 @@ echo ""
 echo -e "\033[1;35mDEPLOYING \033[30m(Build $TRAVIS_BUILD_NUMBER)\033[m"
 start=$(date +%s.%N)
 
-echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR\033[1;30m"
+echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR"
 cp -rf . $tmpdir/
 rm -rf $tmpdir/.git
 cd ..
