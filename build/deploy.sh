@@ -23,12 +23,10 @@ start=$(date +%s.%N)
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR\033[1;30m"
 cp -rf . $tmpdir/
 rm -rf $tmpdir/.git
-rm -rf *
-rm -rf .*
+cd ..
+rm -rf dealHunterSuiteBackend
 
 echo -e " \033[1;37m* \033[1;34mGIT INITIALIZING"
-cd ..
-rm -f dealHunterSuiteBackend
 
 git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
