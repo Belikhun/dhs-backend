@@ -29,7 +29,7 @@ git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
 git remote set-url origin https://belivipro9x99:${GH_TOKEN}@github.com/belivipro9x99/dealHunterSuiteBackend.git
 git remote update
-git fetch -f
+git fetch -f --all
 git checkout --track origin/production
 git clean -fxd > /dev/null
 
