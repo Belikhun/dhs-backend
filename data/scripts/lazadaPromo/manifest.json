@@ -1,0 +1,8 @@
+{
+    "name": "Lazada Promotion List",
+    "description": "Tìm item có promotion cho Lazada",
+    "site": "lazada.vn/",
+    "match": "*",
+    "version": 2,
+    "hide": true
+}

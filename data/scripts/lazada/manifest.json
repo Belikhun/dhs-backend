@@ -1,0 +1,8 @@
+{
+    "name": "Lazada",
+    "description": "Tự động mua hàng cho Lazada",
+    "site": "lazada.vn/",
+    "match": "lazada\\.vn.*",
+    "version": 8,
+    "hide": true
+}

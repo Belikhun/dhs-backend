@@ -1,0 +1,8 @@
+{
+    "name": "Tiki Deal Hunter",
+    "description": "Tìm item giá lỗi cho Tiki",
+    "site": "tiki.vn/",
+    "match": "*",
+    "version": 2,
+    "hide": true
+}

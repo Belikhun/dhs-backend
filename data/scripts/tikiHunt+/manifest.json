@@ -1,0 +1,8 @@
+{
+    "name": "Tiki Deal Hunter Pro",
+    "description": "Tìm item giá lỗi và tự động đặt mua cho Tiki",
+    "site": "tiki.vn/",
+    "match": "*",
+    "version": 9,
+    "hide": true
+}

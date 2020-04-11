@@ -1,0 +1,8 @@
+{
+    "name": "Lazada Deal Hunter",
+    "description": "Tìm item giá lỗi cho Lazada",
+    "site": "lazada.vn/",
+    "match": "*",
+    "version": 2,
+    "hide": true
+}

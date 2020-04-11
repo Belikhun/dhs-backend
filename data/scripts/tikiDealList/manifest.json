@@ -1,0 +1,8 @@
+{
+    "name": "Tiki Upcoming Deal List",
+    "description": "Liệt kê các deal sắp tới cho Tiki",
+    "site": "tiki.vn/",
+    "match": "*",
+    "version": 3,
+    "hide": true
+}

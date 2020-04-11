@@ -1,0 +1,8 @@
+{
+    "name": "Tiki",
+    "description": "Tự động mua hàng cho Tiki",
+    "site": "tiki.vn/",
+    "match": "tiki\\.vn\/.*\\-p\\d+\\.html.*",
+    "version": 13,
+    "hide": true
+}

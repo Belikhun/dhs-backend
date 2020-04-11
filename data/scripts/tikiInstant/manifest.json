@@ -1,0 +1,9 @@
+{
+    "name": "Tiki Instant",
+    "description": "Mua hàng 1 click cho Tiki",
+    "site": "tiki.vn/",
+    "match": "tiki\\.vn\/.*\\-p\\d+\\.html.*",
+    "autorun": true,
+    "version": 2,
+    "hide": true
+}
