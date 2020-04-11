@@ -23,14 +23,13 @@ start=$(date +%s.%N)
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR\033[1;30m"
 cp -r ./* $tmpdir
 rm -rf $tmpdir/.git
-ls $tmpdir
 
 echo -e " \033[1;37m* \033[1;34mGIT INITIALIZING"
 git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
 git checkout --orphan production
-git rm -rf .
-git clean -fxd
+git rm -rf . > /dev/null
+git clean -fxd > /dev/null
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
 cp -r $tmpdir/* .
