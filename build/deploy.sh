@@ -23,7 +23,8 @@ start=$(date +%s.%N)
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR\033[1;30m"
 cp -rf . $tmpdir/
 rm -rf $tmpdir/.git
-rm -rf .
+rm -rf *
+rm -rf .*
 
 echo -e " \033[1;37m* \033[1;34mGIT INITIALIZING"
 cd ..
