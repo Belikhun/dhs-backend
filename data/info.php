@@ -36,16 +36,13 @@
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 
 	ob_start(); ?>
-		<ul style="margin: unset;">
-			<li>Tốc độ mua của <b>Sendo</b> đã được cải thiện</li>
-			<li><b>Shopee</b> hiện không thể tự động tiến hành thanh toán. Nguyên nhân vẫn đang được điều tra</li>
-		</ul>
+		<b>Shopee Auto Click</b> sẽ tạm thời thay thế cho <b>Shopee</b>
 	<?php
 	$ANNOUNCEMENT = ob_get_clean();
 
 	define("EXTENSION_ANNOUNCEMENT", Array(
 		"enabled" => true,
-		"level" => "info",
+		"level" => "warning",
 		"message" => $ANNOUNCEMENT
 	));
 
