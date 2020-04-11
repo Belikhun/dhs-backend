@@ -29,8 +29,8 @@ git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
 git remote set-url origin https://belivipro9x99:${GH_TOKEN}@github.com/belivipro9x99/dealHunterSuiteBackend.git
 git remote update
-git fetch -f --all
-git checkout --track origin/production
+git fetch -f origin
+git checkout -b production
 git clean -fxd > /dev/null
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
@@ -39,7 +39,7 @@ cp -rf $tmpdir/. .
 echo -e " \033[1;37m* \033[1;34mCREATING COMMIT"
 git add .
 git commit --message "🛠 BUILD: $TRAVIS_BUILD_NUMBER"
-git push --force --set-upstream origin production
+git push -f -u origin production
 	
 end=$(date +%s.%N)
 echo -e " \033[1;37m→ \033[1;33m$(php -r "echo $end - $start;")s"
