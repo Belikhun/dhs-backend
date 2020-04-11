@@ -42,7 +42,7 @@ echo -e " \033[1;37m* \033[1;34mCREATING COMMIT"
 git add .
 git commit --message "🛠 BUILD: $TRAVIS_BUILD_NUMBER"
 git push -f -u origin production
-	
+
 end=$(date +%s.%N)
 echo -e " \033[1;37m→ \033[1;33m$(php -r "echo $end - $start;")s"
 echo -e "\033[1;32m✓\033[0m Done!"
