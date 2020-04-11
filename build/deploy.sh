@@ -8,7 +8,7 @@
 set -e
 mkdir ~/tmp
 pushd ~/tmp
-tmpDir = "$(pwd)"
+tmpDir="$(pwd)"
 popd
 
 pushd ..
