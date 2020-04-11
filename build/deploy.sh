@@ -6,12 +6,12 @@
 #? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 #? |-----------------------------------------------------------------------------------------------|
 set -e
-mkdir ~/tmp
-pushd ~/tmp
-tmpdir="$(pwd)"
-popd
+pushd .. > /dev/null
 
-pushd ..
+mkdir ~/tmp
+pushd ~/tmp > /dev/null
+tmpdir="$(pwd)"
+popd > /dev/null
 
 echo -e "\033[1;30m + CURRENT DIR: $(pwd)"
 echo -e "\033[1;30m + TEMPORARY DIR: $tmpdir"
@@ -21,8 +21,8 @@ echo -e "\033[1;35mDEPLOYING \033[30m(Build $TRAVIS_BUILD_NUMBER)\033[m"
 start=$(date +%s.%N)
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR\033[1;30m"
-cp ./* tmpdir
-rm -rf tmpdir/.git
+cp ./* $tmpdir
+rm -rf $tmpdir/.git
 
 echo -e " \033[1;37m* \033[1;34mGIT INITIALIZING"
 git config --global user.email "belivipro9x99@gmail.com"
@@ -30,7 +30,7 @@ git config --global user.name "Belikhun"
 git checkout -b production
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
-cp tmpdir/* .
+cp $tmpdir/* .
 
 echo -e " \033[1;37m* \033[1;34mCREATING COMMIT"
 git add .
