@@ -27,6 +27,7 @@ rm -rf $tmpdir/.git
 echo -e " \033[1;37m* \033[1;34mGIT INITIALIZING"
 git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
+git fetch -f --update-shallow
 git checkout production
 git clean -fxd > /dev/null
 
