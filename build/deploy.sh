@@ -21,18 +21,17 @@ echo -e "\033[1;35mDEPLOYING \033[30m(Build $TRAVIS_BUILD_NUMBER)\033[m"
 start=$(date +%s.%N)
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR\033[1;30m"
-cp -r ./* $tmpdir
+cp -rf /. $tmpdir/
 rm -rf $tmpdir/.git
 
 echo -e " \033[1;37m* \033[1;34mGIT INITIALIZING"
 git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
-git checkout --orphan production
-git rm -rf . > /dev/null
+git checkout production
 git clean -fxd > /dev/null
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
-cp -r $tmpdir/* .
+cp -rf $tmpdir/* .
 
 echo -e " \033[1;37m* \033[1;34mCREATING COMMIT"
 git add .
