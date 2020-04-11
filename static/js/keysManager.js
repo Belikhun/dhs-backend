@@ -272,19 +272,19 @@ const keysManager = {
 			<form class="editor" action="javascript:void(0);">
 				<span class="column grow">
 					<div class="row">
-						<div class="formGroup blue sound small" data-soundselectsoft>
+						<div class="formGroup sound small" data-color="blue" data-soundselectsoft>
 							<input id="keyName_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Tên" required>
 							<label for="keyName_${keyID}">Tên</label>
 						</div>
 
-						<div class="formGroup blue sound large" data-soundselectsoft>
+						<div class="formGroup sound large" data-color="blue" data-soundselectsoft>
 							<input id="keyKey_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Khóa" required>
 							<label for="keyKey_${keyID}">Key</label>
 						</div>
 					</div>
 
 					<div class="row">
-						<div class="formGroup blue large sound" data-soundselectsoft>
+						<div class="formGroup large sound" data-color="blue" data-soundselectsoft>
 							<input id="tags_${keyID}" type="text" class="formField" autocomplete="off" placeholder="Thẻ">
 							<label for="tags_${keyID}">Thẻ (ngăn cách bằng dấu cách)</label>
 						</div>
@@ -317,7 +317,6 @@ const keysManager = {
 		var addLicenses = $(`#addLicenses_${keyID}`);
 		var licenses = $(`#licenses_${keyID}`);
 
-		let submitButton = fcfn(container, "submitButton");
 		let cancelButton = fcfn(container, "cancelButton");
 
 		cancelButton.addEventListener("mouseup", e => {
@@ -340,7 +339,7 @@ const keysManager = {
 		keyKeyInput.value = data.key;
 
 		if (data.tags && data.tags.length > 0)
-			tagsInput.value = data.tags.join(";");
+			tagsInput.value = data.tags.join(" ");
 
 		for (let item of data.licenses) {
 			let expireTime = new Date(item.expire * 1000);
@@ -374,7 +373,7 @@ const keysManager = {
 			let data = {
 				name: keyNameInput.value,
 				key: keyKeyInput.value,
-				tags: tagsInput.value.split(";"),
+				tags: tagsInput.value.split(" "),
 				licenses: licenseLists
 			}
 

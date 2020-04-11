@@ -63,19 +63,19 @@
                     <form id="keyAddEditor" class="editor" action="javascript:void(0);">
                         <span class="column grow">
                             <div class="row">
-                                <div class="formGroup blue sound small" data-soundselectsoft>
+                                <div class="formGroup sound small" data-color="blue" data-soundselectsoft>
                                     <input id="addKeyName" type="text" class="formField" autocomplete="off" placeholder="Tên người dùng" required>
                                     <label for="addKeyName">Tên</label>
                                 </div>
 
-                                <div class="formGroup grow blue sound large" data-soundselectsoft>
+                                <div class="formGroup grow sound large" data-color="blue" data-soundselectsoft>
                                     <input id="addKey" type="text" class="formField" autocomplete="off" placeholder="ID" required>
                                     <label for="addKey">Key</label>
                                 </div>
                             </div>
 
                             <div class="row">
-                                <div class="formGroup blue large sound" data-soundselectsoft>
+                                <div class="formGroup large sound" data-color="blue" data-soundselectsoft>
                                     <input id="addTags" type="text" class="formField" autocomplete="off" placeholder="Thẻ">
                                     <label for="addTags">Thẻ (ngăn cách bằng dấu cách)</label>
                                 </div>
