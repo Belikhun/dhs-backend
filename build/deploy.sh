@@ -28,7 +28,9 @@ ls $tmpdir
 echo -e " \033[1;37m* \033[1;34mGIT INITIALIZING"
 git config --global user.email "belivipro9x99@gmail.com"
 git config --global user.name "Belikhun"
-git checkout -b production
+git checkout --orphan production
+git rm -rf .
+git clean -fxd
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
 cp -r $tmpdir/* .
