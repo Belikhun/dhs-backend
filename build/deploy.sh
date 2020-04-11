@@ -31,7 +31,7 @@ git checkout production
 git clean -fxd > /dev/null
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
-cp -rf $tmpdir/* .
+cp -rf $tmpdir/. .
 
 echo -e " \033[1;37m* \033[1;34mCREATING COMMIT"
 git add .
