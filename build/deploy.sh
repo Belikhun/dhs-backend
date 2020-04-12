@@ -34,6 +34,7 @@ git clone https://belivipro9x99:${GH_TOKEN}@github.com/belivipro9x99/dealHunterS
 cd dealHunterSuiteBackend
 git checkout -b production
 git reset --hard origin/production
+git rm -rf .
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES FROM TEMPORARY DIR"
 cp -rf $tmpdir/. .
