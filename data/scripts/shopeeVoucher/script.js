@@ -15,7 +15,7 @@
         log(`|===========================|`);
         log(`|       Shopee Voucher      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 11:22:19 13/04/2020  |`);
+        log(`|  LU: 00:36:34 14/04/2020  |`);
         log(`|===========================|`);
 
 		info({ hide: true });
@@ -32,7 +32,7 @@
 		let APISource = preSetup.platform;
 		let selectedVoucherList = []
 		
-		let voucherList = await myajax({
+		let campaignData = await myajax({
 			url: `${HOSTADDRESS}/api/v2/microsite/campaign_site_page`,
 			method: "GET",
 			header: {
@@ -46,21 +46,44 @@
 			}
 		});
 
-		if (voucherList.error && voucherList.error !== 0) {
+		if (campaignData.error && campaignData.error !== 0) {
 			await errored(`Lỗi Khi Lấy Danh Sách Voucher`);
 			log(" + Không thể lấy danh sách voucher");
-			log(`    + Code: ${voucherList.error}`);
-			log(`    + BEE : ${voucherList.be_error}`);
-			log(`    + MSG : ${voucherList.error_msg || "Không rõ"}`);
-			throw { code: voucherList.error, description: `Lỗi Khi Lấy Danh Sách Voucher`, data: voucherList };
+			log(`    + Code: ${campaignData.error}`);
+			log(`    + BEE : ${campaignData.be_error}`);
+			log(`    + MSG : ${campaignData.error_msg || "Không rõ"}`);
+			throw { code: campaignData.error, description: `Lỗi Khi Lấy Danh Sách Voucher`, data: campaignData };
 		}
 
-		voucherList = voucherList.data.data.content.children
-			.map(i => ({ meta: i.meta, data: i.children[0].data }))
-			.filter(i => typeof i.data.promotion_id === "number");
+		voucherList = []
+
+		for (let item of campaignData.data.data.content.children) {
+			if (typeof item.children[0].data.promotion_id === "number") {
+				voucherList.push({
+					id: item.children[0].data.promotion_id,
+					name: item.meta.name,
+					signature: item.children[0].data.promotion_signature,
+					image: item.children[0].data.get_voucher_image
+				});
+
+				continue;
+			}
+
+			if (item.children[0].data.vouchers) {
+				for (let voucher of item.children[0].data.vouchers)
+					voucherList.push({
+						id: voucher.promotion_id,
+						name: voucher.display_shop_name,
+						signature: voucher.promotion_signature,
+						image: null
+					});
+
+				continue;
+			}
+		}
 
 		voucherData = voucherList
-			.reduce((o, i) => { o[i.meta.name] = i; return o }, {});
+			.reduce((o, i) => { o[i.name] = i; return o }, {});
 
 		await delayAsync(500);
 		
@@ -74,12 +97,11 @@
 		}
 
 		for (let item of voucherList)
-			voucherSetupData[item.meta.name] = {
+			voucherSetupData[item.name] = {
 				type: "checkbox",
-				label: `${item.meta.name}<br><img style="width: 320px" src="https://cf.shopee.vn/file/${item.data.get_voucher_image}">`,
-				color: item.data.microsite_claimable ? "blue" : "pink",
-				value: false,
-				disabled: item.collected
+				label: `<b style="font-size: 15px">${item.name}</b>${item.image ? `<br><img style="width: 320px; margin-top: 10px; border-radius: 8px;" src="https://cf.shopee.vn/file/${item.image}">` : ""}`,
+				color: "blue",
+				value: false
 			}
 
 		const voucherSetup = await setup(voucherSetupData, { confirm: "Tiếp" });
@@ -111,6 +133,7 @@
 		
         // Start
         var checkNth = 0;
+		var successCount = 0;
 		var start = time();
 		var total = selectedVoucherList.length;
 		var checkPer = settings.timeCheckInterval;
@@ -125,7 +148,7 @@
 				let item = selectedVoucherList[i];
 				checkNth++;
 
-				log(`🎫 ${item.meta.name} (ID ${item.meta.id})`);
+				log(`🎫 ${item.name} (ID ${item.id})`);
 				let reqStart = time();
 				let data = {}
 				
@@ -145,8 +168,8 @@
 							"If-None-Match-": "55b03-2631999c3258f845f93e63e284bd3a2a"
 						},
 						json: {
-							signature: item.data.promotion_signature,
-							voucher_promotionid: item.data.promotion_id
+							signature: item.signature,
+							voucher_promotionid: item.id
 						}
 					})
 				} catch(e) {
@@ -172,7 +195,6 @@
 				
 				let reqTime = ((time() - reqStart) * 1000);
 				let reqTimeAT = (reqTime / checkPer) * 100;
-				let successCount = 0;
 		
 				runInfo({
 					dataType: "time",
@@ -180,7 +202,7 @@
 					now: reqTime.toFixed(2) + "ms",
 					current: successCount,
 					saved: (successCount / total) * 100,
-					itemStatus: item.meta.name,
+					itemStatus: item.name,
 					itemStatusColor: "yellow",
 					checkDetail: `Check ${checkNth}`
 				})
@@ -194,6 +216,7 @@
 				}
 
 				order();
+				successCount++;
 				log(` ✅ Thêm Thành Công (${successCount}/${total})`);
 				selectedVoucherList = selectedVoucherList.splice(i, 1);
 
@@ -202,6 +225,8 @@
 					complete();
 					runInfo({
 						dataType: "time",
+						current: successCount,
+						saved: (successCount / total) * 100,
 						itemStatus: `ĐÃ THÊM ${successCount} VOUCHER`,
 						itemStatusColor: "green",
 						progress: 100,
