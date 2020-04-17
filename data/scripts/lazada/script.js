@@ -371,6 +371,17 @@
                             progWarn: false,
                             checkDetail: "Đặt hàng thành công"
                         });
+                        
+                        await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: data.offers.url,
+							price: currentPrice,
+							count: 1,
+							runPrice: itemInitPrice,
+							thumbnail: `http:${data.image}`
+						});
+
                         log("CHẠY KẾT THÚC");
                         return;
                     }

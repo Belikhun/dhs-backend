@@ -595,6 +595,17 @@
                             progWarn: false,
                             checkDetail: "Đặt hàng thành công"
                         });
+
+                        await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-i.${SID}.${ID}`,
+							price: currentPrice,
+							count: settings.orderCount,
+							runPrice: itemInitPrice,
+							oldPrice: data.result.data.final_price_max || null,
+							thumbnail: data.result.data.image
+						});
         
                         log("CHẠY KẾT THÚC");
                         return;

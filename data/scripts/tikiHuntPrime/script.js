@@ -763,6 +763,7 @@
 							}
 
 							if (priceRatio >= settings.autobuyRatio) {
+								let successCount = 0;
 								log(`   + BẮT ĐẦU ĐẶT MUA`);
 
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
@@ -786,6 +787,8 @@
 												count: settings.autobuyCount,
 												paymentMethod: settings.paymentMethod
 											});
+
+											successCount++;
 										}
 									} catch(e) {
 										heartbeat({ color: "red" });
@@ -799,13 +802,24 @@
 									log(`Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 								}
 
-								chrome.notifications.create({
-									type: "basic",
-									title: "Deal Hunter Suite",
-									message: `Đã mua: ${item.title} (${item.id})`,
-									contextMessage: `${(time() - start).toFixed(2)}s`,
-									iconUrl: "/assets/img/icon@32x32.png",
-									requireInteraction: true
+								if (successCount > 0)
+									chrome.notifications.create({
+										type: "basic",
+										title: "Deal Hunter Suite",
+										message: `Đã mua: ${item.title} (${item.id})`,
+										contextMessage: `${(time() - start).toFixed(2)}s`,
+										iconUrl: "/assets/img/icon@32x32.png",
+										requireInteraction: true
+									});
+
+								await sendBeacon({
+									script: SCRIPT.id,
+									name: item.title,
+									link: item.link,
+									price: item.price,
+									count: successCount,
+									oldPrice: item.oldPrice,
+									thumbnail: item.thumbnail
 								});
 							}
 						}
