@@ -195,7 +195,7 @@ const core = {
 							(item.note && typeof item.note === "object")
 								? `
 									<ul class="textView">
-										${item.note.map(i => `<li>${i}</li>`).join()}
+										${item.note.map(i => `<li>${i}</li>`).join("")}
 									</ul>
 								`
 								: ""
