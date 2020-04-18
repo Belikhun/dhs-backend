@@ -428,7 +428,7 @@
                         await sendBeacon({
 							script: SCRIPT.id,
 							name: itemName,
-							link: `${HOST.main}/item-${ID}`,
+							link: `${HOST.main}/item-${ID}.html`,
 							price: currentPrice,
 							count: settings.orderCount,
 							runPrice: itemInitPrice,
@@ -516,7 +516,7 @@
                     await sendBeacon({
                         script: SCRIPT.id,
                         name: itemName,
-                        link: `${HOST.main}/item-${ID}`,
+                        link: `${HOST.main}/item-${ID}.html`,
                         price: itemInitPrice,
                         count: settings.orderCount
                     });
@@ -627,7 +627,7 @@
                         await sendBeacon({
 							script: SCRIPT.id,
 							name: itemName,
-							link: `${HOST.main}/item-${ID}`,
+							link: `${HOST.main}/item-${ID}.html`,
 							price: currentPrice,
 							count: settings.orderCount,
 							runPrice: itemInitPrice,
