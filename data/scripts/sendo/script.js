@@ -263,10 +263,10 @@
             priceHistory: { type: "customNode", node: PHC },
             orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", color: "pink", value: true },
             orderByCoupon: { type: "switch", label: "Mua theo mã giảm giá", name: "orderBy" },
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, depend: "orderBy:orderByPrice" },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, save: false, depend: "orderBy:orderByPrice" },
             orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
             orderDelay: { type: "number", label: "Thời gian chờ trước khi mua", value: "0", required: false },
-            coupon: { type: "text", label: "Mã giảm giá", required: false },
+            coupon: { type: "text", label: "Mã giảm giá", required: false, save: false },
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 200, required: true, depend: "orderBy:orderByTime", doubt: true },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
@@ -377,7 +377,16 @@
 						});
 
 						return;
-					}
+                    }
+                    
+                    if (info.errors) {
+                        await errored("Lỗi Khi Thử Áp Dụng Coupon");
+                        log(" + Cannot Get Checkout Info");
+                        log(`    + Type: ${info.errors[0].type}`);
+                        log(`    + Code: ${info.errors[0].code}`);
+                        log(`    + MSG : ${info.errors[0].message || "Không Rõ"}`);
+                        throw { code: info.errors[0].code, description: info.errors[0].message, data: info.errors };
+                    }
 			
 					let reqTime = ((time() - reqStart) * 1000);
                     let reqTimeAT = (reqTime / settings.checkInterval) * 100;
@@ -415,6 +424,17 @@
                             progWarn: false,
                             checkDetail: "Đặt hàng thành công"
                         });
+
+                        await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOST.main}/item-${ID}`,
+							price: currentPrice,
+							count: settings.orderCount,
+							runPrice: itemInitPrice,
+							oldPrice: data.result.data.final_price_max || null,
+							thumbnail: data.result.data.image
+						});
         
                         log("CHẠY KẾT THÚC");
 						return;
@@ -492,6 +512,14 @@
                         log("CHẠY KẾT THÚC");
                         return;
                     }
+
+                    await sendBeacon({
+                        script: SCRIPT.id,
+                        name: itemName,
+                        link: `${HOST.main}/item-${ID}`,
+                        price: itemInitPrice,
+                        count: settings.orderCount
+                    });
 
                     // UNLOAD MEMORY
                     delete curTime;
@@ -599,7 +627,7 @@
                         await sendBeacon({
 							script: SCRIPT.id,
 							name: itemName,
-							link: `${HOSTADDRESS}/item-i.${SID}.${ID}`,
+							link: `${HOST.main}/item-${ID}`,
 							price: currentPrice,
 							count: settings.orderCount,
 							runPrice: itemInitPrice,
