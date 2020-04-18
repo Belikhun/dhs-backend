@@ -11,7 +11,7 @@
 	define("AUTHOR", "Team DHS");
 	define("VERSION", "0.7.2");
 	define("VERSION_TAG", "release");
-	define("REPO_ADDRESS", "");
+	define("REPO_ADDRESS", "https://github.com/belivipro9x99/dealHunterSuiteBackend");
 	define("REPORT_ERROR", REPO_ADDRESS . "/issues");
 	define("CONTACT_LINK", "http://m.me/HunterDealJustFun");
 	define("TRACK_ID", "UA-124598427-2");
@@ -28,10 +28,10 @@
 	define("AVATAR_DIR", $_SERVER["DOCUMENT_ROOT"] ."/data/avatar");
 	define("SCRIPTS_DIR", $_SERVER["DOCUMENT_ROOT"] ."/data/scripts");
 
-	define("HOST_NAME", "dealhunter.000webhostapp.com");
+	define("HOST_NAME", "dealhuntersuite.com");
 
 	define("EXTENSION_ID", "ooeeakiohlmkbdmdpfkhkkafgappoijd");
-	define("EXTENSION_VERSION", "3.4");
+	define("EXTENSION_VERSION", "3.5");
 	define("EXTENSION_ZIP_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.zip");
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 

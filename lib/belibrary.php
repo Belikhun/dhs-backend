@@ -151,11 +151,11 @@
 	}
 
 	function getForm(String $key, $isNull = null) {
-		return isset($_POST[$key]) ? trim($_POST[$key]) : $isNull;
+		return (isset($_POST[$key]) && $_POST[$key] !== "null") ? trim($_POST[$key]) : $isNull;
 	}
 
 	function getQuery(String $key, $isNull = null) {
-		return isset($_GET[$key]) ? trim($_GET[$key]) : $isNull;
+		return (isset($_GET[$key]) && $_GET[$key] !== "null") ? trim($_GET[$key]) : $isNull;
 	}
 
 	function getHeader(String $key, $isNull = null) {

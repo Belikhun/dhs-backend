@@ -150,7 +150,13 @@
 					]
 				})
 
-			return { price: itemPrice, status: itemStatus, qty: itemQTY };
+			return {
+				price: itemPrice,
+				oldPrice: data.list_price,
+				thumbnail: data.thumbnail_url,
+				status: itemStatus,
+				qty: itemQTY
+			}
 		}
 		
 		//? PRICE HISTORY CONTAINER
@@ -374,28 +380,39 @@
 				order();
 
 				for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
-					let item = accountList[orderNth];
+					let account = accountList[orderNth];
 
 					runInfo({ itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`, itemStatusColor: "yellow" });
 					heartbeat();
 					log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
 
 					try {
-						await __doOrder({
-							id: PID,
-							count: settings.orderCount,
-							coupon: settings.coupon,
-							paymentMethod: settings.paymentMethod,
-							username: item.u,
-							password: item.p
+						await __switchAccount({
+							username: account.u,
+							password: account.p
 						});
+
+						for (let time = 1; time <= settings.autoRebuy; time++) {
+							log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
+							sounds.notification();
+							await __doOrder({
+								id: item.pid,
+								count: 1,
+								paymentMethod: settings.paymentMethod
+							});
+
+							successCount++;
+						}
 					} catch(e) {
-						clog("ERRR", `doOrder ${item.u} [${PID}]`, e);
+						heartbeat({ color: "red" });
+						log(`Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+						clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
+						await __clearCart();
 						continue;
 					}
-					
-					successCount++;
-					log(`Mua thành công cho tài khoản ${item.u}! (${orderNth + 1}Nth)`);
+
+					heartbeat();
+					log(`Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 				}
 	
 				complete();
@@ -405,6 +422,17 @@
 					progress: 100,
 					progWarn: false,
 					checkDetail: "Đặt hàng thành công"
+				});
+
+				await sendBeacon({
+					script: SCRIPT.id,
+					name: itemName,
+					link: `${HOSTADDRESS}/item-p${ID}.html`,
+					price: currentPrice,
+					count: successCount,
+					runPrice: itemInitPrice,
+					oldPrice: data.oldPrice,
+					thumbnail: data.thumbnail
 				});
 
 				await command("changeLocation", { href: "/sales/order/history" });
@@ -426,18 +454,14 @@
 			let runTime = time() - start;
 			runInfo({ time: runTime });
 		}, 60)
-		
-		const __doOrder = async ({
-			id = 0,
-			count = 0,
-			coupon = "",
-			paymentMethod = "cod",
+
+		const __switchAccount = async ({
 			username = "",
 			password = ""
 		}) => {
-			sounds.notification();
-			let orderTimer = new stopClock();
+			let loginTimer = new stopClock();
 
+			heartbeat();
 			log(`Đang đăng xuất khỏi tài khoản hiện tại`);
 			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang đăng xuất" });
 
@@ -445,7 +469,7 @@
 				url: `${HOSTADDRESS}/api/v2/account/logout`,
 				method: "GET",
 				header: {
-					"X-Access-Token": await getToken()
+					"x-access-token": cookie.get("TIKI_ACCESS_TOKEN")
 				}
 			});
 
@@ -464,7 +488,6 @@
 					}
 				});
 			} catch(e) {
-				await errored("Lỗi khi đăng nhập vào tài khoản");
 				log(" + Không thể đăng nhập vào tài khoản");
 				log(`    + Code: ${e.data.data.error.code}`);
 				log(`    + MSG : ${e.data.data.error.message || "Không rõ"}`);
@@ -478,7 +501,17 @@
 				throw { code: -1, description: "Thất bại khi đăng nhập vào tài khoản", data: e.data.data }
 			}
 
-			log("Đăng nhập thành công");
+			log(`Đăng nhập thành công (${loginTimer.stop}s)`);
+		}
+		
+		const __doOrder = async ({
+			id = 0,
+			count = 0,
+			coupon = "",
+			paymentMethod = "cod"
+		}) => {
+			sounds.notification();
+			let orderTimer = new stopClock();
 
 			log("Đang thêm Item vào Giỏ Hàng");
 			runInfo({ now: `Bước 3`, progress: 20, checkDetail: "Đang thêm Item vào Giỏ Hàng" });

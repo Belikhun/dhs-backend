@@ -96,7 +96,7 @@
 						itemStatus = item.inventory_status;
 
 						if (item.id !== PID) {
-							log(`PID Change: ${PID} -> ${item.id}`);
+							log(`PID Change: ${PID} -> ${item.id} (1)`);
 							PID = parseInt(item.id);
 						}
 					}
@@ -124,7 +124,7 @@
 				}
 
 				if (_pid !== PID) {
-					log(`PID Change: ${PID} -> ${_pid}`);
+					log(`PID Change: ${PID} -> ${_pid} (2)`);
 					PID = _pid;
 				}
 			}
@@ -150,7 +150,13 @@
 					]
 				})
 
-			return { price: itemPrice, status: itemStatus, qty: itemQTY };
+			return {
+				price: itemPrice,
+				oldPrice: data.list_price,
+				thumbnail: data.thumbnail_url,
+				status: itemStatus,
+				qty: itemQTY
+			}
 		}
 
 		//? PRICE HISTORY CONTAINER
@@ -348,7 +354,7 @@
 						return;
 					}
 					
-					var currentPrice = data ? data.price : null;
+					let currentPrice = data ? data.price : null;
 					let reqTime = ((time() - reqStart) * 1000);
 					let reqTimeAT = (reqTime / settings.checkInterval) * 100;
 					let successCount = 0;
@@ -412,20 +418,36 @@
 										count: settings.orderCount,
 										paymentMethod: settings.paymentMethod
 									});
-								} finally {
+
 									successCount++;
+								} catch(e) {
+									continue;
 								}
 
 								heartbeat();
 								log(`Mua thành công item thứ ${orderNth}!`);
 							}
-						else
+						else {
 							await __doOrder({
 								id: PID,
 								count: settings.orderCount,
 								coupon: settings.coupon,
 								paymentMethod: settings.paymentMethod
 							});
+
+							successCount++;
+						}
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-p${ID}.html`,
+							price: currentPrice,
+							count: successCount,
+							runPrice: itemInitPrice,
+							oldPrice: data.oldPrice,
+							thumbnail: data.thumbnail
+						});
 			
 						complete();
 						runInfo({
@@ -530,7 +552,18 @@
 						log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
 						doCheck = false;
 						order();
+
 						await __doOrder({ skipPre: true });
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-p${ID}.html`,
+							price: currentPrice,
+							count: settings.orderCount,
+							runPrice: itemInitPrice
+						});
+
 						complete();
 						runInfo({
 							itemStatus: `ĐÃ ĐẶT ${settings.orderCount} items`,
