@@ -294,6 +294,17 @@ function fcfn(node, className) {
 	return node.getElementsByClassName(className)[0];
 }
 
+/**
+ * @param	{String}	HTML representing a single element
+ * @return	{Element}
+ */
+function htmlToElement(html) {
+    let template = document.createElement("template");
+	template.innerHTML = html.trim();
+	
+    return template.content.firstChild;
+}
+
 function buildElementTree(type = "div", __class = [], data = new Array(), __keypath = "") {
 	let tree = document.createElement(type);
 	if (typeof __class == "string")
@@ -464,7 +475,7 @@ function liveTime(element, start = time(new Date()), { type = "full", count = "u
 					break;
 				}
 
-				parsed = parseTime(t % 86400, { showPlus: true });
+				parsed = parseTime(t % 86400, { forceShowHours: true, showPlus: true });
 				ts = `<timer><days>${Math.floor(t / 86400)}</days>${parsed.str}<ms>${parsed.ms}</ms></timer>`;
 				break;
 
@@ -475,7 +486,7 @@ function liveTime(element, start = time(new Date()), { type = "full", count = "u
 					break;
 				}
 				
-				parsed = parseTime(t % 86400, { showPlus: true });
+				parsed = parseTime(t % 86400, { forceShowHours: true, showPlus: true });
 				ts = `<timer><days>${Math.floor(t / 86400)}</days>${parsed.str}</timer>`;
 				break;
 		
@@ -515,6 +526,96 @@ class stopClock {
 
 	get stop() {
 		return (this.__time() - this.start) / 1000;
+	}
+}
+
+class pager {
+	constructor(container, showCount = 20) {
+		if (!container.classList)
+			throw { code: -1, description: `pager: container is not a valid node` }
+
+		this.container = container;
+		this.listData = []
+		this.renderItemHandler = () => {}
+		this.updateHandler = () => {}
+		this.filterHandler = () => true
+		this.showCount = showCount;
+		this.__currentPage = 1;
+		this.__maxPage = 1;
+	}
+
+	/**
+	 * @param {array} list
+	 */
+	set list(list) {
+		if (typeof list !== "object" || !list.length)
+			throw { code: -1, description: `(set) pager.list: not a valid array` }
+
+		this.listData = list;
+		this.render();
+	}
+
+	renderItem(f) {
+		if (typeof f !== "function")
+			throw { code: -1, description: `pager.renderItem: not a valid function` }
+
+		this.renderItemHandler = f;
+	}
+
+	onUpdate(f) {
+		if (typeof f !== "function")
+			throw { code: -1, description: `pager.onUpdate: not a valid function` }
+
+		this.updateHandler = f;
+	}
+
+	setFilter(f) {
+		if (typeof f !== "function")
+			throw { code: -1, description: `pager.setFilter: not a valid function` }
+
+		this.filterHandler = f;
+	}
+
+	next() {
+		this.__currentPage++;
+		this.render();
+	}
+
+	back() {
+		this.__currentPage--;
+		this.render();
+	}
+
+	setPage(page) {
+		if (typeof page !== "number" && !["first", "last"].includes(page))
+			throw { code: -1, description: `pager.setPage: ${page} is not a valid number/command` }
+
+		this.__currentPage = page;
+		this.render();
+	}
+
+	render() {
+		if (this.__currentPage < 1 || this.__currentPage === "first")
+			this.__currentPage = 1;
+
+		let listData = this.listData.filter(this.filterHandler);
+		let total = Math.max(listData.length, 1);
+		let maxPage = parseInt(Math.floor(total / this.showCount) + ((total % this.showCount === 0) ? 0 : 1));
+
+		if (this.__currentPage > maxPage || this.__currentPage === "last")
+			this.__currentPage = maxPage;
+
+		let from = (this.__currentPage - 1) * this.showCount;
+		let to = Math.min(this.__currentPage * this.showCount - 1, total - 1);
+
+		this.updateHandler({ total, maxPage, currentPage: this.__currentPage, from, to });
+		emptyNode(this.container);
+
+		for (let i = from; i <= to; i++)
+			if (listData[i])
+				this.renderItemHandler(listData[i], this.container);
+			else
+				clog("WARN", `pager.render: listData does not contain data in index`, { text: i, color: flatc("red") });
 	}
 }
 
@@ -679,7 +780,7 @@ function triBg(element, {
 
 		let triangle = document.createElement("span");
 		triangle.style.filter = `brightness(${randBright})`;
-		triangle.style.transform = `scale(${randScale * scale})`;
+		triangle.style.transform = `translate(-50%, -50%) scale(${randScale * scale})`;
 		triangle.style.left = `${randLeftPos}%`;
 		triangle.style.animationDelay = `${delay}s`;
 		triangle.style.animationDuration = `${speed / randScale}s`;

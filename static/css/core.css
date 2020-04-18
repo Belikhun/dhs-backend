@@ -1,0 +1,542 @@
+/*
+? |-----------------------------------------------------------------------------------------------|
+? |  /static/css/core.css                                                                         |
+? |                                                                                               |
+? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
+? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
+? |-----------------------------------------------------------------------------------------------|
+*/
+
+body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-color: #dddddd;
+    top: 0;
+    bottom: 0;
+    width: 100vw;
+    margin: 0 0 20px;
+    overflow: hidden;
+    font-family: "Open Sans", "Segoe UI", "Calibri", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.fixedContainer {
+    position: fixed;
+    display: flex;
+    flex-direction: row;
+    top: 0;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+#mainContainer {
+    position: relative;
+	display: flex;
+	flex-direction: column;
+    flex-grow: 1;
+    background-color: #dddddd;
+    overflow: auto;
+}
+
+#mainContainer::before {
+	content: "\f24d";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, calc(-50% - 22px));
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 72px;
+    color: rgb(172, 172, 172);
+}
+
+#mainContainer::after {
+	content: "LAYOUT EMPTY";
+    position: absolute;
+    display: block;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(-50% + 38px));
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    color: rgb(158, 158, 158);
+}
+
+#mainContainer .container {
+	position: relative;
+	display: none;
+}
+
+/** =====================================keysManager===================================== */
+
+#mainContainer .keysManager {
+	background-color: transparent;
+}
+
+#mainContainer .keysManager .keyList {
+    position: relative;
+    display: contents;
+}
+
+#mainContainer .keysManager .keyList .group {
+    transition: background-color 0.3s ease;
+}
+
+#mainContainer .keysManager .keyList .group:nth-child(even) .storedKeyList {
+	background-color: rgba(230, 230, 230, 0.4);
+}
+
+#mainContainer .keysManager .keyList .group.showEditor,
+#mainContainer .keysManager .keyList .group .storedKeyList:hover {
+    background-color: rgba(245, 245, 246, 0.4);
+}
+
+#mainContainer .keysManager .keyList .group.showEditor .storedKeyList,
+#mainContainer .keysManager .keyList .group.showEditor .storedKeyList:hover {
+    background-color: unset;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList.expired {
+    background-color: rgba(255, 170, 170, 0.2);
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList.expired:hover {
+	background-color: rgba(255, 191, 191, 0.2);
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex-flow: wrap;
+	justify-content: center;
+	background-color: rgba(255, 255, 255, 0.4);
+	margin: 0 10px;
+	border-radius: 16px;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .id {
+    position: relative;
+    font-size: 13px;
+    font-weight: bold;
+    color: #676f79;
+    width: 30px;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .id::before {
+    content: "#";
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info {
+    position: relative;
+    flex-grow: 1;
+    list-style: none;
+    margin: unset;
+    padding: 0 20px;
+    overflow: hidden;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .keyName {
+    position: relative;
+    font-family: Nunito;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+    color: #425161;
+
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList.expired .info .keyName {
+    color: rgb(221, 52, 52);
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .tags {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .tags > tag {
+    position: relative;
+    display: inline-block;
+    background-color: #f1f1f1;
+    color: #4d4d4d;
+    margin: 4px;
+    padding: 2px 10px;
+    border-radius: 15px;
+    font-family: "Calibri";
+    font-weight: bold;
+    font-size: 11px;
+    -webkit-font-smoothing: antialiased;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .tags > tag:first-child {
+    margin: 0 4px 0 0;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .key {
+    position: relative;
+    font-family: "Open Sans";
+    font-size: 12px;
+    font-weight: lighter;
+    color: #676f79;
+    margin-top: 10px;
+
+    word-wrap: break-word;
+    -webkit-user-select: text;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .allow {
+    position: relative;
+    font-size: 13px;
+    color: #4c545f;
+    margin-top: 10px;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .detail {
+    position: relative;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin: 10px 0 0 0;
+    padding: unset;
+    list-style: none;
+
+    font-size: 13px;
+    color: rgb(75, 75, 75);
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .detail > li::before {
+    content: "\f111";
+    position: relative;
+    display: inline-block;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 13px;
+    margin-right: 10px;
+    color: rgb(124, 124, 124);
+    transition: color 0.1s ease;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .detail > .create::before {
+    content: "\f055";
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .info .detail > .lastUsed::before {
+    content: "\f144";
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .licenses {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex-grow: 0;
+    flex-shrink: 1;
+
+    margin: 10px;
+    padding: unset;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .licenses .license {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 10px;
+
+    max-width: 260px;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .licenses .license .allow {
+    font-weight: bold;
+    font-size: 16px;
+    color: rgb(44, 44, 44);
+
+    word-wrap: break-word;
+    text-align: right;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .licenses .license .allow::before {
+    content: "Cho Phép";
+    display: block;
+    font-size: 12px;
+    font-weight: normal;
+    text-transform: uppercase;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .licenses .license .timeDesc {
+    margin-top: 10px;
+    font-family: "Open Sans";
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #383838;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .licenses .license.expired .timer {
+    color: rgb(255, 68, 68);
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .button {
+    position: relative;
+    flex-grow: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 10px 0;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .button span {
+    position: relative;
+    padding: 0 8px;
+    cursor: pointer;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .button span::before {
+    content: "\f111";
+    position: relative;
+    display: inline-block;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 22px;
+    color: rgba(132, 132, 132, 0.6);
+    transition: color 0.1s ease;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .button span.delete::before {
+    content: "\f1f8";
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .button span.delete:hover::before {
+    color: #e74c3c;
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .button span.edit::before {
+    content: "\f304";
+}
+
+#mainContainer .keysManager .keyList .group .storedKeyList .button span.edit:hover::before {
+    color: #3498db;
+}
+
+#mainContainer .keysManager .keyList .group.showEditor .storedKeyList .button .edit {
+    display: none;
+}
+
+#mainContainer .keysManager .group.plus .item .left {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+#mainContainer .keysManager .group.plus .item .left > button {
+	flex-grow: 1;
+	flex-shrink: 1;
+	max-width: 120px;
+}
+
+#mainContainer .keysManager .group.plus .item .searchBox {
+	transform: translateY(-8px);
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox {
+	position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox > span {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin: 0 5px;
+    background-color: rgba(255, 255, 255, 0.5);
+	border-radius: 50%;
+	cursor: pointer;
+
+	transition:
+		background-color 0.3s ease;
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox > span:hover {
+    background-color: #ffffff;
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox > span::before {
+	content: "\f105";
+    position: relative;
+    font-family: "Font Awesome 5 Free";
+    font-size: 16px;
+	font-weight: 900;
+    color: rgb(116, 116, 116);
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox .forward::before {
+    content: "\f050";
+    font-size: 13px;
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox .next::before {
+	padding: 0 0 0 2px;
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox .prev::before {
+    content: "\f104";
+	padding: 0 2px 0 0;
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox .backward::before {
+    content: "\f049";
+    font-size: 13px;
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox .delete::before {
+    content: "\f1f8";
+    font-size: 13px;
+}
+
+#mainContainer .keysManager .group.plus .item.sortBox {
+	flex-direction: row;
+	justify-content: center;
+}
+
+#mainContainer .keysManager .group.plus .item.sortBox > .switch {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin: 0 10px;
+}
+
+#mainContainer .keysManager .group.plus .item.sortBox > .switch > .left {
+	margin-right: 10px;
+	text-align: right;
+}
+
+#mainContainer .keysManager .group.plus .item .buttonBox .current {
+    font-family: Nunito;
+    font-size: 12px;
+	font-weight: bold;
+    letter-spacing: 1.5px;
+    margin: 0 5px;
+}
+
+#mainContainer .keysManager .group .keyEditor {
+    position: relative;
+    display: flex;
+
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+#mainContainer .keysManager .group .keyEditor.showEditor,
+#mainContainer .keysManager .keyList .group.showEditor .keyEditor {
+    max-height: 360px;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-height: 100%;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor line {
+    margin: 10px 20px;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .column {
+    position: relative;
+    display: flex;
+    max-height: 100%;
+    flex-shrink: 1;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 20px;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .column.grow {
+    flex-grow: 1;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .row {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    margin: 5px 0;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .column .row .small {
+    flex-grow: 0;
+    margin: 0 10px;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .column .row .large {
+    flex-grow: 1;
+    margin: 0 10px;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .addLicense {
+    padding: 10px 20px;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .licensesContainer {
+    flex-flow: wrap;
+    overflow-y: auto;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .licensesContainer > .row {
+    justify-content: center;
+    flex-flow: wrap;
+}
+
+#mainContainer .keysManager .group .keyEditor .editor .licensesContainer > .row.expired {
+    background-color: rgba(255, 170, 170, 0.2);
+}
+
+/* Dark */
+
+body.dark #mainContainer .keysManager .keyList .group .storedKeyList .info .keyName {
+    color: rgb(182, 182, 182);
+}
+
+body.dark #mainContainer .keysManager .keyList .group .storedKeyList .info .key {
+    color: rgb(218, 218, 218);
+}
+
+body.dark .formGroup.blue .formField {
+    color: rgb(204, 204, 204);
+}
+
+/** =====================================LAYOUT===================================== */
+
+#mainContainer[data-layout="3"]::before,
+#mainContainer[data-layout="3"]::after {
+	content: unset;
+}
+
+#mainContainer[data-layout="3"] .keysManager {
+	display: block;
+}

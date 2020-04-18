@@ -8,214 +8,142 @@
 */
 
 .navBar {
-    position: fixed;
+    position: relative;
     display: flex;
     flex-direction: column;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #ebebeb;
-    box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.2);
+    flex-grow: 0;
+    flex-shrink: 0;
+    height: 100%;
+    background-color: #ffffff;
+
+    order: 1;
     z-index: 99;
+    overflow: hidden;
     user-select: none;
 }
 
-.navBar .top {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    height: 56px;
-}
-
-.navBar .top .left {
-    position: relative;
-    display: flex;
-    flex-grow: 1;
-    align-items: center;
-    height: 100%;
-}
-
-.navBar .top .left .icon {
-    position: relative;
-    height: 44px;
-    width: 44px;
-    border-radius: 100%;
-    margin: 0 10px;
-    float: left;
-}
-
-.navBar .top .left .title {
-    position: relative;
-    max-width: calc(100% - 58px);
-    padding-left: 0;
-    float: left;
-    list-style: none;
-    text-align: left;
-    font-weight: bold;
-    margin: unset;
-}
-
-.navBar .top .left .title .main {
-    position: relative;
-    font-family: Nunito;
-    font-size: 18px;
-    font-weight: 750;
-    letter-spacing: .8px;
-    color: #425161;
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-.navBar .top .left .title .sub {
-    position: relative;
-    font-size: 12px;
-    color: #546e7a;
-    overflow: hidden;
-    letter-spacing: 0.4px;
-    font-weight: lighter;
-    white-space: nowrap;
-}
-
-.navBar .top .right {
+.navBar .group {
     position: relative;
     display: flex;
     flex-grow: 0;
     flex-shrink: 0;
+    flex-direction: column;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.navBar .group.middle {
+    flex-grow: 1;
+    flex-shrink: 1;
+    justify-content: center;
+}
+
+.navBar .top .avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    margin: 10px;
+    border-radius: 50%;
+}
+
+.navBar .group .icon {
+    position: relative;
+    display: flex;
     align-items: center;
-    height: 100%;
-    cursor: pointer;
-}
-
-.navBar .top .right .hamburger {
-    position: relative;
-    width: 22px;
-    height: 20px;
-    margin-right: 10px;
-    -webkit-transition: all 1s cubic-bezier(0.06, 0.81, 0, 0.98);
-    -o-transition: all 1s cubic-bezier(0.06, 0.81, 0, 0.98);
-    transition: all 1s cubic-bezier(0.06, 0.81, 0, 0.98);
-    z-index: 2;
-}
-
-.navBar .top .right .hamburger span {
-    position: absolute;
+    justify-content: center;
     width: 100%;
-    height: 4px;
-    border-radius: 4px;
-    background-color: #2c3e50;
-    left: 0;
-    -webkit-transition-property: opacity, -webkit-transform;
-    -o-transition-property: transform, opacity;
-    transition-property: transform, opacity;
-    -webkit-transition-duration: 0.5s;
-         -o-transition-duration: 0.5s;
-            transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease;
-         -o-transition-timing-function: ease;
-            transition-timing-function: ease;
+    height: 60px;
+    cursor: pointer;
+
+    background-color: transparent;
+    transition:
+        height 0.3s cubic-bezier(0.33, 1, 0.68, 1),
+        background-color 0.3s ease;
 }
 
-.navBar .top .right .hamburger span:nth-child(1) {
-    top: 0;
-}
-
-.navBar .top .right .hamburger span:nth-child(2) {
-    top: 50%;
-    -webkit-transform: translateY(-50%);
-        -ms-transform: translateY(-50%);
-            transform: translateY(-50%);
-}
-
-.navBar .top .right .hamburger span:nth-child(3) {
-    bottom: 0;
-}
-
-.navBar .top .right.active .hamburger span:nth-child(1){
-    -webkit-transform: translateY(8px) rotate(45deg);
-        -ms-transform: translateY(8px) rotate(45deg);
-            transform: translateY(8px) rotate(45deg);
-}
-
-.navBar .top .right.active .hamburger span:nth-child(2){
+.navBar .group .icon .triBgContainer {
     opacity: 0;
+
+    transition:
+        opacity 0.3s ease;
 }
 
-.navBar .top .right.active .hamburger span:nth-child(3){
-    -webkit-transform: translateY(-8px) rotate(-45deg);
-        -ms-transform: translateY(-8px) rotate(-45deg);
-            transform: translateY(-8px) rotate(-45deg);
-}
-
-.navBar .top .right .avatar {
+.navBar .group .icon::before {
+    content: "\f111";
     position: relative;
-    height: 44px;
-    width: 44px;
-    border-radius: 100%;
-    margin: 0 10px;
-    object-fit: cover;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 22px;
+    color: rgba(136, 136, 136, 0.6);
+    z-index: 1;
+
+    transition: color 0.3s ease;
 }
 
-.navBar .top .right .info {
-    position: relative;
-    margin: unset;
-    padding: unset;
-    max-width: calc(100% - 82px);
-    list-style: none;
-    text-align: right;
-    font-weight: bold;
+.navBar .group .icon::after {
+    content: "";
+    position: absolute;
+    display: block;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    background-color: rgba(82, 82, 82, 0.5);
+
+    transition:
+        width 0.3s cubic-bezier(0.33, 1, 0.68, 1),
+        background-color 0.3s ease;
 }
 
-.navBar .top .right .info .tag {
-    position: relative;
-    font-family: Nunito;
-    font-size: 12px;
-    letter-spacing: 0.4px;
-    color: #546e7a;
+.navBar .group .icon:hover {
+    background-color: rgba(124, 124, 124, 0.1);
 }
 
-.navBar .top .right .info .name {
-    position: relative;
-    font-family: Nunito;
-    font-size: 18px;
-    font-weight: 750;
-    font-style: italic;
-    color: #425161;
+.navBar .group .icon:hover::before {
+    color: rgb(100, 100, 100);
 }
 
-.navBar .bottom {
-    position: relative;
+.navBar .group .icon:hover::after {
+    width: 4px;
 }
 
-@media only screen and (max-width: 800px) {
-    .navBar .top .left {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        max-width: unset;
-    }
+.navBar .group .icon.active {
+    height: 120px;
+}
 
-    body:not(.guest) .navBar .top .left .icon {
-        display: none;
-    }
+.navBar .group .icon.active .triBgContainer {
+    opacity: 1;
+}
 
-    .navBar .top .left .title {
-        position: absolute;
-        text-align: center;
-        max-width: calc(100% - 180px);
-        left: 50%;
-        transform: translateX(-50%);
-    }
+.navBar .group .icon.active::before {
+    color: rgb(255, 255, 255);
+}
 
-    .navBar .top .right {
-        width: 100%;
-        justify-content: space-between;
-    }
+.navBar .group .icon.active::after {
+    background-color: rgb(255, 255, 255);
+}
 
-    body.guest .navBar .top .right {
-        flex-flow: row-reverse;
-    }
+.navBar .group .icon.active:hover::after {
+    width: 4px;
+}
 
-    .navBar .top .right .info {
-        display: none;
-    }
+.navBar .group .icon.chart::before {
+    content: "\f080";
+}
+
+.navBar .group .icon.book::before {
+    content: "\f02d";
+}
+
+.navBar .group .icon.key::before {
+    content: "\f084";
+}
+
+.navBar .group .icon.user::before {
+    content: "\f4fe";
+}
+
+.navBar .group .icon.config::before {
+    content: "\f013";
 }
