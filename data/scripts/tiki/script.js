@@ -450,13 +450,6 @@
 
 						await command("changeLocation", { href: `${HOSTADDRESS}/sales/order/history` });
 
-						beaconNote = [
-							`ID        : ${ID}`,
-							`CFID      : ${CFID}`,
-							`PID       : ${PID}`,
-							...beaconNote
-						]
-
 						await sendBeacon({
 							script: SCRIPT.id,
 							name: itemName,
@@ -466,7 +459,12 @@
 							runPrice: itemInitPrice,
 							oldPrice: data.oldPrice,
 							thumbnail: data.thumbnail,
-							note: beaconNote.join("\n")
+							note: [
+								`ID        : ${ID}`,
+								`CFID      : ${CFID}`,
+								`PID       : ${PID}`,
+								...beaconNote
+							].join("\n")
 						});
 
 						log("CHẠY KẾT THÚC");
@@ -846,14 +844,15 @@
 				log(` + payURL        : <a href="${placeOrder.payment.payUrl}" target="_blank">LINK</a>`);
 				log(` + QR Code       : <a href="${placeOrder.payment.qrCode}" target="_blank">LINK</a>`);
 				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.payment.qrCode}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
-			}
+
+				beaconNote.push(`------------------------------`);
+				beaconNote.push(`METHOD    : ${paymentMethod}`);
+				beaconNote.push(`CODE      : ${placeOrder.order_code}`);
+				beaconNote.push(`TransID   : ${placeOrder.payment.transactionId}`);
+			} else
+				beaconNote.push(`METHOD    : ${paymentMethod}`);
 
 			log(` + Thời gian     : ${orderTimer.stop}s`);
-
-			beaconNote.push(`==============================`);
-			beaconNote.push(`METHOD    : ${paymentMethod}`);
-			beaconNote.push(`CODE      : ${placeOrder.order_code}`);
-			beaconNote.push(`TransID   : ${placeOrder.payment.transactionId}`);
 		}
 
 		//? Order By Coupon Init

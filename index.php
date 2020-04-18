@@ -44,6 +44,9 @@
 
         $name = $userdata["name"];
         $id = $userdata["id"];
+    } else {
+        header("Location: /login.php");
+        die();
     }
 
     $stripedContestDescription = strip_tags($config["app"]["description"]);
