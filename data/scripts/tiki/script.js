@@ -2,6 +2,7 @@
 (async () => {
 	var infoUpdateInterval = null;
 	var doCheck = true;
+	var beaconNote = []
 
 	const HOSTADDRESS = "https://tiki.vn";
 
@@ -437,17 +438,6 @@
 
 							successCount++;
 						}
-
-						await sendBeacon({
-							script: SCRIPT.id,
-							name: itemName,
-							link: `${HOSTADDRESS}/item-p${ID}.html`,
-							price: currentPrice,
-							count: successCount,
-							runPrice: itemInitPrice,
-							oldPrice: data.oldPrice,
-							thumbnail: data.thumbnail
-						});
 			
 						complete();
 						runInfo({
@@ -459,6 +449,26 @@
 						});
 
 						await command("changeLocation", { href: `${HOSTADDRESS}/sales/order/history` });
+
+						beaconNote = [
+							`ID        : ${ID}`,
+							`CFID      : ${CFID}`,
+							`PID       : ${PID}`,
+							...beaconNote
+						]
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-p${ID}.html`,
+							price: currentPrice,
+							count: successCount,
+							runPrice: itemInitPrice,
+							oldPrice: data.oldPrice,
+							thumbnail: data.thumbnail,
+							note: beaconNote.join("\n")
+						});
+
 						log("CHẠY KẾT THÚC");
 						return;
 					}
@@ -555,15 +565,6 @@
 
 						await __doOrder({ skipPre: true });
 
-						await sendBeacon({
-							script: SCRIPT.id,
-							name: itemName,
-							link: `${HOSTADDRESS}/item-p${ID}.html`,
-							price: currentPrice,
-							count: settings.orderCount,
-							runPrice: itemInitPrice
-						});
-
 						complete();
 						runInfo({
 							itemStatus: `ĐÃ ĐẶT ${settings.orderCount} items`,
@@ -574,6 +575,24 @@
 						});
 
 						await command("changeLocation", { href: HOSTADDRESS + "/sales/order/history" });
+
+						beaconNote = [
+							`ID   : ${ID}`,
+							`CFID : ${CFID}`,
+							`PID  : ${PID}`,
+							...beaconNote
+						]
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-p${ID}.html`,
+							price: currentPrice,
+							count: settings.orderCount,
+							runPrice: itemInitPrice,
+							note: beaconNote.join("\n")
+						});
+
 						log("CHẠY KẾT THÚC");
 						return;
 					}
@@ -830,6 +849,11 @@
 			}
 
 			log(` + Thời gian     : ${orderTimer.stop}s`);
+
+			beaconNote.push(`==============================`);
+			beaconNote.push(`METHOD    : ${paymentMethod}`);
+			beaconNote.push(`CODE      : ${placeOrder.order_code}`);
+			beaconNote.push(`TransID   : ${placeOrder.payment.transactionId}`);
 		}
 
 		//? Order By Coupon Init
