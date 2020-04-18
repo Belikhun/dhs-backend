@@ -25,7 +25,7 @@
 
 		checkToken();
 
-		$orderLogs = unserialize((new fip(ORDER_LOG_FILE, "a:0:{}")) -> read());
+		$orderLogs = array_reverse(unserialize((new fip(ORDER_LOG_FILE, "a:0:{}")) -> read()));
 		stop(0, "Success", 200, $orderLogs, true);
 	}
 
