@@ -3,7 +3,10 @@
 	const log = (text) => writeLog(text);
 
 	var updateInfoInterval = null;
+	var beaconNote = [];
 	let BUTTON_ID = null;
+
+	const HOSTADDRESS = "https://tiki.vn";
 
 	onCancel(async (clean) => {
 		clearInterval(updateInfoInterval);
@@ -26,6 +29,8 @@
 	
 		// Get itemName
 		var itemName = "";
+		var itemInitPrice = 0;
+		var thumbnail = null;
 	
 		try {
 			itemName = (await command("queryText", { query: "#product-name > span:nth-child(3)" })).text
@@ -35,6 +40,22 @@
 		}
 	
 		log("itemName: " + itemName);
+
+		try {
+			itemInitPrice = parseInt((await command("queryText", { query: "#span-price" })).text.replace(/\./gi, ""))
+		} catch(e) {
+			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(itemInitPrice not found)</i>");
+			return;
+		}
+	
+		log("itemInitPrice: " + itemInitPrice);
+
+		try {
+			thumbnail = (await command("eval", { script: `document.querySelector(\`head > meta[property="og:image"]\`).content` })).result
+		} catch(e) {
+			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(thumbnail not found)</i>");
+			return;
+		}
 	
 		// Get ID
 		var ID = null;
@@ -376,7 +397,12 @@
 				log(` + payURL        : <a href="${placeOrder.payment.payUrl}" target="_blank">LINK</a>`);
 				log(` + QR Code       : <a href="${placeOrder.payment.qrCode}" target="_blank">LINK</a>`);
 				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.payment.qrCode}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
-			}
+				beaconNote.push(`------------------------------`);
+				beaconNote.push(`METHOD    : ${paymentMethod}`);
+				beaconNote.push(`CODE      : ${placeOrder.order_code}`);
+				beaconNote.push(`TransID   : ${placeOrder.payment.transactionId}`);
+			} else
+				beaconNote.push(`METHOD    : ${paymentMethod}`);
 
 			log(` + Thời gian   : ${orderTimer.stop}s`);
 		}
@@ -436,6 +462,21 @@
 
 			complete(`ĐÃ ĐẶT MUA ${successCount}/${accountList.length} TÀI KHOẢN`);
 			runInfo({ status: (successCount === 0) ? "errored" : ((successCount === accountList.length) ? "complete" : "warning") })
+
+			if (successCount !== 0)
+				await sendBeacon({
+					script: SCRIPT.id,
+					name: itemName,
+					link: `${HOSTADDRESS}/item-p${ID}.html`,
+					price: itemInitPrice,
+					count: successCount,
+					thumbnail: thumbnail,
+					note: [
+						`ID        : ${ID}`,
+						`PID       : ${PID}`,
+						...beaconNote
+					].join("\n")
+				});
 		}
 
 		runInfo({ status: "waiting", info: "Đang chờ người dùng đặt mua", progress: "HOLD" });
