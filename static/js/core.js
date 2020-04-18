@@ -22,7 +22,8 @@ const core = {
 
 	async init(set) {
         clog("info", "Initializing...");
-        var initTime = new stopClock();
+		var initTime = new stopClock();
+		cookie.set("__s_m", true);
 
         set(0, "Initializing: popup");
         popup.init();
@@ -31,10 +32,21 @@ const core = {
 		await this.getServerConfigAsync();
 		
 		set(20, "Initializing: layout");
-        this.layout.init();
+		this.layout.init();
+		
+		set(30, "Initializing: orderLogs");
+        await this.orderLogs.init();
 
-		set(30, "Initializing: keysManager");
-        await this.keysManager.init();
+		set(40, "Initializing: keysManager");
+		await this.keysManager.init();
+		
+		set(50, "Initializing: syslogs");
+		await this.syslogs.init();
+		
+		set(50, "Initializing: sounds");
+        await sounds.init((p, t) => {
+            set(50 + p*0.5, `Initializing: sounds (${t})`);
+        });
         
 		clog("debg", "Initialisation took:", {
             color: flatc("blue"),
@@ -90,7 +102,7 @@ const core = {
 				this.btnList[layout] = item;
 			}
 
-			this.changeLayout(3);
+			this.changeLayout(2);
 
 			clog("okay", "Initialised:", {
                 color: flatc("red"),
@@ -119,6 +131,120 @@ const core = {
 		}
 	},
 
+	orderLogs: {
+		container: $("#orderLogContainer"),
+		reloadBtn: $("#orderLogReloadBtn"),
+		searchBox: $("#orderLogSearchBox"),
+
+		pager: null,
+		pageControl: {
+			first: $("#orderLogPageFirst"),
+			back: $("#orderLogPageBack"),
+			current: $("#orderLogPageCurrent"),
+			next: $("#orderLogPageNext"),
+			last: $("#orderLogPageLast")
+		},
+
+		async init() {
+			this.reloadBtn.addEventListener("mouseup", () => this.reload());
+
+			this.pager = new pager(this.container, 20);
+
+			this.pager.renderItem((item, container) => {
+				container.appendChild(htmlToElement(`
+				<div class="group star sound" data-soundhover>
+					<div class="item">
+						<a href="${item.link}" class="detail" target="_blank">
+							${
+								(item.thumbnail && typeof item.thumbnail === "string")
+									? `
+										<span class="lazyload thumbnail">
+											<img onload="this.parentNode.dataset.loaded = 1" src="${item.thumbnail}"/>
+											<div class="simple-spinner"></div>
+										</span>
+									`
+									: `<span class="lazyload thumbnail" data-errored></span>`
+							}
+
+							<span class="middle">
+								<t class="itemName">${item.itemName}</t>
+
+								${
+									(item.oldPrice && typeof item.oldPrice === "number")
+										? `<t class="origialPrice price">${item.oldPrice}</t>`
+										: ""
+								}
+
+								<span class="priceBox">
+									${(item.runPrice) ? `<t class="runPrice price">${item.runPrice}</t>` : ""}
+									<t class="buyPrice price">${item.price}</t>
+									<t class="buyCount">${item.count}</t>
+								</span>
+							</span>
+
+							<span class="right">
+								<t class="script">${item.script}</t>
+								<t class="name">${item.name}</t>
+								<timer>
+									<style scoped="scoped" onload="liveTime(this.parentElement, ${item.time}, {type: 'minimal'});"></style>
+								</timer>
+							</span>
+						</a>
+
+						${
+							(item.note && typeof item.note === "object")
+								? `
+									<ul class="textView">
+										${item.note.map(i => `<li>${i}</li>`).join()}
+									</ul>
+								`
+								: ""
+						}
+					</div>
+				</div>
+				`))
+			})
+
+			this.pager.setFilter((item) => {
+				let s = this.searchBox.value.toLowerCase();
+
+				return (
+					s === ""
+					|| item.itemName.toLowerCase().includes(s)
+					|| item.name.toLowerCase().includes(s)
+					|| item.script.toLowerCase().includes(s)
+				)
+			})
+
+			this.searchBox.addEventListener("input", () => {
+				clearTimeout(this.searchTimeout);
+				this.searchTimeout = setTimeout(() => this.pager.render(), 200);
+			})
+
+			this.pager.onUpdate(({ total, maxPage, currentPage, from, to }) => this.pageControl.current.innerText = `${currentPage}/${maxPage} (${from + 1}-${to + 1}: ${total})`)
+			await this.reload();
+
+			clog("okay", "Initialised:", {
+                color: flatc("red"),
+                text: "core.orderLogs"
+            });
+		},
+
+		async reload() {
+			let response = await myajax({
+				url: "/api/analytics/order",
+				method: "POST",
+				form: {
+					action: "getData",
+					token: API_TOKEN
+				}
+			})
+	
+			this.pager.list = response.data;
+			sounds.scan();
+		},
+	},
+
 	keysManager: {
 		container: $("#keysContainer"),
 		addForm: {
@@ -133,10 +259,10 @@ const core = {
 			submit: $("#keyAddSubmit"),
 			cancel: $("#keyAddCancel")
 		},
-		reloadBtn: $("#reloadBtn"),
+		reloadBtn: $("#keyReloadBtn"),
 		searchBox: $("#keySearchBox"),
-		sortByNewSettings: $("#sortByNew"),
-		showExpiredSettings: $("#showExpired"),
+		sortByNewSettings: $("#keySortByNew"),
+		showExpiredSettings: $("#keyShowExpired"),
 	
 		pager: null,
 		pageControl: {
@@ -199,7 +325,7 @@ const core = {
 	
 				sounds.confirm(0);
 	
-				let response = await myajax({
+				await myajax({
 					url: "/api/keys/add",
 					method: "POST",
 					json: {
@@ -519,8 +645,22 @@ const core = {
 	
 		async delete(targetElement) {
 			let keyID = targetElement.dataset.editTarget;
+
+			if (!this.data[keyID])
+				throw { code: -1, description: `"Không tìm thấy dữ liệu key của ID ${keyID}` }
 	
-			let doIt = confirm(`Bạn có chắc muốn xóa key ID ${keyID} không?\nHành động này không thể hoàn tác một khi đã thực hiện!`);
+			let doIt = await popup.show({
+				level: "warning",
+				windowTitle: "Problems Editor",
+				title: `Xóa \"${this.data[keyID].name}\"`,
+				message: `Xác nhận`,
+				description: `Bạn có chắc muốn xóa <b>keyID${keyID}</b> không?`,
+				note: `Hành động này <b>không thể hoàn tác</b> một khi đã thực hiện!`,
+				buttonList: {
+					delete: { text: "XÓA!!!", color: "red" },
+					cancel: { text: "Hủy Bỏ", color: "blue" }
+				}
+			})
 	
 			if (doIt !== true)
 				return false;
@@ -548,5 +688,106 @@ const core = {
 	
 			this.reload();
 		}
-	}
+	},
+
+	syslogs: {
+		logsContainer: $("#syslogsContainer"),
+		nav: {
+			left: $("#syslogsNavLeft"),
+			btnLeft: $("#syslogsNavBtnLeft"),
+			currentPage: $("#syslogsNavPage"),
+			btnRight: $("#syslogsNavBtnRight"),
+			right: $("#syslogsNavRight")
+		},
+
+		prevHash: "",
+		showPerPage: 20,
+		currentPage: 1,
+		maxPage: 1,
+
+		async init() {
+			this.nav.btnLeft.addEventListener("click", e => {
+				this.currentPage--;
+
+				if (this.currentPage < 1)
+					this.currentPage = 1;
+
+				this.refresh();
+			});
+
+			this.nav.btnRight.addEventListener("click", e => {
+				this.currentPage++;
+
+				if (this.currentPage > this.maxPage)
+					this.currentPage = this.maxPage;
+
+				this.refresh();
+			});
+
+			await this.refresh();
+
+			clog("okay", "Initialised:", {
+                color: flatc("red"),
+                text: "core.syslogs"
+            });
+		},
+
+		async refresh(clearLogs = false) {
+			let response = {}
+
+			try {
+				response = await myajax({
+					url: "/api/logs",
+					method: "POST",
+					form: {
+						token: API_TOKEN,
+						clear: clearLogs,
+						show: this.showPerPage,
+						page: this.currentPage
+					}
+				})
+			} catch(e) {
+				if (e.data.code === 6) {
+					clog("WARN", `Không tồn tại trang ${this.currentPage} của nhật ký hệ thống.`, e.data.data);
+					this.currentPage = 1;
+					this.maxPage = e.data.data.maxPage;
+					await this.refresh();
+
+					return;
+				}
+
+				throw e;
+			}
+
+			let data = response.data;
+			let hash = response.hash;
+			if (hash === this.prevHash)
+				return;
+
+			this.prevHash = hash;
+			this.nav.left.innerText = `Hiển thị ${data.from} - ${data.to}`;
+			this.nav.currentPage.innerText = `Trang ${data.pageNth}/${data.maxPage}`;
+			this.nav.right.innerText = `Tổng ${data.total}`;
+			this.maxPage = data.maxPage;
+			var html = [];
+
+			for (let i of data.logs)
+				html.push(`
+					<div class="log ${i.level.toLowerCase()}" onclick="this.classList.toggle('enlarge')">
+						<span class="level">${i.level}<i>#${i.nth}</i></span>
+						<span class="detail">
+							<div class="text">${i.text}</div>
+							<div class="info">
+								<t class="client">${i.client.username}@${i.client.ip}</t>
+								<t class="timestamp">${i.time}</t>
+								<t class="module">${i.module}</t>
+							</div>
+						</span>
+					</div>
+				`);
+			
+			this.logsContainer.innerHTML = html.join("\n");
+			clog("info", `Refreshed SysLogs [${hash}]`);
+		}
+	},
 }

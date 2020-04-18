@@ -67,7 +67,264 @@ body {
 
 #mainContainer .container {
 	position: relative;
-	display: none;
+    display: none;
+    height: 100%;
+}
+
+#mainContainer .container::-webkit-scrollbar {
+    display: none;
+}
+
+.buttonBox {
+	position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.buttonBox > span {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin: 0 5px;
+    background-color: rgba(255, 255, 255, 0.5);
+	border-radius: 50%;
+	cursor: pointer;
+
+	transition:
+		background-color 0.3s ease;
+}
+
+.buttonBox > span:hover {
+    background-color: #ffffff;
+}
+
+.buttonBox > span::before {
+	content: "\f105";
+    position: relative;
+    font-family: "Font Awesome 5 Free";
+    font-size: 16px;
+	font-weight: 900;
+    color: rgb(116, 116, 116);
+}
+
+.buttonBox .forward::before {
+    content: "\f050";
+    font-size: 13px;
+}
+
+.buttonBox .next::before {
+	padding: 0 0 0 2px;
+}
+
+.buttonBox .prev::before {
+    content: "\f104";
+	padding: 0 2px 0 0;
+}
+
+.buttonBox .backward::before {
+    content: "\f049";
+    font-size: 13px;
+}
+
+.buttonBox .delete::before {
+    content: "\f1f8";
+    font-size: 13px;
+}
+
+.buttonBox .current {
+    font-family: Nunito;
+    font-size: 12px;
+	font-weight: bold;
+    letter-spacing: 1.5px;
+    margin: 0 5px;
+}
+
+.searchBox {
+	transform: translateY(-8px);
+}
+
+/** =====================================orderLogs===================================== */
+
+#mainContainer .orderLogs {
+	background-color: transparent;
+}
+
+#mainContainer .orderLogs .orderLogList {
+    position: relative;
+    display: contents;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail {
+    position: relative;
+    display: flex;
+    flex-grow: 1;
+    flex-direction: row;
+    text-decoration: none;
+    width: 100%;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .thumbnail {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    margin-right: 20px;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    text-align: left;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .itemName {
+    font-family: Nunito;
+    font-weight: 900;
+    font-size: 18px;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .origialPrice {
+    font-family: Calibri;
+    font-weight: bold;
+    font-size: 16px;
+    color: #9b9b9b;
+    text-decoration: line-through;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .priceBox {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .priceBox > .runPrice {
+    font-family: Calibri;
+    font-weight: bold;
+    font-size: 16px;
+    color: #08717a;
+    padding-right: 30px;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .priceBox > .runPrice::before {
+    content: "\f061";
+    position: absolute;
+    display: block;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 15px;
+    color: rgb(128, 128, 128);
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .priceBox > .buyPrice {
+    font-family: Calibri;
+    font-weight: bold;
+    font-size: 26px;
+    color: #089008;
+    margin-bottom: 2px;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .priceBox > .buyCount {
+    margin-left: 10px;
+    font-size: 16px;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .priceBox > .buyCount::before {
+    content: "x";
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > .script {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    font-size: 16px;
+    color: rgb(34, 34, 34);
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > .name {
+    display: flex;
+    align-items: center;
+    font-family: Nunito;
+    font-weight: 900;
+    font-size: 16px;
+    font-style: italic;
+    color: rgb(34, 34, 34);
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > timer {
+    color: black;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > ::after {
+    content: "\f111";
+    position: relative;
+    display: inline-block;
+    margin-left: 8px;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 15px;
+    font-style: normal;
+    color: rgb(128, 128, 128);
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > .script::after {
+    content: "\f70e";
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > .name::after {
+    content: "\f007";
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > timer::after {
+    content: "\f1da";
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .textView {
+    margin-top: 10px;
+}
+
+@media only screen and (max-width: 650px) {
+    #mainContainer .orderLogs .orderLogList > .group > .item > .detail {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle {
+        align-items: center;
+        margin: 10px 0;
+    }
+
+    #mainContainer .orderLogs .orderLogList > .group > .item > .detail > .middle > .itemName {
+        text-align: center;
+    }
+
+    #mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right {
+        align-items: center;
+    }
 }
 
 /** =====================================keysManager===================================== */
@@ -86,7 +343,7 @@ body {
 }
 
 #mainContainer .keysManager .keyList .group:nth-child(even) .storedKeyList {
-	background-color: rgba(230, 230, 230, 0.4);
+	background-color: rgba(195, 195, 195, 0.4);
 }
 
 #mainContainer .keysManager .keyList .group.showEditor,
@@ -113,7 +370,6 @@ body {
     flex-direction: row;
     flex-flow: wrap;
 	justify-content: center;
-	background-color: rgba(255, 255, 255, 0.4);
 	margin: 0 10px;
 	border-radius: 16px;
 }
@@ -345,70 +601,6 @@ body {
 	max-width: 120px;
 }
 
-#mainContainer .keysManager .group.plus .item .searchBox {
-	transform: translateY(-8px);
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox {
-	position: relative;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox > span {
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-    width: 26px;
-    height: 26px;
-    margin: 0 5px;
-    background-color: rgba(255, 255, 255, 0.5);
-	border-radius: 50%;
-	cursor: pointer;
-
-	transition:
-		background-color 0.3s ease;
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox > span:hover {
-    background-color: #ffffff;
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox > span::before {
-	content: "\f105";
-    position: relative;
-    font-family: "Font Awesome 5 Free";
-    font-size: 16px;
-	font-weight: 900;
-    color: rgb(116, 116, 116);
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox .forward::before {
-    content: "\f050";
-    font-size: 13px;
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox .next::before {
-	padding: 0 0 0 2px;
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox .prev::before {
-    content: "\f104";
-	padding: 0 2px 0 0;
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox .backward::before {
-    content: "\f049";
-    font-size: 13px;
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox .delete::before {
-    content: "\f1f8";
-    font-size: 13px;
-}
-
 #mainContainer .keysManager .group.plus .item.sortBox {
 	flex-direction: row;
 	justify-content: center;
@@ -425,14 +617,6 @@ body {
 #mainContainer .keysManager .group.plus .item.sortBox > .switch > .left {
 	margin-right: 10px;
 	text-align: right;
-}
-
-#mainContainer .keysManager .group.plus .item .buttonBox .current {
-    font-family: Nunito;
-    font-size: 12px;
-	font-weight: bold;
-    letter-spacing: 1.5px;
-    margin: 0 5px;
 }
 
 #mainContainer .keysManager .group .keyEditor {
@@ -530,13 +714,308 @@ body.dark .formGroup.blue .formField {
     color: rgb(204, 204, 204);
 }
 
+/** =====================================syslogs===================================== */
+
+#mainContainer .syslogs {
+    position: relative;
+    flex-direction: column;
+}
+
+#mainContainer .syslogs .logsContainer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#mainContainer .syslogs .logsContainer .log {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    background-color: rgba(224, 224, 224, 0.8);
+    counter-increment: log-item;
+    cursor: pointer;
+
+    transition: background-color 0.3s ease;
+}
+
+#mainContainer .syslogs .logsContainer .log:hover {
+    background-color: rgba(232, 232, 232, 0.8);
+}
+
+#mainContainer .syslogs .logsContainer .log .level {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 0;
+    color: rgb(82, 82, 82);
+    background-color: rgb(236, 236, 236);
+    min-width: 100px;
+    padding: 0 10px 0 40px;
+    font-size: 14px;
+    font-weight: bold;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    transition-property: padding, background-color;
+}
+
+#mainContainer .syslogs .logsContainer .log.enlarge .level {
+    padding: 0 20px;
+    background-color: rgb(242, 242, 242);
+}
+
+#mainContainer .syslogs .logsContainer .log .level > i {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    font-weight: bold;
+    font-size: 10px;
+    font-style: normal;
+
+    transition: all 0.3s ease;
+}
+
+#mainContainer .syslogs .logsContainer .log.enlarge .level > i {
+    left: 50%;
+    transform: translate(-50%, calc(-50% + 22px));
+}
+
+#mainContainer .syslogs .logsContainer .log .detail {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 40px 10px 20px;
+    box-sizing: border-box;
+    flex-grow: 2;
+    border-left: 2px solid rgb(165, 165, 165);
+}
+
+#mainContainer .syslogs .logsContainer .log .detail::before {
+    content: "\f107";
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    display: inline-block;
+
+    font-family: "Font Awesome 5 Free";
+    font-size: 14px;
+    font-weight: 900;
+    color: rgb(104, 104, 104);
+
+    transition: transform 0.3s ease;
+}
+
+#mainContainer .syslogs .logsContainer .log.enlarge .detail::before {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .text {
+    position: relative;
+    display: block;
+    font-family: "Consolas", "Calibri", "Segoe UI";
+    font-size: 15px;
+    font-weight: normal;
+    color: rgb(56, 56, 56);
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .info {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 0;
+    box-sizing: border-box;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    transition: height 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .info::before {
+    content: "";
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 8px;
+}
+
+#mainContainer .syslogs .logsContainer .log.enlarge .detail .info {
+    height: 54px;
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .info t {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    font-family: "Calibri", "Segoe UI";
+    font-size: 13px;
+    color: rgb(90, 90, 90);
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .info t::before {
+    content: "\f111";
+    position: relative;
+    display: inline-block;
+    padding-right: 6px;
+
+    font-family: "Font Awesome 5 Free";
+    font-size: 13px;
+    font-weight: 900;
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .info .client {
+    font-weight: bold;
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .info .client::before {
+    content: "\f2bd";
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .info .timestamp::before {
+    content: "\f017";
+}
+
+#mainContainer .syslogs .logsContainer .log .detail .info .module::before {
+    content: "\f466";
+}
+
+#mainContainer .syslogs .logsContainer .log.okay .detail {
+    border-left-color: rgb(124, 194, 129);
+}
+
+#mainContainer .syslogs .logsContainer .log.okay .level {
+    color: rgb(28, 172, 38);
+}
+
+#mainContainer .syslogs .logsContainer .log.warn .detail {
+    border-left-color: rgb(190, 184, 92);
+}
+
+#mainContainer .syslogs .logsContainer .log.warn .level {
+    color: rgb(163, 155, 46);
+}
+
+#mainContainer .syslogs .logsContainer .log.errr .detail {
+    border-left-color: rgb(223, 150, 150);
+}
+
+#mainContainer .syslogs .logsContainer .log.errr .level {
+    color: rgb(233, 67, 67);
+}
+
+#mainContainer .syslogs .logsContainer .log.verb .detail {
+    border-left-color: rgb(191, 149, 211);
+}
+
+#mainContainer .syslogs .logsContainer .log.verb .level {
+    color: rgb(148, 15, 209);
+}
+
+#mainContainer .syslogs .navigation {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-grow: 0;
+    flex-direction: row;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: rgb(242, 242, 242);
+}
+
+#mainContainer .syslogs .navigation .left,
+#mainContainer .syslogs .navigation .right {
+    position: relative;
+    flex: 1 0 0;
+    font-size: 11px;
+}
+
+#mainContainer .syslogs .navigation .right {
+    text-align: right;
+}
+
+#mainContainer .syslogs .navigation .middle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 2;
+}
+
+#mainContainer .syslogs .navigation .middle .icon {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    padding: 0 18px;
+}
+
+#mainContainer .syslogs .navigation .middle .icon::before {
+    content: "\f111";
+    position: relative;
+    display: inline-block;
+
+    font-family: "Font Awesome 5 Free";
+    font-size: 22px;
+    font-weight: 900;
+    color: rgb(158, 158, 158);
+    transition: color 0.2s ease;
+}
+
+#mainContainer .syslogs .navigation .middle .icon:hover::before {
+    color: #f368e0;
+}
+
+#mainContainer .syslogs .navigation .middle .buttonLeft::before {
+    content: "\f104";
+}
+
+#mainContainer .syslogs .navigation .middle .buttonRight::before {
+    content: "\f105";
+}
+
+#mainContainer .syslogs .navigation .middle .currentPage {
+    position: relative;
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 18px;
+}
+
+/** =====================================account===================================== */
+
+#mainContainer .account {
+    height: 100%;
+    border: unset;
+}
+
 /** =====================================LAYOUT===================================== */
 
+#mainContainer[data-layout="2"]::before,
+#mainContainer[data-layout="2"]::after,
 #mainContainer[data-layout="3"]::before,
-#mainContainer[data-layout="3"]::after {
+#mainContainer[data-layout="3"]::after,
+#mainContainer[data-layout="4"]::before,
+#mainContainer[data-layout="4"]::after,
+#mainContainer[data-layout="5"]::before,
+#mainContainer[data-layout="5"]::after {
 	content: unset;
 }
 
-#mainContainer[data-layout="3"] .keysManager {
+#mainContainer[data-layout="2"] .orderLogs,
+#mainContainer[data-layout="3"] .keysManager,
+#mainContainer[data-layout="5"] .account {
 	display: block;
+}
+
+#mainContainer[data-layout="4"] .syslogs {
+    display: flex;
 }

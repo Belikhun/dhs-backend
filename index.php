@@ -163,7 +163,7 @@
                             title: "Oops",
                             description: "Có vẻ như lỗi vẫn đang tiếp diễn!<br>Hãy thử <b>tải lại</b> trang hoặc sử dụng thông tin dưới đây để gửi một báo cáo lỗi:",
                             level: "error",
-                            additionalNode: errorDetail,
+                            customNode: errorDetail,
                             buttonList: {
                                 report: {
                                     text: "Báo lỗi",
@@ -198,18 +198,52 @@
 				</div>
 
 				<div class="group middle">
-					<span class="icon chart" data-active-layout="1" data-color="green"></span>
-					<span class="icon book" data-active-layout="2" data-color="blue"></span>
-					<span class="icon key" data-active-layout="3" data-color="yellow"></span>
-					<span class="icon user" data-active-layout="4" data-color="pink"></span>
+					<span class="icon chart sound" data-active-layout="1" data-color="green" data-soundhover data-soundselect></span>
+					<span class="icon cart sound" data-active-layout="2" data-color="blue" data-soundhover data-soundselect></span>
+					<span class="icon key sound" data-active-layout="3" data-color="pink" data-soundhover data-soundselect></span>
+					<span class="icon book sound" data-active-layout="4" data-color="red" data-soundhover data-soundselect></span>
+					<span class="icon user sound" data-active-layout="5" data-color="yellow" data-soundhover data-soundselect></span>
 				</div>
 
 				<div class="group bottom">
-					<span class="icon config" data-active-layout="5" data-color="brown"></span>
+					<span class="icon config sound" data-active-layout="6" data-color="brown" data-soundhover data-soundselect></span>
 				</div>
             </div>
 
             <div id="mainContainer">
+                <div class="container orderLogs menu">
+				    <div class="group home">
+						<t class="title big">Nhật kí mua hàng</t>
+						<t class="title small">Danh sách Item mua thành công bằng tool</t>
+		
+						<div class="space"></div>
+					</div>
+		
+					<div class="group tools">
+						<div class="item lr sound" data-soundhover>
+							<span class="left">
+								<button id="orderLogReloadBtn" class="sq-btn blue sound" data-soundhover data-soundselect>Làm mới</button>
+                            </span>
+
+                            <span class="middle formGroup searchBox sound" data-color="blue" data-soundselectsoft>
+								<input id="orderLogSearchBox" type="text" class="formField" autocomplete="off" placeholder="Nhập Từ Khóa" required>
+								<label for="orderLogSearchBox">Tìm Kiếm</label>
+							</span>
+                            
+							<span class="right buttonBox">
+								<span id="orderLogPageFirst" class="backward" data-soundhover data-soundselect></span>
+								<span id="orderLogPageBack" class="prev" data-soundhover data-soundselect></span>
+								<t id="orderLogPageCurrent" class="current"></t>
+								<span id="orderLogPageNext" class="next" data-soundhover data-soundselect></span>
+								<span id="orderLogPageLast" class="forward" data-soundhover data-soundselect></span>
+							</span>
+						</div>
+                    </div>
+                    
+                    <div class="orderLogList" id="orderLogContainer">
+					</div>
+				</div>
+
 				<div class="container keysManager menu">
 					<div class="group home">
 						<t class="title big">Quản lý keys</t>
@@ -222,7 +256,7 @@
 						<div class="item lr sound" data-soundhover>
 							<span class="left">
 								<button id="keyAdd" class="sq-btn dark sound" data-soundhover data-soundselect>Thêm</button>
-								<button id="reloadBtn" class="sq-btn blue sound" data-soundhover data-soundselect>Làm mới</button>
+								<button id="keyReloadBtn" class="sq-btn blue sound" data-soundhover data-soundselect>Làm mới</button>
 							</span>
 
 							<span class="middle formGroup searchBox sound" data-color="blue" data-soundselectsoft>
@@ -279,7 +313,7 @@
 							<span class="switch">
 								<t class="left">Mới nhất xếp trước</t>
 								<label class="sq-checkbox right">
-									<input id="sortByNew" type="checkbox" class="sound" data-soundcheck>
+									<input id="keySortByNew" type="checkbox" class="sound" data-soundcheck>
 									<span class="checkmark"></span>
 								</label>
 							</span>
@@ -287,7 +321,7 @@
 							<span class="switch">
 								<t class="left">Chỉ hiển thị key đã hết hạn</t>
 								<label class="sq-checkbox pink right">
-									<input id="showExpired" type="checkbox" class="sound" data-soundcheck>
+									<input id="keyShowExpired" type="checkbox" class="sound" data-soundcheck>
 									<span class="checkmark"></span>
 								</label>
 							</span>
@@ -296,7 +330,22 @@
 		
 					<div class="keyList" id="keysContainer">
 					</div>
-				</div>
+                </div>
+
+                <div class="container syslogs">
+                    <div id="syslogsContainer" class="logsContainer showEmpty"></div>
+                    <div class="navigation">
+                        <span id="syslogsNavLeft" class="left"></span>
+                        <span class="middle">
+                            <span id="syslogsNavBtnLeft" class="icon buttonLeft sound" data-soundhover data-soundselect></span>
+                            <span id="syslogsNavPage" class="currentPage"></span>
+                            <span id="syslogsNavBtnRight" class="icon buttonRight sound" data-soundhover data-soundselect></span>
+                        </span>
+                        <span id="syslogsNavRight" class="right"></span>
+                    </div>
+                </div>
+                
+                <iframe src="/account.php" class="container account"></iframe>
             </div>
         </div>
 

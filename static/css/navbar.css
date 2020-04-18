@@ -110,6 +110,7 @@
 
 .navBar .group .icon.active {
     height: 120px;
+    cursor: default;
 }
 
 .navBar .group .icon.active .triBgContainer {
@@ -121,15 +122,15 @@
 }
 
 .navBar .group .icon.active::after {
-    background-color: rgb(255, 255, 255);
-}
-
-.navBar .group .icon.active:hover::after {
-    width: 4px;
+    width: 0;
 }
 
 .navBar .group .icon.chart::before {
-    content: "\f080";
+    content: "\f1fe";
+}
+
+.navBar .group .icon.cart::before {
+    content: "\f218";
 }
 
 .navBar .group .icon.book::before {

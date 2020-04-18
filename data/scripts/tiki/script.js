@@ -96,7 +96,7 @@
 						itemStatus = item.inventory_status;
 
 						if (item.id !== PID) {
-							log(`PID Change: ${PID} -> ${item.id}`);
+							log(`PID Change: ${PID} -> ${item.id} (1)`);
 							PID = parseInt(item.id);
 						}
 					}
@@ -124,7 +124,7 @@
 				}
 
 				if (_pid !== PID) {
-					log(`PID Change: ${PID} -> ${_pid}`);
+					log(`PID Change: ${PID} -> ${_pid} (2)`);
 					PID = _pid;
 				}
 			}

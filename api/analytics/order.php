@@ -26,30 +26,7 @@
 		checkToken();
 
 		$orderLogs = unserialize((new fip(ORDER_LOG_FILE, "a:0:{}")) -> read());
-		$logsTotal = max(count($orderLogs), 1);
-		$showCount = (int) getForm("show", $logsTotal);
-		$maxPage = (int) floor($logsTotal / $showCount) + (($logsTotal % $showCount === 0) ? 0 : 1);
-		$pageNth = (int) getForm("page", 1);
-		$from = ($pageNth - 1) * $showCount;
-		$to = min($pageNth * $showCount - 1, $logsTotal - 1);
-
-		if ($pageNth < 1 || $pageNth > $maxPage)
-			stop(6, "Trang bạn yêu cầu không nằm trong khoảng thỏa mãn", 400, Array(
-				"total" => $logsTotal,
-				"maxPage" => $maxPage
-			));
-
-		$slicedLogs = array_slice(array_reverse($orderLogs), $from, $to - $from + 1);
-
-		stop(0, "Success", 200, Array(
-			"total" => $logsTotal,
-			"perPage" => $showCount,
-			"maxPage" => $maxPage,
-			"pageNth" => $pageNth,
-			"from" => $from + 1,
-			"to" => $to + 1,
-			"logs" => $slicedLogs
-		), true);
+		stop(0, "Success", 200, $orderLogs, true);
 	}
 
     if (!isset($_SESSION["authKey"]))

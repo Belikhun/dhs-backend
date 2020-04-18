@@ -538,7 +538,7 @@ class pager {
 		this.listData = []
 		this.renderItemHandler = () => {}
 		this.updateHandler = () => {}
-		this.filterHandler = () => true
+		this.filterHandler = null;
 		this.showCount = showCount;
 		this.__currentPage = 1;
 		this.__maxPage = 1;
@@ -548,7 +548,7 @@ class pager {
 	 * @param {array} list
 	 */
 	set list(list) {
-		if (typeof list !== "object" || !list.length)
+		if (typeof list !== "object" || typeof list.length !== "number")
 			throw { code: -1, description: `(set) pager.list: not a valid array` }
 
 		this.listData = list;
@@ -598,7 +598,7 @@ class pager {
 		if (this.__currentPage < 1 || this.__currentPage === "first")
 			this.__currentPage = 1;
 
-		let listData = this.listData.filter(this.filterHandler);
+		let listData = (typeof this.filterHandler === "function") ? this.listData.filter(this.filterHandler) : this.listData;
 		let total = Math.max(listData.length, 1);
 		let maxPage = parseInt(Math.floor(total / this.showCount) + ((total % this.showCount === 0) ? 0 : 1));
 
@@ -615,7 +615,7 @@ class pager {
 			if (listData[i])
 				this.renderItemHandler(listData[i], this.container);
 			else
-				clog("WARN", `pager.render: listData does not contain data in index`, { text: i, color: flatc("red") });
+				clog("DEBG", `pager.render: listData does not contain data in index`, { text: i, color: flatc("red") });
 	}
 }
 
@@ -1181,7 +1181,7 @@ const popup = {
 		bgColor = null,
 		headerTheme = null,
 		bodyTheme = null,
-		additionalNode = document.createElement("div"),
+		customNode = null,
 		buttonList = {}
 	} = {}) {
 		return new Promise((resolve, reject) => {
@@ -1222,9 +1222,12 @@ const popup = {
 			} else
 				this.popup.body.note.style.display = "none";
 
-			additionalNode.classList.add("customNode");
-			this.popup.body.replaceChild(additionalNode, this.popup.body.customNode);
-			this.popup.body.customNode = additionalNode;
+			if (customNode && customNode.classList) {
+				customNode.classList.add("customNode");
+				this.popup.body.replaceChild(customNode, this.popup.body.customNode);
+				this.popup.body.customNode = customNode;
+			} else
+				this.popup.body.customNode.style.display = "none";
 
 			//* BODY BUTTON
 
