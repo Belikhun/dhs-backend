@@ -693,17 +693,6 @@
 						order();
 						sounds.notification();
 						await __doOrder();
-
-						await sendBeacon({
-							script: SCRIPT.id,
-							name: itemName,
-							link: `${HOSTADDRESS}/item-i.${SID}.${ID}`,
-							price: currentPrice,
-							count: settings.orderCount,
-							runPrice: itemInitPrice,
-							oldPrice: ordersData.data.shoporders[0].iteminfos[0].oldprice,
-							thumbnail: `https://cf.shopee.vn/file/${ordersData.data.shoporders[0].iteminfos[0].image}`
-						});
 						
 						log(` + Thời gian   : ${orderTimer.stop}s`);
 						complete();
@@ -716,6 +705,17 @@
 						});
 
 						log("CHẠY KẾT THÚC");
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-i.${SID}.${ID}`,
+							price: currentPrice,
+							count: settings.orderCount,
+							runPrice: itemInitPrice,
+							oldPrice: ordersData.data.shoporders[0].iteminfos[0].oldprice / 100000,
+							thumbnail: `https://cf.shopee.vn/file/${ordersData.data.shoporders[0].iteminfos[0].image}`
+						});
 
 						delete orderTimer;
                     }
@@ -827,17 +827,6 @@
 						});
 
 						await __doOrder();
-
-						await sendBeacon({
-							script: SCRIPT.id,
-							name: itemName,
-							link: `${HOSTADDRESS}/item-i.${SID}.${ID}`,
-							price: currentPrice,
-							count: settings.orderCount,
-							runPrice: itemInitPrice,
-							oldPrice: data.item.price_before_discount,
-							thumbnail: `https://cf.shopee.vn/file/${data.item.image}`
-						});
 						
 						log(` + Thời gian   : ${orderTimer.stop}s`);
 						complete();
@@ -850,6 +839,17 @@
 						});
 
 						log("CHẠY KẾT THÚC");
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-i.${SID}.${ID}`,
+							price: currentPrice,
+							count: settings.orderCount,
+							runPrice: itemInitPrice,
+							oldPrice: data.item.price_before_discount / 100000,
+							thumbnail: `https://cf.shopee.vn/file/${data.item.image}`
+						});
 
 						delete orderTimer;
 						return;
