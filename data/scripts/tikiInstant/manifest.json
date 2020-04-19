@@ -5,6 +5,5 @@
     "match": "tiki\\.vn\/.*\\-p\\d+\\.html.*",
     "autorun": true,
     "version": 2,
-    "hide": true,
-    "disabled": true
+    "hide": true
 }
