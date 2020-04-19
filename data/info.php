@@ -36,7 +36,10 @@
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 
 	ob_start(); ?>
-		<b>Shopee Auto Click</b> sẽ tạm thời thay thế cho <b>Shopee</b>
+		<ul style="margin: unset">
+			<li><b>Tiki</b> hiện đang là <b><i>bản thử nghiệm</i></b>! Vui lòng báo lại lỗi cho Admin nếu gặp</li>
+			<li><b>Shopee Auto Click</b> sẽ tạm thời thay thế cho <b>Shopee</b></li>
+		</ul>
 	<?php
 	$ANNOUNCEMENT = ob_get_clean();
 
