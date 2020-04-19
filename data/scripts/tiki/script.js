@@ -15,7 +15,7 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|       Tiki Auto v014      |`);
+		log(`|       Tiki Auto v015      |`);
 		log(`|          Belikhun         |`);
 		log(`|  LU: 15:40:11 19/04/2020  |`);
 		log(`|===========================|`);
@@ -171,9 +171,9 @@
 				}
 			})
 
-			if (!data || data.id !== PID) {
+			if (!data || data.id !== PID || !data.current_seller.id) {
 				clog("DEBG", "No Item Data. Returning INIT Data");
-				itemStatus = "NO_DATA";
+				itemStatus = (!data) ? "NO_DATA" : (data.id !== PID ? "ID_MISMATCH" : (!data.current_seller.id ? "NO_SELLER" : "UNKNOWN"));
 				itemQTY = "?";
 				minSale = "?";
 				maxSale = "?";
