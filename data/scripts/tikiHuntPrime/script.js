@@ -802,7 +802,7 @@
 									log(`Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 								}
 
-								if (successCount > 0)
+								if (successCount > 0) {
 									chrome.notifications.create({
 										type: "basic",
 										title: "Deal Hunter Suite",
@@ -812,15 +812,16 @@
 										requireInteraction: true
 									});
 
-								await sendBeacon({
-									script: SCRIPT.id,
-									name: item.title,
-									link: item.link,
-									price: item.price,
-									count: successCount,
-									oldPrice: item.oldPrice,
-									thumbnail: item.thumbnail
-								});
+									await sendBeacon({
+										script: SCRIPT.id,
+										name: item.title,
+										link: item.link,
+										price: item.price,
+										count: successCount,
+										oldPrice: item.oldPrice,
+										thumbnail: item.thumbnail
+									});
+								}
 							}
 						}
 					}
