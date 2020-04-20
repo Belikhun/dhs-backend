@@ -275,6 +275,11 @@ body {
     color: rgb(34, 34, 34);
 }
 
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > .date {
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+
 #mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > timer {
     color: black;
 }
@@ -297,6 +302,10 @@ body {
 
 #mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > .name::after {
     content: "\f007";
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > .date::after {
+    content: "\f783";
 }
 
 #mainContainer .orderLogs .orderLogList > .group > .item > .detail > .right > timer::after {

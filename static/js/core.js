@@ -185,6 +185,7 @@ const core = {
 							<span class="right">
 								<t class="script">${item.script}</t>
 								<t class="name">${item.name}</t>
+								<t class="date">${(new Date(item.time * 1000)).toLocaleString()}</t>
 								<timer>
 									<style scoped="scoped" onload="liveTime(this.parentElement, ${item.time}, {type: 'minimal'});"></style>
 								</timer>
@@ -222,6 +223,10 @@ const core = {
 			})
 
 			this.pager.onUpdate(({ total, maxPage, currentPage, from, to }) => this.pageControl.current.innerText = `${currentPage}/${maxPage} (${from + 1}-${to + 1}: ${total})`)
+			this.pageControl.first.addEventListener("mouseup", () => this.pager.setPage("first"));
+			this.pageControl.back.addEventListener("mouseup", () => this.pager.back());
+			this.pageControl.next.addEventListener("mouseup", () => this.pager.next());
+			this.pageControl.last.addEventListener("mouseup", () => this.pager.setPage("last"));
 			await this.reload();
 
 			clog("okay", "Initialised:", {
