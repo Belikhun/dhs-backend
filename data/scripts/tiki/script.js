@@ -206,11 +206,11 @@
 				})
 
 			return {
-				price: itemPrice,
-				oldPrice: itemOldPrice,
+				price: parseInt(itemPrice),
+				oldPrice: parseInt(itemOldPrice),
 				thumbnail: itemData.thumbnail_url,
 				status: itemStatus,
-				qty: itemQTY
+				qty: parseInt(itemQTY)
 			}
 		}
 
@@ -414,6 +414,7 @@
 					let currentPrice = data ? data.price : null;
 					let reqTime = ((time() - reqStart) * 1000);
 					let reqTimeAT = (reqTime / settings.checkInterval) * 100;
+					let orderedCount = 0;
 			
 					runInfo({
 						progress: reqTimeAT,
@@ -476,6 +477,7 @@
 									});
 
 									successCount++;
+									orderedCount++;
 								} catch(e) {
 									continue;
 								}
@@ -492,6 +494,7 @@
 							});
 
 							successCount++;
+							orderedCount++;
 						}
 
 						await sendBeacon({
@@ -499,7 +502,7 @@
 							name: itemName,
 							link: `${HOSTADDRESS}/item-p${ID}.html`,
 							price: currentPrice,
-							count: successCount,
+							count: orderedCount,
 							runPrice: itemInitPrice,
 							oldPrice: data.oldPrice,
 							thumbnail: data.thumbnail,
@@ -507,6 +510,7 @@
 								`ID        : ${ID}`,
 								`CFID      : ${CFID}`,
 								`PID       : ${PID}`,
+								`METHOD    : ${settings.orderBy}`,
 								...beaconNote
 							].join("\n")
 						});
@@ -524,7 +528,7 @@
 							itemStatusColor: settings.autoReOrder ? (successCount === settings.autoReOrderTimes ? "green" : "yellow") : "green",
 							progress: 100,
 							progWarn: false,
-							checkDetail: "Đặt hàng thành công"
+							checkDetail: "Chạy Kết Thúc"
 						});
 
 						await command("changeLocation", { href: `${HOSTADDRESS}/sales/order/history` });
@@ -635,13 +639,6 @@
 
 						await command("changeLocation", { href: HOSTADDRESS + "/sales/order/history" });
 
-						beaconNote = [
-							`ID   : ${ID}`,
-							`CFID : ${CFID}`,
-							`PID  : ${PID}`,
-							...beaconNote
-						]
-
 						await sendBeacon({
 							script: SCRIPT.id,
 							name: itemName,
@@ -649,7 +646,15 @@
 							price: currentPrice,
 							count: settings.orderCount,
 							runPrice: itemInitPrice,
-							note: beaconNote.join("\n")
+							oldPrice: itemData.list_price,
+							thumbnail: itemData.thumbnail_url,
+							note: [
+								`ID        : ${ID}`,
+								`CFID      : ${CFID}`,
+								`PID       : ${PID}`,
+								`METHOD    : ${settings.orderBy}`,
+								...beaconNote
+							].join("\n")
 						});
 
 						log("CHẠY KẾT THÚC");
@@ -910,8 +915,7 @@
 				beaconNote.push(`METHOD    : ${paymentMethod}`);
 				beaconNote.push(`CODE      : ${placeOrder.order_code}`);
 				beaconNote.push(`TransID   : ${placeOrder.payment.transactionId}`);
-			} else
-				beaconNote.push(`METHOD    : ${paymentMethod}`);
+			}
 
 			log(` + Thời gian     : ${orderTimer.stop}s`);
 		}

@@ -205,11 +205,11 @@
 				})
 
 			return {
-				price: itemPrice,
-				oldPrice: itemOldPrice,
+				price: parseInt(itemPrice),
+				oldPrice: parseInt(itemOldPrice),
 				thumbnail: itemData.thumbnail_url,
 				status: itemStatus,
-				qty: itemQTY
+				qty: parseInt(itemQTY)
 			}
 		}
 		
