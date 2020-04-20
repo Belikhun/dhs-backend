@@ -355,8 +355,9 @@
 					{ name: `Ví Momo`, color: "blue", value: "momo" }
 				]
 			},
-			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "pink", depend: "orderBy:orderByPrice" },
+			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "blue", value: false, save: false, depend: "orderBy:orderByPrice" },
 			autoReOrderTimes: { type: "number", label: "Số lần tự động mua lại", value: 2, depend: "autoReOrder" },
+			continueRun: { type: "checkbox", label: "Tiếp tục chạy khi chưa mua đủ số lượng", color: "pink", depend: "autoReOrder" }
 		});
 	
 		log("CÀI ĐẶT:");
@@ -370,6 +371,7 @@
 		// Start
 		var checkNth = 0;
 		var start = time();
+		var successCount = 0;
 	
 		switch (settings.orderBy) {
 
@@ -412,7 +414,6 @@
 					let currentPrice = data ? data.price : null;
 					let reqTime = ((time() - reqStart) * 1000);
 					let reqTimeAT = (reqTime / settings.checkInterval) * 100;
-					let successCount = 0;
 			
 					runInfo({
 						progress: reqTimeAT,
@@ -432,7 +433,7 @@
 						order();
 			
 						if (settings.autoReOrder)
-							for (var orderNth = 1; orderNth <= settings.autoReOrderTimes; orderNth++) {
+							for (var orderNth = successCount; orderNth <= settings.autoReOrderTimes; orderNth++) {
 								runInfo({ itemStatus: `Lần Mua ${orderNth}/${settings.autoReOrderTimes}`, itemStatusColor: "yellow" });
 								heartbeat();
 								log(`========== ITEM ${orderNth}/${settings.autoReOrderTimes} ==========`);
@@ -492,17 +493,6 @@
 
 							successCount++;
 						}
-			
-						complete();
-						runInfo({
-							itemStatus: `ĐÃ ĐẶT ${settings.autoReOrder ? successCount : settings.orderCount} items`,
-							itemStatusColor: settings.autoReOrder ? (successCount === settings.autoReOrderTimes ? "green" : "yellow") : "green",
-							progress: 100,
-							progWarn: false,
-							checkDetail: "Đặt hàng thành công"
-						});
-
-						await command("changeLocation", { href: `${HOSTADDRESS}/sales/order/history` });
 
 						await sendBeacon({
 							script: SCRIPT.id,
@@ -521,6 +511,23 @@
 							].join("\n")
 						});
 
+						if (successCount < settings.autoReOrderTimes && settings.continueRun) {
+							log("🛒 Chưa mua đủ số lượng. TIẾP TỤC CHẠY");
+							log(` + ĐÃ MUA ${successCount}/${settings.autoReOrderTimes}. Còn ${settings.autoReOrderTimes - successCount}`);
+							doCheck = true;
+							return;
+						}
+			
+						complete();
+						runInfo({
+							itemStatus: `ĐÃ ĐẶT ${settings.autoReOrder ? successCount : settings.orderCount} items`,
+							itemStatusColor: settings.autoReOrder ? (successCount === settings.autoReOrderTimes ? "green" : "yellow") : "green",
+							progress: 100,
+							progWarn: false,
+							checkDetail: "Đặt hàng thành công"
+						});
+
+						await command("changeLocation", { href: `${HOSTADDRESS}/sales/order/history` });
 						log("CHẠY KẾT THÚC");
 						return;
 					}
