@@ -912,7 +912,6 @@
 				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.payment.qrCode}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
 
 				beaconNote.push(`------------------------------`);
-				beaconNote.push(`METHOD    : ${paymentMethod}`);
 				beaconNote.push(`CODE      : ${placeOrder.order_code}`);
 				beaconNote.push(`TransID   : ${placeOrder.payment.transactionId}`);
 			}
