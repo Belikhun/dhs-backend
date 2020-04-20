@@ -32,6 +32,8 @@
 		log("itemName: " + itemName);
 		info({ title: itemName });
 		var itemInitPrice = null;
+		var updateItemData = true;
+		var itemData = {}
 	
 		// Get ID
 		var ID = null;
@@ -42,79 +44,106 @@
 		const getToken = async () => (await this.getCookie(HOSTADDRESS, "TIKI_ACCESS_TOKEN")).value
 
 		const fetchItemData = async (updateInfo = true) => {
-			let data = await myajax({
-				url: `${HOSTADDRESS}/api/v2/products/${ID}`,
-				method: "GET",
-				changeState: false
-			});
+			if (updateItemData) {
+				itemData = await myajax({
+					url: `${HOSTADDRESS}/api/v2/products/${ID}`,
+					method: "GET",
+					changeState: false
+				});
 	
-			ID = data.id;
-			let itemPrice = null;
-			let itemStatus = null;
-			let itemQTY = null;
+				if (ID !== itemData.id) {
+					log(`ID Change: ${ID} -> ${itemData.id}`);
+					ID = itemData.id;
+				}
+			}
+
+			let itemPrice = itemData.price;
+			let itemOldPrice = itemData.list_price;
+			let itemStatus = itemData.inventory_status;
+			let itemQTY = (itemData.stock_item) ? itemData.stock_item.qty : "?";
+			let minSale = (itemData.stock_item) ? itemData.stock_item.min_sale_qty : "?";
+			let maxSale = (itemData.stock_item) ? itemData.stock_item.max_sale_qty : "?";
 
 			if (updateInfo)
 				info({
 					id: ID,
-					price: priceFormat(data.price),
+					price: priceFormat(itemData.price),
 					tags: [
-						`status: ${data.inventory_status}`,
-						`Deal: ${data.is_deal ? "Có" : "Không"}`,
-						`Số lượng: ${(data.stock_item) ? data.stock_item.qty : "?"}`,
-						`freeShip: ${data.is_free_shipping ? "Có" : "Không"}`,
-						data.warranty_lifetime || "Không Bảo Hành"
+						`status: ${itemData.inventory_status}`,
+						`Deal: ${itemData.is_deal ? "Có" : "Không"}`,
+						`Số lượng: ${itemQTY}`,
+						`MIN Sale: ${minSale}`,
+						`MAX Sale: ${maxSale}`,
+						`freeShip: ${itemData.is_free_shipping ? "Có" : "Không"}`,
+						itemData.warranty_lifetime || "Không Bảo Hành"
 					]
 				})
 
-			if (!CFID && data.configurable_products) {
-				let configList = []
+			if (itemData.configurable_products) {
+				if (!CFID) {
+					let configList = []
 
-				for (let item of data.configurable_products)
-					configList.push({
+					for (let item of itemData.configurable_products)
+						configList.push({
 							name: item.name,
 							color: "pink",
 							value: item.child_id
 						});
-
-				let select = await setup({
-					config: {
-						type: "radio",
-						label: "Chọn loại hàng",
-						required: true,
-						list: configList
-					}
-				}, { confirm: "Tiếp" });
-
-				CFID = parseInt(select.config);
-				log(`Config ID: ${CFID}`);
-
-				await delayAsync(400);
-
-				for (let item of data.configurable_products)
-					if (item.child_id === CFID) {
-						itemPrice = item.price;
-						itemStatus = item.inventory_status;
-
-						if (item.id !== PID) {
-							log(`PID Change: ${PID} -> ${item.id}`);
-							PID = parseInt(item.id);
+	
+					let select = await setup({
+						customPID: { type: "number", label: "PID tùy chỉnh", save: false },
+						config: {
+							type: "radio",
+							label: "Chọn loại hàng",
+							list: configList
 						}
+					}, { confirm: "Tiếp" });
+	
+					if (select.customPID) {
+						clog("DEBG", `Custom PID: ${select.customPID}`);
+						CFID = "custom";
+						PID = select.customPID;
+					} else {
+						if (!select.config)
+							throw { code: -1, description: "Vui lòng chọn loại hàng!" }
+
+						CFID = parseInt(select.config);
 					}
+
+					log(`Config ID: ${CFID}`);
+					await delayAsync(400);
+				}
+
+				if (CFID !== "custom")
+					for (let item of itemData.configurable_products)
+						if (item.child_id === CFID) {
+							itemPrice = item.price;
+							itemStatus = item.inventory_status;
+
+							if (item.id !== PID) {
+								log(`PID Change: ${PID} -> ${item.id} (1)`);
+								PID = parseInt(item.id);
+							}
+
+							break;
+						}
 			} else {
-				itemPrice = data.price;
-				itemStatus = data.inventory_status;
-
-				if (data.stock_item)
-					itemQTY = data.stock_item.qty;
-
 				let _pid = PID;
 
-				if (data.current_seller)
-					_pid = parseInt(data.current_seller.product_id);
-				else {
+				if (itemData.current_seller) {
+					_pid = parseInt(itemData.current_seller.product_id);
+					clog("DEBG", "Have current_seller:", itemData.current_seller);
+				} else {
+					clog("DEBG", "No current_seller. Fetching page to get PID");
+
+					if (updateItemData) {
+						clog("DEBG", "Disabling fetchItemData");
+						updateItemData = false;
+					}
+
 					heartbeat({ color: "red" });
 					let itemPage = await myajax({
-						url: `${HOSTADDRESS}/${data.url_path}`,
+						url: `${HOSTADDRESS}/${itemData.url_path}`,
 						method: "GET",
 						type: "text"
 					})
@@ -124,13 +153,36 @@
 				}
 
 				if (_pid !== PID) {
-					log(`PID Change: ${PID} -> ${_pid}`);
+					log(`PID Change: ${PID} -> ${_pid} (2)`);
 					PID = _pid;
 				}
 			}
 
 			if (!PID)
 				throw { code: -1, description: "Không xác định được PID của sản phẩm" }
+
+			let data = await myajax({
+				url: `${HOSTADDRESS}/ajaxProductRender`,
+				method: "GET",
+				query: {
+					pid: ID,
+					spid: PID
+				}
+			})
+
+			if (!data || data.id !== PID || !data.current_seller.id) {
+				clog("DEBG", "No Item Data. Returning INIT Data");
+				itemStatus = (!data) ? "NO_DATA" : (data.id !== PID ? "ID_MISMATCH" : (!data.current_seller.id ? "NO_SELLER" : "UNKNOWN"));
+				itemQTY = "?";
+				minSale = "?";
+				maxSale = "?";
+			} else {
+				itemPrice = data.price;
+				itemStatus = data.inventory_status;
+				itemQTY = (data.stock_item) ? data.stock_item.qty : "?";
+				minSale = (data.stock_item) ? data.stock_item.min_sale_qty : "?";
+				maxSale = (data.stock_item) ? data.stock_item.max_sale_qty : "?";
+			}
 
 			if (!itemInitPrice)
 				itemInitPrice = itemPrice;
@@ -141,21 +193,23 @@
 					price: priceFormat(itemPrice),
 					tags: [
 						`status: ${itemStatus}`,
-						`Deal: ${data.is_deal ? "Có" : "Không"}`,
-						`Số lượng: ${(data.stock_item) ? data.stock_item.qty : "?"}`,
-						`freeShip: ${data.is_free_shipping ? "Có" : "Không"}`,
-						data.warranty_lifetime || "Không Bảo Hành",
-						`CFID: ${CFID}`,
+						`Deal: ${itemData.is_deal ? "Có" : "Không"}`,
+						`Số lượng: ${itemQTY}`,
+						`MIN Sale: ${minSale}`,
+						`MAX Sale: ${minSale}`,
+						`freeShip: ${itemData.is_free_shipping ? "Có" : "Không"}`,
+						itemData.warranty_lifetime || "Không Bảo Hành",
+						`CFID: ${CFID || "?"}`,
 						`PID: ${PID}`
 					]
 				})
 
 			return {
-				price: itemPrice,
-				oldPrice: data.list_price,
-				thumbnail: data.thumbnail_url,
+				price: parseInt(itemPrice),
+				oldPrice: parseInt(itemOldPrice),
+				thumbnail: itemData.thumbnail_url,
 				status: itemStatus,
-				qty: itemQTY
+				qty: parseInt(itemQTY)
 			}
 		}
 		
@@ -318,7 +372,6 @@
 			log(` + ` + pleft(key, 18, true) + ` = ${settings[key]}`);
 
 		log("Đang bắt đầu chạy...");
-		clearInterval(updateInfoInterval);
 		run();
 		
 		// Start

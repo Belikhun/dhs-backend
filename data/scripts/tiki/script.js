@@ -206,11 +206,11 @@
 				})
 
 			return {
-				price: itemPrice,
-				oldPrice: itemOldPrice,
+				price: parseInt(itemPrice),
+				oldPrice: parseInt(itemOldPrice),
 				thumbnail: itemData.thumbnail_url,
 				status: itemStatus,
-				qty: itemQTY
+				qty: parseInt(itemQTY)
 			}
 		}
 
@@ -355,8 +355,9 @@
 					{ name: `Ví Momo`, color: "blue", value: "momo" }
 				]
 			},
-			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "pink", depend: "orderBy:orderByPrice" },
+			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "blue", value: false, save: false, depend: "orderBy:orderByPrice" },
 			autoReOrderTimes: { type: "number", label: "Số lần tự động mua lại", value: 2, depend: "autoReOrder" },
+			continueRun: { type: "checkbox", label: "Tiếp tục chạy khi chưa mua đủ số lượng", color: "pink", depend: "autoReOrder" }
 		});
 	
 		log("CÀI ĐẶT:");
@@ -370,6 +371,7 @@
 		// Start
 		var checkNth = 0;
 		var start = time();
+		var successCount = 0;
 	
 		switch (settings.orderBy) {
 
@@ -412,7 +414,7 @@
 					let currentPrice = data ? data.price : null;
 					let reqTime = ((time() - reqStart) * 1000);
 					let reqTimeAT = (reqTime / settings.checkInterval) * 100;
-					let successCount = 0;
+					let orderedCount = 0;
 			
 					runInfo({
 						progress: reqTimeAT,
@@ -432,7 +434,7 @@
 						order();
 			
 						if (settings.autoReOrder)
-							for (var orderNth = 1; orderNth <= settings.autoReOrderTimes; orderNth++) {
+							for (var orderNth = successCount; orderNth <= settings.autoReOrderTimes; orderNth++) {
 								runInfo({ itemStatus: `Lần Mua ${orderNth}/${settings.autoReOrderTimes}`, itemStatusColor: "yellow" });
 								heartbeat();
 								log(`========== ITEM ${orderNth}/${settings.autoReOrderTimes} ==========`);
@@ -475,6 +477,7 @@
 									});
 
 									successCount++;
+									orderedCount++;
 								} catch(e) {
 									continue;
 								}
@@ -491,6 +494,32 @@
 							});
 
 							successCount++;
+							orderedCount++;
+						}
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-p${ID}.html`,
+							price: currentPrice,
+							count: orderedCount,
+							runPrice: itemInitPrice,
+							oldPrice: data.oldPrice,
+							thumbnail: data.thumbnail,
+							note: [
+								`ID        : ${ID}`,
+								`CFID      : ${CFID}`,
+								`PID       : ${PID}`,
+								`METHOD    : ${settings.orderBy}`,
+								...beaconNote
+							].join("\n")
+						});
+
+						if (successCount < settings.autoReOrderTimes && settings.continueRun) {
+							log("🛒 Chưa mua đủ số lượng. TIẾP TỤC CHẠY");
+							log(` + ĐÃ MUA ${successCount}/${settings.autoReOrderTimes}. Còn ${settings.autoReOrderTimes - successCount}`);
+							doCheck = true;
+							return;
 						}
 			
 						complete();
@@ -499,28 +528,10 @@
 							itemStatusColor: settings.autoReOrder ? (successCount === settings.autoReOrderTimes ? "green" : "yellow") : "green",
 							progress: 100,
 							progWarn: false,
-							checkDetail: "Đặt hàng thành công"
+							checkDetail: "Chạy Kết Thúc"
 						});
 
 						await command("changeLocation", { href: `${HOSTADDRESS}/sales/order/history` });
-
-						await sendBeacon({
-							script: SCRIPT.id,
-							name: itemName,
-							link: `${HOSTADDRESS}/item-p${ID}.html`,
-							price: currentPrice,
-							count: successCount,
-							runPrice: itemInitPrice,
-							oldPrice: data.oldPrice,
-							thumbnail: data.thumbnail,
-							note: [
-								`ID        : ${ID}`,
-								`CFID      : ${CFID}`,
-								`PID       : ${PID}`,
-								...beaconNote
-							].join("\n")
-						});
-
 						log("CHẠY KẾT THÚC");
 						return;
 					}
@@ -628,13 +639,6 @@
 
 						await command("changeLocation", { href: HOSTADDRESS + "/sales/order/history" });
 
-						beaconNote = [
-							`ID   : ${ID}`,
-							`CFID : ${CFID}`,
-							`PID  : ${PID}`,
-							...beaconNote
-						]
-
 						await sendBeacon({
 							script: SCRIPT.id,
 							name: itemName,
@@ -642,7 +646,15 @@
 							price: currentPrice,
 							count: settings.orderCount,
 							runPrice: itemInitPrice,
-							note: beaconNote.join("\n")
+							oldPrice: itemData.list_price,
+							thumbnail: itemData.thumbnail_url,
+							note: [
+								`ID        : ${ID}`,
+								`CFID      : ${CFID}`,
+								`PID       : ${PID}`,
+								`METHOD    : ${settings.orderBy}`,
+								...beaconNote
+							].join("\n")
 						});
 
 						log("CHẠY KẾT THÚC");
@@ -900,11 +912,9 @@
 				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.payment.qrCode}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
 
 				beaconNote.push(`------------------------------`);
-				beaconNote.push(`METHOD    : ${paymentMethod}`);
 				beaconNote.push(`CODE      : ${placeOrder.order_code}`);
 				beaconNote.push(`TransID   : ${placeOrder.payment.transactionId}`);
-			} else
-				beaconNote.push(`METHOD    : ${paymentMethod}`);
+			}
 
 			log(` + Thời gian     : ${orderTimer.stop}s`);
 		}
