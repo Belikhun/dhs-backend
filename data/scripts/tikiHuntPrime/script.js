@@ -81,16 +81,17 @@
 
 			for (let itemNth = 0; itemNth < selectedPageList.length; itemNth++) {
 				let item = selectedPageList[itemNth];
+				let pageLoaded = 0;
 				let start = time();
 
 				log(`   + Đang tải: ${item.title}`);
 				
-				for (let page = 1; page <= pageCount; page++) {
-					var result = {}
-					heartbeat({ color: "yellow" });
+				await new Promise((resolve, reject) => {
+					for (let page = 1; page <= pageCount; page++) {
+						var result = {}
+						heartbeat({ color: "yellow" });
 
-					try {
-						result = await myajax({
+						result = myajax({
 							url: HOSTADDRESS + item.path,
 							method: "GET",
 							query: {
@@ -99,76 +100,81 @@
 								page: page
 							},
 							type: "text"
-						});
-					} catch(e) {
-						heartbeat({ color: "red" });
-						log(" + Lỗi đã xảy ra khi lấy danh sách Item");
-						log(`    + Code: ${e.code}`);
-						log(`    + MSG : ${e.description || "Không Rõ"}`);
-						log(`    + Bỏ qua lỗi: true`);
+						}).catch(e => {
+							heartbeat({ color: "red" });
+							log(" + Lỗi đã xảy ra khi lấy danh sách Item");
+							log(`    + Code: ${e.code}`);
+							log(`    + MSG : ${e.description || "Không Rõ"}`);
+							log(`    + Bỏ qua lỗi: true`);
 
-						continue;
-					}
+							pageLoaded++;
+							return;
+						}).then(() => {
+							// Calc progress
+							pageLoaded++;
 
-					// Calc progress
-					let now = (itemNth * pageCount + page);
-					let end = pageCount * selectedPageList.length;
-					set((now / end) * 100, now, end);
-					delete now;
-					delete end;
-					heartbeat();
-		
-					let itemPage = (new DOMParser()).parseFromString(result, "text/html");
-					let itemList = itemPage.querySelectorAll("div.product-item[data-id]");
-	
-					for (let item of itemList) {
-						if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
-							continue;
+							let now = (itemNth * pageCount + pageLoaded);
+							let end = pageCount * selectedPageList.length;
+							set((now / end) * 100, now, end);
+							delete now;
+							delete end;
+							heartbeat();
+				
+							let itemPage = (new DOMParser()).parseFromString(result, "text/html");
+							let itemList = itemPage.querySelectorAll("div.product-item[data-id]");
+			
+							for (let item of itemList) {
+								if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
+									return;
 
-						let link = item.querySelector("a[data-id]").href;
-						let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
-	
-						let price = parseInt(item.dataset.price);
-						let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular").innerText;
-						let oldPrice = (_priceBox !== "") ? parseInt(_priceBox.match(/\d/g).join("")) : price;
-						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
-	
-						if (priceSale < saleFilter)
-							continue;
+								let link = item.querySelector("a[data-id]").href;
+								let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
+			
+								let price = parseInt(item.dataset.price);
+								let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular").innerText;
+								let oldPrice = (_priceBox !== "") ? parseInt(_priceBox.match(/\d/g).join("")) : price;
+								let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
+			
+								if (priceSale < saleFilter)
+									return;
 
-						let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
-						let couponCode = null;
-						let couponPrice = null;
-						let couponSale = null;
-	
-						if (couponBox) {
-							couponCode = couponBox.innerText;
-							couponPrice = parseInt(item.querySelector("a > div.price-tag-wrap > p.price-tag > span.price > span").innerText.match(/\d/g).join(""));
-							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
-						}
-	
-						list[item.dataset.id] = {
-							id: item.dataset.id,
-							pid: item.dataset.sellerProductId,
-							title: item.dataset.title,
-							link: link,
-							price,
-							priceSale,
-							thumbnail,
-							oldPrice,
-							coupon: { code: couponCode, price: couponPrice, sale: couponSale },
-							sale: couponSale || priceSale
-						}
+								let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
+								let couponCode = null;
+								let couponPrice = null;
+								let couponSale = null;
+			
+								if (couponBox) {
+									couponCode = couponBox.innerText;
+									couponPrice = parseInt(item.querySelector("a > div.price-tag-wrap > p.price-tag > span.price > span").innerText.match(/\d/g).join(""));
+									couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
+								}
+			
+								list[item.dataset.id] = {
+									id: item.dataset.id,
+									pid: item.dataset.sellerProductId,
+									title: item.dataset.title,
+									link: link,
+									price,
+									priceSale,
+									thumbnail,
+									oldPrice,
+									coupon: { code: couponCode, price: couponPrice, sale: couponSale },
+									sale: couponSale || priceSale
+								}
+			
+								if (doSort)
+									sortedList.push(list[item.dataset.id]);
+							}
 
-						// Item Handling Function
-						await itemHandler(list[item.dataset.id]);
-	
-						if (doSort)
-							sortedList.push(list[item.dataset.id]);
-					}
+							delete result;
 
-					delete result;
-				}
+							if (pageLoaded >= pageCount)
+								resolve();
+						})
+				}})
+
+				for (let item of sortedList)
+					await itemHandler(item);
 				
 				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
 			}
@@ -916,14 +922,12 @@
 			}
 
 			if (loginResponse.messages && loginResponse.messages.email) {
-				await errored("Lỗi khi đăng nhập vào tài khoản");
 				log(`📥 Không thể đăng nhập vào tài khoản \"${username}\"`);
 				log(` + MSG : ${loginResponse.messages.email || "Không Rõ"}`);
 				throw { code: -1, description: loginResponse.messages.email, data: loginResponse }
 			}
 
 			if (loginResponse.messages && loginResponse.messages.password) {
-				await errored("Lỗi khi đăng nhập vào tài khoản");
 				log(`📥 Không thể đăng nhập vào \"${username}\"`);
 				log(` + MSG : ${loginResponse.messages.password || "Không Rõ"}`);
 				throw { code: -1, description: loginResponse.messages.password, data: loginResponse }

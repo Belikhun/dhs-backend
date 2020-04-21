@@ -911,14 +911,12 @@
 			}
 
 			if (loginResponse.messages && loginResponse.messages.email) {
-				await errored("Lỗi khi đăng nhập vào tài khoản");
 				log(`📥 Không thể đăng nhập vào tài khoản \"${username}\"`);
 				log(` + MSG : ${loginResponse.messages.email || "Không Rõ"}`);
 				throw { code: -1, description: loginResponse.messages.email, data: loginResponse }
 			}
 
 			if (loginResponse.messages && loginResponse.messages.password) {
-				await errored("Lỗi khi đăng nhập vào tài khoản");
 				log(`📥 Không thể đăng nhập vào \"${username}\"`);
 				log(` + MSG : ${loginResponse.messages.password || "Không Rõ"}`);
 				throw { code: -1, description: loginResponse.messages.password, data: loginResponse }
