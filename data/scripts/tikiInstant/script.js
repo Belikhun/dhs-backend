@@ -27,6 +27,15 @@
 		log(`|  LU: 00:12:21 18/03/2020  |`);
 		log(`|===========================|`);
 	
+		const getToken = async () => {
+			let at = await this.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
+	
+			if (!at.value)
+				return (await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
+	
+			return at.value;
+		}
+
 		// Get itemName
 		var itemName = "";
 		var itemInitPrice = 0;
@@ -163,7 +172,7 @@
 				url: "/api/v2/account/logout",
 				method: "GET",
 				header: {
-					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"]
+					"X-Access-Token": await getToken()
 				}
 			});
 
@@ -311,7 +320,7 @@
 					url: "/checkout/payment/ajax_update_cart",
 					method: "POST",
 					header: {
-						"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
+						"X-Access-Token": await getToken(),
 						apikey: null
 					},
 					form: {
@@ -370,7 +379,7 @@
 				url: "/checkout/payment/ajax_check_place_order",
 				method: "POST",
 				header: {
-					"x-access-token": (await command("getCookie", { key: "TIKI_ACCESS_TOKEN" }))["TIKI_ACCESS_TOKEN"],
+					"X-Access-Token": await getToken(),
 					apikey: null
 				},
 				form: {
