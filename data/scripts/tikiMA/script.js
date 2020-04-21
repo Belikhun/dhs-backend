@@ -16,7 +16,7 @@
 		log(`|===========================|`);
 		log(`|   Tiki Multiple Account   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 17:35:20 10/04/2020  |`);
+		log(`|  LU: 11:27:15 21/04/2020  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -344,6 +344,7 @@
 		log(" + Đang lưu danh sách tài khoản");
 		await this.dataSave({ "tikiMA.accountList": account.list });
 		var accountList = account.list.split("\n").map(a => { let i = a.split(":"); return { u: i[0], p: i[1] } });
+		var doOrderAccountList = accountList;
 		await delayAsync(1000);
 
 		// Wait for settings
@@ -364,6 +365,9 @@
 					{ name: `Ví Momo`, color: "blue", value: "momo" }
 				]
 			},
+			autoReOrder: { type: "checkbox", label: "Tự động mua lại cho tài khoản", color: "blue", value: false, save: false, depend: "orderBy:orderByPrice" },
+			autoReOrderTimes: { type: "number", label: "Số lần tự động mua lại CHO MỐI TÀI KHOẢN", value: 2, depend: "autoReOrder" },
+			continueRun: { type: "checkbox", label: "Tiếp tục chạy khi chưa mua đủ số lượng", color: "pink", depend: "autoReOrder" }
 		});
 	
 		log("CÀI ĐẶT:");
@@ -371,12 +375,16 @@
 		for (let key of Object.keys(settings))
 			log(` + ` + pleft(key, 18, true) + ` = ${settings[key]}`);
 
+		if (settings.autoReOrder)
+			doOrderAccountList = doOrderAccountList.map(i => { i.c = settings.autoReOrderTimes; return i });
+
 		log("Đang bắt đầu chạy...");
 		run();
 		
 		// Start
 		var checkNth = 0;
 		var start = time();
+		var successCount = 0;
 	
 		runInfo({
 			end: settings.checkInterval + "ms",
@@ -413,7 +421,7 @@
 			var currentPrice = data ? data.price : null;
 			let reqTime = ((time() - reqStart) * 1000);
 			let reqTimeAT = (reqTime / settings.checkInterval) * 100;
-			let successCount = 0;
+			let orderedCount = 0;
 	
 			runInfo({
 				progress: reqTimeAT,
@@ -432,12 +440,18 @@
 				doCheck = false;
 				order();
 
-				for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
-					let account = accountList[orderNth];
+				for (var orderNth = 0; orderNth < doOrderAccountList.length; orderNth++) {
+					let account = doOrderAccountList[orderNth];
 
-					runInfo({ itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`, itemStatusColor: "yellow" });
+					if (account.c <= 0) {
+						log(`🏳 Đã mua đủ số lượng cho tài khoản ${account.u}`);
+						continue;
+					}
+
+					runInfo({ itemStatus: `Lần Mua ${orderNth + 1}/${doOrderAccountList.length}`, itemStatusColor: "yellow" });
 					heartbeat();
-					log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
+					log(`========== ACCOUNT ${account.u} (${orderNth + 1}/${doOrderAccountList.length}) ==========`);
+					log(`🔃 Số lần mua lại: ${account.c}`);
 
 					try {
 						await __switchAccount({
@@ -445,8 +459,8 @@
 							password: account.p
 						});
 
-						for (let time = 1; time <= settings.autoRebuy; time++) {
-							log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
+						for (let time = 1; time <= account.c; time++) {
+							log(`---------- LẦN ${time}/${account.c} ----------`);
 							sounds.notification();
 							await __doOrder({
 								id: item.pid,
@@ -455,6 +469,8 @@
 							});
 
 							successCount++;
+							orderedCount++;
+							doOrderAccountList[orderNth].c--;
 						}
 					} catch(e) {
 						heartbeat({ color: "red" });
@@ -467,15 +483,6 @@
 					heartbeat();
 					log(`Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 				}
-	
-				complete();
-				runInfo({
-					itemStatus: `ĐÃ ĐẶT ${successCount} items`,
-					itemStatusColor: (successCount === settings.autoReOrderTimes ? "green" : "yellow"),
-					progress: 100,
-					progWarn: false,
-					checkDetail: "Đặt hàng thành công"
-				});
 
 				await sendBeacon({
 					script: SCRIPT.id,
@@ -486,6 +493,22 @@
 					runPrice: itemInitPrice,
 					oldPrice: data.oldPrice,
 					thumbnail: data.thumbnail
+				});
+
+				if (successCount < (settings.autoReOrderTimes * accountList.length) && settings.continueRun) {
+					log("🛒 Chưa mua đủ số lượng. TIẾP TỤC CHẠY");
+					log(` + ĐÃ MUA ${successCount}/${settings.autoReOrderTimes * accountList.length}. Còn ${(settings.autoReOrderTimes * accountList.length) - successCount}`);
+					doCheck = true;
+					return;
+				}
+	
+				complete();
+				runInfo({
+					itemStatus: `ĐÃ ĐẶT ${successCount} items`,
+					itemStatusColor: (successCount === settings.autoReOrderTimes ? "green" : "yellow"),
+					progress: 100,
+					progWarn: false,
+					checkDetail: "Đặt hàng thành công"
 				});
 
 				await command("changeLocation", { href: "/sales/order/history" });
