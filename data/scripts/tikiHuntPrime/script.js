@@ -489,7 +489,7 @@
 
 		let pageListSetup = await setup(pageListSetupData, { confirm: "Tiếp", saveKey: "pageList" });
 
-		log("DANH SÁCH TRANG:");
+		log("📃 DANH SÁCH TRANG:");
 
 		for (let key of Object.keys(pageListSetup)) {
 			log(` + ` + pleft(key, 18, true) + ` = ${pageListSetup[key]}`);
@@ -607,7 +607,9 @@
 			autobuyFrom: { type: "number", label: "Giá tối thiểu", value: 0, depend: "autobuy" },
 			autobuyCount: { type: "number", label: "Số Lượng Mua", value: 1, depend: "autobuy" },
 			autoRebuy: { type: "number", label: "Số Lần Mua Lại", value: 1, depend: "autobuy" },
-			applyCoupon: { type: "checkbox", label: "Áp mã giảm giá nếu có", value: false, depend: "autobuy" },
+			checkMaxDeal: { type: "checkbox", label: "Kiểm tra thông tin sale", value: false, depend: "autobuy" },
+			itemQtyMinus: { type: "number", label: "Trừ số lượng trong kho", value: 4, depend: "checkMaxDeal" },
+			applyCoupon: { type: "checkbox", label: "Áp mã giảm giá nếu có", color: "blue", value: false, depend: "autobuy" },
 			randomIp: { type: "checkbox", label: "IP Ngẫu nhiên", color: "blue", value: false, depend: "autobuy" },
 			ip: { type: "text", label: "IP", depend: "randomIp", doubt: true },
 			paymentMethod: {
@@ -623,11 +625,11 @@
 			accountList: { type: "textarea", label: "Danh Sách Tài Khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false }
 		})
 
-		log(" + Đang lưu danh sách tài khoản");
+		log("👥 Đang lưu danh sách tài khoản");
 		await this.dataSave({ "tikiMA.accountList": settings.accountList });
 		var accountList = settings.accountList.split("\n").filter(String).map(a => { let i = a.split(":"); return { u: i[0], p: i[1] } });
 
-		log("Đang bắt đầu chạy...");
+		log("🏃‍♂️ Đang bắt đầu chạy...");
 		run();
 		
 		// Start
@@ -660,9 +662,9 @@
 			if (runTime <= 0) {
 				let startCheck = time();
 				log("");
-				log(`Bắt đầu kiểm tra (lần ${runNth})`);
+				log(`🛫 Bắt đầu kiểm tra (lần ${runNth})`);
 				await __doUpdate();
-				log(` + KIỂM TRA HOÀN THÀNH`);
+				log(`🛫 KIỂM TRA HOÀN THÀNH`);
 				log(` + Thời gian: ${(time() - startCheck).toFixed(2)}s`);
 
 				// Reset
@@ -740,8 +742,8 @@
 					let showItemDetail = !settings.checkPriceHistory;
 
 					if (settings.checkPriceHistory) {
-						log(`     + Đang kiểm tra lịch sử giá`);
-						log(`       + ID: ${item.id} PID: ${item.pid}`);
+						log(`🐝 Đang kiểm tra lịch sử giá`);
+						log(` + ID: ${item.id} PID: ${item.pid}`);
 						let beeCost = {}
 
 						try {
@@ -765,26 +767,61 @@
 						showItemDetail = true;
 						
 						if (beeCost.status === "error") {
-							log("     + Không thể lấy lịch sử giá Item");
-							log(`       + Code : ${beeCost.meta.code || "Không Rõ"}`);
-							log(`       + MSG  : ${beeCost.meta.message || "Không Rõ"}`);
-							log(`       + Bỏ qua lỗi: true`);
+							log("🐝 Không thể lấy lịch sử giá Item");
+							log(` + Code : ${beeCost.meta.code || "Không Rõ"}`);
+							log(` + MSG  : ${beeCost.meta.message || "Không Rõ"}`);
+							log(` + Bỏ qua lỗi: true`);
 						} else {
 							let costData = beeCost.data.price_classification;
 							let min = costData ? costData.min_price : Math.min.apply(this, beeCost.data.item_history.price);
-							log(`   + GIÁ THẤP NHẤT: ${min}`);
+							log(`🐝 GIÁ THẤP NHẤT: ${min}`);
 
 							let priceRatio = min / item.price;
-							log(`   + PRICE RATIO: ${priceRatio}`);
+							log(`🐝 PRICE RATIO: ${priceRatio}`);
 
 							if (item.price < settings.autobuyFrom) {
-								log(`   + GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
+								log(`🐝 🛑 GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
 								return;
 							}
 
 							if (priceRatio >= settings.autobuyRatio) {
+								let orderCount = settings.autobuyCount;
+
+								if (settings.checkMaxDeal) {
+									log(`🤝 Đang kiểm tra thông tin Sale`);
+
+									let data = await myajax({
+										url: `${HOSTADDRESS}/ajaxProductRender`,
+										method: "GET",
+										query: {
+											pid: item.id,
+											spid: item.pid
+										}
+									})
+
+									if (data && data.id === PID && data.stock_item && data.stock_item.max_sale_qty) {
+										let itemQTY = data.stock_item.qty;
+										let minSale = data.stock_item.min_sale_qty;
+										let maxSale = data.stock_item.max_sale_qty;
+										log(`🤝 QTY/MIN/MAX: ${itemQTY}/${minSale}/${maxSale}`);
+
+										let calcCount = Math.min(orderCount, Math.max(itemQTY - settings.itemQtyMinus), maxSale);
+										log(`🤝 Số lượng mua tính được: ${calcCount}`);
+
+										if (calcCount < minSale) {
+											log(`🤝 🛑 Số lượng tính được nhỏ hơn MIN SALE`);
+											return;
+										}
+
+										orderCount = calcCount;
+									} else {
+										log(`🤝 🛑 Không có thông tin Sale`);
+										return;
+									}
+								}
+
 								let successCount = 0;
-								log(`   + BẮT ĐẦU ĐẶT MUA`);
+								log(`💠 BẮT ĐẦU ĐẶT MUA`);
 
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
 									let account = accountList[orderNth];
@@ -804,7 +841,7 @@
 											sounds.notification();
 											await __doOrder({
 												id: item.pid,
-												count: settings.autobuyCount,
+												count: orderCount,
 												coupon: (settings.applyCoupon && item.coupon && item.coupon.code) ? item.coupon.code : "",
 												paymentMethod: settings.paymentMethod
 											});
@@ -813,14 +850,14 @@
 										}
 									} catch(e) {
 										heartbeat({ color: "red" });
-										log(`Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+										log(`💠 Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 										clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
 										await __clearCart();
 										continue;
 									}
 
 									heartbeat();
-									log(`Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+									log(`💠 Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 								}
 
 								if (successCount > 0) {
