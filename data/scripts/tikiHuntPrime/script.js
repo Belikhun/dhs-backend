@@ -88,10 +88,9 @@
 				
 				await new Promise((resolve, reject) => {
 					for (let page = 1; page <= pageCount; page++) {
-						var result = {}
 						heartbeat({ color: "yellow" });
 
-						result = myajax({
+						myajax({
 							url: HOSTADDRESS + item.path,
 							method: "GET",
 							query: {
@@ -109,7 +108,7 @@
 
 							pageLoaded++;
 							return;
-						}).then(() => {
+						}).then((result) => {
 							// Calc progress
 							pageLoaded++;
 
@@ -125,7 +124,7 @@
 			
 							for (let item of itemList) {
 								if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
-									return;
+									continue;
 
 								let link = item.querySelector("a[data-id]").href;
 								let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
@@ -136,7 +135,7 @@
 								let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 			
 								if (priceSale < saleFilter)
-									return;
+									continue;
 
 								let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
 								let couponCode = null;
