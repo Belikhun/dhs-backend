@@ -138,14 +138,16 @@
 								if (priceSale < saleFilter)
 									continue;
 
-								let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
+								let couponBox = item.querySelector("div.price-tag-wrap p.price-tag > span.tag > span.code");
 								let couponCode = null;
 								let couponPrice = null;
 								let couponSale = null;
 			
 								if (couponBox) {
+									let couponPriceBox = item.querySelector("div.price-tag-wrap p.price-tag > span.price > span");
+		
 									couponCode = couponBox.innerText;
-									couponPrice = parseInt(item.querySelector("a > div.price-tag-wrap > p.price-tag > span.price > span").innerText.match(/\d/g).join(""));
+									couponPrice = couponPriceBox ? parseInt(couponPriceBox.innerText.match(/\d/g).join("")) : price;
 									couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
 								}
 			
@@ -605,6 +607,7 @@
 			autobuyFrom: { type: "number", label: "Giá tối thiểu", value: 0, depend: "autobuy" },
 			autobuyCount: { type: "number", label: "Số Lượng Mua", value: 1, depend: "autobuy" },
 			autoRebuy: { type: "number", label: "Số Lần Mua Lại", value: 1, depend: "autobuy" },
+			applyCoupon: { type: "checkbox", label: "Áp mã giảm giá nếu có", value: false, depend: "autobuy" },
 			randomIp: { type: "checkbox", label: "IP Ngẫu nhiên", color: "blue", value: false, depend: "autobuy" },
 			ip: { type: "text", label: "IP", depend: "randomIp", doubt: true },
 			paymentMethod: {
@@ -802,6 +805,7 @@
 											await __doOrder({
 												id: item.pid,
 												count: settings.autobuyCount,
+												coupon: (settings.applyCoupon && item.coupon && item.coupon.code) ? item.coupon.code : "",
 												paymentMethod: settings.paymentMethod
 											});
 
