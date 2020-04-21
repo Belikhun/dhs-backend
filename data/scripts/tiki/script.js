@@ -42,7 +42,14 @@
 		var CFID = null;
 
 		// Define
-		const getToken = async () => (await this.getCookie(HOSTADDRESS, "TIKI_ACCESS_TOKEN")).value
+		const getToken = async () => {
+			let at = await this.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
+	
+			if (!at.value)
+				return (await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
+	
+			return at.value;
+		}
 
 		const fetchItemData = async (updateInfo = true) => {
 			if (updateItemData) {
