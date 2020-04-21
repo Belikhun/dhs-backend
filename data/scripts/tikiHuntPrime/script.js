@@ -82,6 +82,7 @@
 			for (let itemNth = 0; itemNth < selectedPageList.length; itemNth++) {
 				let item = selectedPageList[itemNth];
 				let pageLoaded = 0;
+				let pageList = [];
 				let start = time();
 
 				log(`   + Đang tải: ${item.title}`);
@@ -163,6 +164,8 @@
 			
 								if (doSort)
 									sortedList.push(list[item.dataset.id]);
+
+								pageList.push(list[item.dataset.id]);
 							}
 
 							delete result;
@@ -172,7 +175,7 @@
 						})
 				}})
 
-				for (let item of sortedList)
+				for (let item of pageList)
 					await itemHandler(item);
 				
 				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
