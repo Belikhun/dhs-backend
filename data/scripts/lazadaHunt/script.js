@@ -128,6 +128,17 @@
 						let oldPrice = (item.originalPrice) ? parseInt(item.originalPrice) : price;
 						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 	
+						let couponBox = null;
+						let couponCode = null;
+						let couponPrice = null;
+						let couponSale = null;
+	
+						if (couponBox) {
+							couponCode = couponBox.innerText;
+							couponPrice = parseInt(item.querySelector("a > div.price-tag-wrap > p.price-tag > span.price > span").innerText.match(/\d/g).join(""));
+							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
+						}
+	
 						list[item.itemId] = {
 							id: item.itemId,
 							nid: item.nid,
@@ -137,7 +148,8 @@
 							priceSale,
 							thumbnail,
 							oldPrice,
-							sale: priceSale
+							coupon: { code: couponCode, price: couponPrice, sale: couponSale },
+							sale: couponSale || priceSale
 						}
 	
 						sortedList.push(list[item.itemId]);
