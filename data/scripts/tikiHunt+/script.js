@@ -136,14 +136,19 @@
 						if (priceSale < saleFilter)
 							continue;
 
-						let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
+						let couponBox = item.querySelector("div.price-tag-wrap p.price-tag > span.tag > span.code");
 						let couponCode = null;
 						let couponPrice = null;
 						let couponSale = null;
 	
-						if (couponBox) {
+						if (couponBox && couponBox.innerText) {
+							let couponPriceBox = item.querySelector("div.price-tag-wrap p.price-tag > span.price > span");
+
 							couponCode = couponBox.innerText;
-							couponPrice = parseInt(item.querySelector("a > div.price-tag-wrap > p.price-tag > span.price > span").innerText.match(/\d/g).join(""));
+							couponPrice = (couponPriceBox && couponPriceBox.innerText)
+								? parseInt(couponPriceBox.innerText.match(/\d/g).join(""))
+								: price;
+								
 							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
 						}
 	
