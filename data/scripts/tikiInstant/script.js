@@ -30,7 +30,7 @@
 		const getToken = async () => {
 			let at = await core.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
 	
-			if (!at.value)
+			if (!at || !at.value)
 				return (await core.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
 	
 			return at.value;
