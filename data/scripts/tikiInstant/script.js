@@ -28,10 +28,10 @@
 		log(`|===========================|`);
 	
 		const getToken = async () => {
-			let at = await this.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
+			let at = await core.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
 	
 			if (!at.value)
-				return (await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
+				return (await core.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
 	
 			return at.value;
 		}
@@ -406,12 +406,11 @@
 				log(` + payURL        : <a href="${placeOrder.payment.payUrl}" target="_blank">LINK</a>`);
 				log(` + QR Code       : <a href="${placeOrder.payment.qrCode}" target="_blank">LINK</a>`);
 				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.payment.qrCode}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+
 				beaconNote.push(`------------------------------`);
-				beaconNote.push(`METHOD    : ${paymentMethod}`);
 				beaconNote.push(`CODE      : ${placeOrder.order_code}`);
 				beaconNote.push(`TransID   : ${placeOrder.payment.transactionId}`);
 			} else
-				beaconNote.push(`METHOD    : ${paymentMethod}`);
 
 			log(` + Thời gian   : ${orderTimer.stop}s`);
 		}
@@ -472,20 +471,21 @@
 			complete(`ĐÃ ĐẶT MUA ${successCount}/${accountList.length} TÀI KHOẢN`);
 			runInfo({ status: (successCount === 0) ? "errored" : ((successCount === accountList.length) ? "complete" : "warning") })
 
-			if (successCount !== 0)
-				await sendBeacon({
-					script: SCRIPT.id,
-					name: itemName,
-					link: `${HOSTADDRESS}/item-p${ID}.html`,
-					price: itemInitPrice,
-					count: successCount,
-					thumbnail: thumbnail,
-					note: [
-						`ID        : ${ID}`,
-						`PID       : ${PID}`,
-						...beaconNote
-					].join("\n")
-				});
+			if (successCount !== 0) {}
+				// await sendBeacon({
+				// 	script: SCRIPT.id,
+				// 	name: itemName,
+				// 	link: `${HOSTADDRESS}/item-p${ID}.html`,
+				// 	price: itemInitPrice,
+				// 	count: successCount,
+				// 	thumbnail: thumbnail,
+				// 	note: [
+				// 		`ID        : ${ID}`,
+				// 		`PID       : ${PID}`,
+				// 		`METHOD    : ${this.settings.paymentMethod}`,
+				// 		...beaconNote
+				// 	].join("\n")
+				// });
 		}
 
 		runInfo({ status: "waiting", info: "Đang chờ người dùng đặt mua", progress: "HOLD" });
