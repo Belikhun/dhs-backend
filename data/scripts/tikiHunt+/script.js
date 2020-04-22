@@ -141,11 +141,14 @@
 						let couponPrice = null;
 						let couponSale = null;
 	
-						if (couponBox) {
+						if (couponBox && couponBox.innerText) {
 							let couponPriceBox = item.querySelector("div.price-tag-wrap p.price-tag > span.price > span");
 
 							couponCode = couponBox.innerText;
-							couponPrice = couponPriceBox ? parseInt(couponPriceBox.innerText.match(/\d/g).join("")) : price;
+							couponPrice = (couponPriceBox && couponPriceBox.innerText)
+								? parseInt(couponPriceBox.innerText.match(/\d/g).join(""))
+								: price;
+								
 							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
 						}
 	
