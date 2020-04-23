@@ -33,6 +33,7 @@ jobs:
             sudo chmod ugo+x build.sh
             sudo chmod ugo+x deploy.sh
             ls -l
+            echo $CIRCLE_BUILD_NUM
 
       - run:
           name: Build 🏗
