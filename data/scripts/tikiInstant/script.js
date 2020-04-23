@@ -24,7 +24,7 @@
 		log(`|===========================|`);
 		log(`|     Tiki Instant Buy      |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 00:12:21 18/03/2020  |`);
+		log(`|  LU: 14:00:15 23/04/2020  |`);
 		log(`|===========================|`);
 	
 		const getToken = async () => {
@@ -93,6 +93,16 @@
 		runInfo({ progress: 40 });
 		log(`Product ID: ${PID}`);
 
+		let randomTikiPage = await myajax({
+			url: `${HOSTADDRESS}/deal-hot`,
+			method: "GET",
+			type: "text"
+		})
+
+		let randomTikiDoc = (new DOMParser()).parseFromString(randomTikiPage, "text/html");
+		const TIKI_CSRF_TOKEN = randomTikiDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
+		log(`🗝 CSRF: ${TIKI_CSRF_TOKEN}`);
+
 		// Check for id change
 		updateInfoInterval = setInterval(async () => {
 			let _ID = null;
@@ -160,31 +170,34 @@
 			coupon = "",
 			paymentMethod = "cod",
 			username = "",
-			password = ""
+			password = "",
+			shippingAddress = null
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
 
-			log(`Đang đăng xuất khỏi tài khoản hiện tại`);
-			runInfo({ progress: 0, info: "Đang đăng xuất" });
-
-			await command("ajax", {
-				url: "/api/v2/account/logout",
-				method: "GET",
-				header: {
-					"X-Access-Token": await getToken()
-				}
-			});
-
-			log("Đăng xuất thành công");
-
-			log(`Đang đăng nhập vào tài khoản \"${username}\"`);
-			runInfo({ progress: 10, info: "Đang đăng nhập" });
-			let loginData = {}
+			log(`📤 Đang đăng xuất`);
+			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang đăng xuất" });
 
 			try {
-				loginData = await command("ajax", {
-					url: "/customer/account/ajaxLogin",
+				await myajax({
+					url: `${HOSTADDRESS}/api/v2/account/logout`,
+					method: "GET",
+					header: {
+						"X-Access-Token": await getToken()
+					}
+				});
+			} finally {}
+
+			log("📤 Đăng xuất thành công");
+
+			log(`📥 Đang đăng nhập vào \"${username}\"`);
+			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
+			let loginResponse = {}
+
+			try {
+				loginResponse = await myajax({
+					url: `${HOSTADDRESS}/customer/account/ajaxLogin`,
 					method: "POST",
 					form: {
 						email: username,
@@ -192,30 +205,32 @@
 					}
 				});
 			} catch(e) {
-				errored(`${username}: ${e.data.data.error.message || "Không rõ"}`);
-				log(" + Không thể đăng nhập vào tài khoản");
-				log(`    + Code: ${e.data.data.error.code}`);
-				log(`    + MSG : ${e.data.data.error.message || "Không rõ"}`);
+				log("📥 Không thể đăng nhập vào tài khoản");
+				log(` + Code: ${e.data.data.error.code}`);
+				log(` + MSG : ${e.data.data.error.message || "Không rõ"}`);
 				
 				if (e.data.data.error.errors)
 					for (let item of e.data.data.error.errors) {
-						log(`      + FIELD   : ${item.field}`);
-						log(`      + MESSAGE : ${item.message || "Không rõ"}`);
+						log(`  + FIELD   : ${item.field}`);
+						log(`  + MESSAGE : ${item.message || "Không rõ"}`);
 					}
 
 				throw { code: -1, description: "Thất bại khi đăng nhập vào tài khoản", data: e.data.data }
 			}
 
-			if (loginData.messages) {
-				errored(`${username}: ${loginData.messages.email || loginData.messages.password || "Không rõ"}`);
-				log(" + Không thể đăng nhập vào tài khoản");
-				log(`    + Code: -1`);
-				log(`    + MSG : ${loginData.messages.email || loginData.messages.password || "Không rõ"}`);
-
-				throw { code: -1, description: `Không thể đăng nhập vào tài khoản ${username}`, data: loginData.message }
+			if (loginResponse.messages && loginResponse.messages.email) {
+				log(`📥 Không thể đăng nhập vào tài khoản \"${username}\"`);
+				log(` + MSG : ${loginResponse.messages.email || "Không Rõ"}`);
+				throw { code: -1, description: loginResponse.messages.email, data: loginResponse }
 			}
 
-			log("Đăng nhập thành công");
+			if (loginResponse.messages && loginResponse.messages.password) {
+				log(`📥 Không thể đăng nhập vào \"${username}\"`);
+				log(` + MSG : ${loginResponse.messages.password || "Không Rõ"}`);
+				throw { code: -1, description: loginResponse.messages.password, data: loginResponse }
+			}
+
+			log(`📥 Đăng nhập thành công`);
 
 			log("Đang thêm Item vào Giỏ Hàng");
 			runInfo({ progress: 20, info: "Đang thêm Item vào Giỏ Hàng" });
@@ -258,30 +273,56 @@
 			}
 			
 			runInfo({ progress: 40, info: "Đang chọn địa chỉ Giao Hàng" });
-			log(`Đang chọn địa chỉ Giao Hàng`);
+			log(`🏡 Đang chọn địa chỉ Giao Hàng`);
+			let shippingID = shippingAddress;
 
-			log(` + Đang lấy thông tin địa chỉ`);
-			let shippingRAW = await command("ajax", {
-				url: "/checkout/shipping",
-				method: "GET",
-				type: "text"
-			})
+			if (!shippingID) {
+				log(`🏡 Đang lấy thông tin địa chỉ`);
+				let addressBook = await myajax({
+					url: `${HOSTADDRESS}/api/v2/me/addresses`,
+					method: "GET",
+					header: {
+						"X-Access-Token": await getToken(),
+						apikey: null
+					},
+					query: {
+						page: 1,
+						limit: 30
+					}
+				})
 
-			runInfo({ progress: 50 });
-			log(` + Đang phân tích thông tin`);
-			let shippingDoc = (new DOMParser()).parseFromString(shippingRAW, "text/html");
+				if (addressBook.error) {
+					await errored("Lỗi khi lấy ID Địa Chỉ");
+					log("🏡 Không thể lấy sổ địa chỉ");
+					log(` + Code : ${addressBook.error.code}`);
+					log(` + MSG  : ${addressBook.error.message}`);
+					throw { code: addressBook.error.code, description: addressBook.error.message, data: addressBook.error }
+				}
+	
+				heartbeat();
+				runInfo({ progress: 50, progWarn: false });
+				log(`🏡 Đang phân tích thông tin`);
+				
+				shippingID = addressBook.data.filter(i => (i.is_default && i.id));
 
-			let CSRF_SHIPPING = shippingDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(` + CSRF: ${CSRF_SHIPPING}`);
+				if (!shippingID[0]) {
+					await errored("Lỗi khi lấy ID Địa Chỉ");
+					log("🏡 Không tìm thấy địa chỉ mặc định");
+					throw { code: -1, description: "Không tìm thấy địa chỉ mặc định", data: addressBook.data }
+				}
 
-			let shippingID = shippingDoc.querySelector("div.address-item.is-default > div > p.action > button.btn.saving-address").dataset.id;
-			log(` + Đang chọn địa chỉ ID: ${shippingID}`);
-			let selectAddress = await command("ajax", {
-				url: "/checkout/shipping/ajaxSave",
+				shippingID = shippingID[0].id;
+			}
+
+			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
+			heartbeat();
+
+			await myajax({
+				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
 				method: "POST",
 				form: {
 					address_id: shippingID,
-					TIKI_CSRF_TOKEN: CSRF_SHIPPING
+					TIKI_CSRF_TOKEN: TIKI_CSRF_TOKEN
 				}
 			})
 
@@ -419,7 +460,10 @@
 			clearInterval(updateInfoInterval);
 
 			let successCount = 0;
-			let accountList = this.settings.accountList.split("\n").filter(String).map(a => { let i = a.split(":"); return { u: i[0], p: i[1] } });
+			let accountList = settings.accountList
+				.split("\n")
+				.filter(String)
+				.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
 
 			if (accountList.length === 0)
 				throw { code: -1, description: "Danh sách tài khoản trống! Vui lòng liệt kê danh sách trong cài đặt của tikiInstant" }

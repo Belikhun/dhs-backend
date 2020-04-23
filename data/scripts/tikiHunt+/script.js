@@ -37,7 +37,7 @@
 		log(`|===========================|`);
 		log(`|    Tiki Deal Hunter Pro   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 00:13:27 18/03/2020  |`);
+		log(`|  LU: 14:05:38 23/04/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -456,6 +456,16 @@
 		allList.append(allListHeader, allListItem);
 		container.appendChild(allList);
 
+		let randomTikiPage = await myajax({
+			url: `${HOSTADDRESS}/deal-hot`,
+			method: "GET",
+			type: "text"
+		})
+
+		let randomTikiDoc = (new DOMParser()).parseFromString(randomTikiPage, "text/html");
+		var TIKI_CSRF_TOKEN = randomTikiDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
+		log(`🗝 CSRF: ${TIKI_CSRF_TOKEN}`);
+
 		//? BLACK LIST
 		const addToBlackList = async (id) => {
 			let list = await getBlackList();
@@ -615,9 +625,12 @@
 			accountList: { type: "textarea", label: "ACL", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false }
 		})
 
-		log(" + Đang lưu danh sách tài khoản");
+		log("👥 Đang lưu danh sách tài khoản");
 		await this.dataSave({ "tikiMA.accountList": settings.accountList });
-		var accountList = settings.accountList.split("\n").filter(String).map(a => { let i = a.split(":"); return { u: i[0], p: i[1] } });
+		var accountList = settings.accountList
+			.split("\n")
+			.filter(String)
+			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
 
 		log("Đang bắt đầu chạy...");
 		run();
@@ -934,7 +947,8 @@
 			id = 0,
 			count = 1,
 			coupon = "",
-			paymentMethod = "cod"
+			paymentMethod = "cod",
+			shippingAddress = null
 		}) => {
 			let orderTimer = new stopClock();
 
@@ -986,33 +1000,54 @@
 			
 			heartbeat();
 			runInfo({ now: `Bước 4`, progress: 40, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
-			log(`Đang chọn địa chỉ Giao Hàng`);
+			log(`🏡 Đang chọn địa chỉ Giao Hàng`);
+			let shippingID = shippingAddress;
 
-			log(` + Đang lấy thông tin địa chỉ`);
-			let shippingRAW = await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping`,
-				method: "GET",
-				type: "text"
-			})
+			if (!shippingID) {
+				log(`🏡 Đang lấy thông tin địa chỉ`);
+				let addressBook = await myajax({
+					url: `${HOSTADDRESS}/api/v2/me/addresses`,
+					method: "GET",
+					header: {
+						"X-Access-Token": await getToken(),
+						apikey: null
+					},
+					query: {
+						page: 1,
+						limit: 30
+					}
+				})
 
+				if (addressBook.error) {
+					log("🏡 Không thể lấy sổ địa chỉ");
+					log(` + Code : ${addressBook.error.code}`);
+					log(` + MSG  : ${addressBook.error.message}`);
+					throw { code: addressBook.error.code, description: addressBook.error.message, data: addressBook.error }
+				}
+	
+				heartbeat();
+				runInfo({ progress: 50, progWarn: false });
+				log(`🏡 Đang phân tích thông tin`);
+				
+				shippingID = addressBook.data.filter(i => (i.is_default && i.id));
+
+				if (!shippingID[0]) {
+					log("🏡 Không tìm thấy địa chỉ mặc định");
+					throw { code: -1, description: "Không tìm thấy địa chỉ mặc định", data: addressBook.data }
+				}
+
+				shippingID = shippingID[0].id;
+			}
+
+			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
-			runInfo({ progress: 50, progWarn: false });
-			log(` + Đang phân tích thông tin`);
-			let shippingDoc = (new DOMParser()).parseFromString(shippingRAW, "text/html");
 
-			let CSRF_SHIPPING = shippingDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(` + CSRF: ${CSRF_SHIPPING}`);
-
-			let shippingID = shippingDoc.querySelector("div.address-item.is-default > div > p.action > button.btn.saving-address").dataset.id;
-			log(` + Đang chọn địa chỉ ID: ${shippingID}`);
-			heartbeat();
-
-			let selectAddress = await myajax({
+			await myajax({
 				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
 				method: "POST",
 				form: {
 					address_id: shippingID,
-					TIKI_CSRF_TOKEN: CSRF_SHIPPING
+					TIKI_CSRF_TOKEN: TIKI_CSRF_TOKEN
 				}
 			})
 
@@ -1034,6 +1069,7 @@
 			
 			let CSRF_PAYMENT = paymentDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
 			log(` + CSRF: ${CSRF_PAYMENT}`);
+			TIKI_CSRF_TOKEN = CSRF_PAYMENT;
 
 			let paymentInput = paymentDoc.querySelectorAll("#form-payment input[name][type][value]");
 			let paymentData = {}

@@ -15,9 +15,9 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|       Tiki Auto v015      |`);
+		log(`|       Tiki Auto Buy       |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 15:40:11 19/04/2020  |`);
+		log(`|  LU: 14:06:27 23/04/2020  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -339,6 +339,16 @@
 		await fetchItemData();
 		await updatePriceHistory(3, ID, PID);
 		log("Đã lấy thông tin Item");
+
+		let randomTikiPage = await myajax({
+			url: `${HOSTADDRESS}/deal-hot`,
+			method: "GET",
+			type: "text"
+		})
+
+		let randomTikiDoc = (new DOMParser()).parseFromString(randomTikiPage, "text/html");
+		const TIKI_CSRF_TOKEN = randomTikiDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
+		log(`🗝 CSRF: ${TIKI_CSRF_TOKEN}`);
 	
 		log("Đang chờ cài đặt từ người dùng");
 		// Wait for settings
@@ -730,7 +740,8 @@
 			count = 0,
 			coupon = "",
 			skipPre = false,
-			paymentMethod = "cod"
+			paymentMethod = "cod",
+			shippingAddress = null
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
@@ -760,37 +771,58 @@
 			
 			heartbeat();
 			runInfo({ now: `Bước 2`, progress: 30, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
-			log(`Đang chọn địa chỉ Giao Hàng`);
+			log(`🏡 Đang chọn địa chỉ Giao Hàng`);
+			let shippingID = shippingAddress;
 
-			log(` + Đang lấy thông tin địa chỉ`);
-			let shippingRAW = await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping`,
-				method: "GET",
-				type: "text"
-			})
+			if (!shippingID) {
+				log(`🏡 Đang lấy thông tin địa chỉ`);
+				let addressBook = await myajax({
+					url: `${HOSTADDRESS}/api/v2/me/addresses`,
+					method: "GET",
+					header: {
+						"X-Access-Token": await getToken(),
+						apikey: null
+					},
+					query: {
+						page: 1,
+						limit: 30
+					}
+				})
 
+				if (addressBook.error) {
+					await errored("Lỗi khi lấy ID Địa Chỉ");
+					log("🏡 Không thể lấy sổ địa chỉ");
+					log(` + Code : ${addressBook.error.code}`);
+					log(` + MSG  : ${addressBook.error.message}`);
+					throw { code: addressBook.error.code, description: addressBook.error.message, data: addressBook.error }
+				}
+	
+				heartbeat();
+				runInfo({ progress: 50, progWarn: false });
+				log(`🏡 Đang phân tích thông tin`);
+				
+				shippingID = addressBook.data.filter(i => (i.is_default && i.id));
+
+				if (!shippingID[0]) {
+					await errored("Lỗi khi lấy ID Địa Chỉ");
+					log("🏡 Không tìm thấy địa chỉ mặc định");
+					throw { code: -1, description: "Không tìm thấy địa chỉ mặc định", data: addressBook.data }
+				}
+
+				shippingID = shippingID[0].id;
+			}
+
+			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
-			runInfo({ progress: 40, progWarn: false });
-			log(` + Đang phân tích thông tin`);
-			let shippingDoc = (new DOMParser()).parseFromString(shippingRAW, "text/html");
 
-			let CSRF_SHIPPING = shippingDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(` + CSRF: ${CSRF_SHIPPING}`);
-
-			let shippingID = shippingDoc.querySelector("div.address-item.is-default > div > p.action > button.btn.saving-address").dataset.id;
-			log(` + Đang chọn địa chỉ ID: ${shippingID}`);
-			heartbeat();
-
-			let selectAddress = await myajax({
+			await myajax({
 				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
 				method: "POST",
 				form: {
 					address_id: shippingID,
-					TIKI_CSRF_TOKEN: CSRF_SHIPPING
+					TIKI_CSRF_TOKEN: TIKI_CSRF_TOKEN
 				}
 			})
-
-			log(` + Chọn địa chỉ thành công!`);
 
 			runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Đang lấy thông tin thanh toán" });
 			log(`Đang lấy thông tin Thanh Toán`);
