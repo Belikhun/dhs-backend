@@ -3,6 +3,9 @@ jobs:
   build:
     working_directory: ~/project
 
+    branches:
+      only: master
+
     docker:
       - image: circleci/buildpack-deps:bionic
 
