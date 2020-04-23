@@ -22,16 +22,18 @@ jobs:
       - run:
           name: Install Dependencies and Build Initialize
           command: |
+            sudo apt-get install dos2unix -y
             sudo npm install -g javascript-obfuscator
-            ls -l
-            pwd
             cd build
+            dos2unix build.sh
+            dos2unix deploy.sh
             sudo chmod ugo+x build.sh
             sudo chmod ugo+x deploy.sh
+            ls -l
 
       - run:
           name: Build 🏗
-          command: "./build.sh"
+          command: ./build.sh
       - run:
           name: Deploy 🚀
           command: ./deploy.sh
