@@ -815,7 +815,7 @@
 										}
 									})
 
-									if (data && data.id === PID && data.stock_item && data.stock_item.max_sale_qty) {
+									if (data && data.id === item.pid && data.stock_item && data.stock_item.max_sale_qty) {
 										let itemQTY = data.stock_item.qty;
 										let minSale = data.stock_item.min_sale_qty;
 										let maxSale = data.stock_item.max_sale_qty;
