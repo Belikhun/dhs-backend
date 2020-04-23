@@ -17,7 +17,7 @@ echo -e "\033[1;30m + CURRENT DIR: $(pwd)"
 echo -e "\033[1;30m + TEMPORARY DIR: $tmpdir"
 echo ""
 
-echo -e "\033[1;35mDEPLOYING \033[30m(Build $BUILD_NUMBER)\033[m"
+echo -e "\033[1;35mDEPLOYING \033[30m(Build $CIRCLE_BUILD_NUM)\033[m"
 start=$(date +%s.%N)
 
 echo -e " \033[1;37m* \033[1;34mCOPYING FILES TO TEMPORARY DIR"
@@ -41,7 +41,7 @@ cp -rf $tmpdir/. .
 
 echo -e " \033[1;37m* \033[1;34mCREATING COMMIT"
 git add .
-git commit --message "🛠 BUILD: $BUILD_NUMBER"
+git commit --message "🛠 BUILD: $CIRCLE_BUILD_NUM"
 git push -f -u origin production
 
 end=$(date +%s.%N)
