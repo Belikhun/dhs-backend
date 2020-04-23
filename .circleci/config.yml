@@ -33,7 +33,7 @@ jobs:
 
       - run:
           name: Build 🏗
-          command: sudo bash ./build.sh
+          command: sudo bash build.sh
       - run:
           name: Deploy 🚀
-          command: sudo bash ./deploy.sh
+          command: sudo bash deploy.sh
