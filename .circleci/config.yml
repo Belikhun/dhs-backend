@@ -1,11 +1,14 @@
 version: 2.1
 jobs:
   build:
+    working_directory: ~/project
+
     docker:
       - image: circleci/buildpack-deps:bionic
 
     steps:
-      - checkout
+      - checkout:
+          path: ~/project
 
       - run: sudo apt update
       - run:
@@ -33,7 +36,9 @@ jobs:
 
       - run:
           name: Build 🏗
+          working_directory: ~/project/build
           command: sudo bash build.sh
       - run:
           name: Deploy 🚀
+          working_directory: ~/project/build
           command: sudo bash deploy.sh
