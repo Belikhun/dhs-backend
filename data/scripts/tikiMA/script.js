@@ -104,7 +104,7 @@
 							label: "Chọn loại hàng",
 							list: configList
 						}
-					}, { confirm: "Tiếp" });
+					}, { confirm: "Tiếp", saveKey: "productSelect" });
 	
 					if (select.customPID) {
 						clog("DEBG", `Custom PID: ${select.customPID}`);
@@ -346,21 +346,23 @@
 		const account = await setup({
 			note: { type: "note", level: "info", text: "Mỗi tài khoản một dòng, ngăn cách tên tài khoản và mật khẩu bằng <b>:</b> (ex: \"username:password\")" },
 			list: { type: "textarea", label: "Danh sách tài khoản", height: "180px", value: prevAccountList, required: true, save: false }
-		}, { confirm: "Tiếp" });
+		}, { confirm: "Tiếp", saveKey: "accountSetup" });
 
 		log(" + Đang lưu danh sách tài khoản");
 		await this.dataSave({ "tikiMA.accountList": account.list });
 		var accountList = account.list.split("\n").map(a => { let i = a.split(":"); return { u: i[0], p: i[1] } });
 		var doOrderAccountList = accountList;
-		await delayAsync(1000);
+		await delayAsync(600);
 
 		// Wait for settings
 		const settings = await setup({
 			priceHistory: { type: "customNode", node: PHC },
-			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true },
+			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, save: false, required: true },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
 			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
+			autoAddress: { type: "checkbox", label: "Sử dụng địa chỉ giao hàng mặc định", color: "blue", value: true },
+			addressID: { type: "number", label: "ID địa chỉ giao hàng", depend: "autoAddress", doubt: true },
 			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false },
 			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
 			paymentMethod: {
@@ -709,23 +711,35 @@
 			heartbeat();
 			runInfo({ now: `Bước 4`, progress: 40, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
 			log(`Đang chọn địa chỉ Giao Hàng`);
+			let shippingID = settings.addressID;
 
-			log(` + Đang lấy thông tin địa chỉ`);
-			let shippingRAW = await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping`,
-				method: "GET",
-				type: "text"
-			})
+			if (settings.autoAddress) {
+				log(` + Đang lấy thông tin địa chỉ`);
+				let shippingRAW = await myajax({
+					url: `${HOSTADDRESS}/checkout/shipping`,
+					method: "GET",
+					type: "text"
+				})
+	
+				heartbeat();
+				runInfo({ progress: 50, progWarn: false });
+				log(` + Đang phân tích thông tin`);
+				let shippingDoc = (new DOMParser()).parseFromString(shippingRAW, "text/html");
+	
+				let CSRF_SHIPPING = shippingDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
+				log(` + CSRF: ${CSRF_SHIPPING}`);
+	
+				let shippingIDBox = shippingDoc.querySelector("div.address-item.is-default > div > p.action > button.btn.saving-address");
+	
+				if (!shippingIDBox) {
+					await errored("Lỗi khi lấy ID Địa Chỉ");
+					log(" + Không thể lấy ID Địa Chỉ");
+					throw { code: -1, description: "Không thể lấy ID Địa Chỉ" }
+				}
 
-			heartbeat();
-			runInfo({ progress: 50, progWarn: false });
-			log(` + Đang phân tích thông tin`);
-			let shippingDoc = (new DOMParser()).parseFromString(shippingRAW, "text/html");
+				shippingID = shippingIDBox.dataset.id;
+			}
 
-			let CSRF_SHIPPING = shippingDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(` + CSRF: ${CSRF_SHIPPING}`);
-
-			let shippingID = shippingDoc.querySelector("div.address-item.is-default > div > p.action > button.btn.saving-address").dataset.id;
 			log(` + Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
