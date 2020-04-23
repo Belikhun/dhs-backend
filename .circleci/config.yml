@@ -14,22 +14,20 @@ jobs:
             curl -sSL "https://nodejs.org/dist/v12.16.2/node-v12.16.2-linux-x64.tar.xz" | sudo tar --strip-components=2 -xJ -C /usr/local/bin/ node-v12.16.2-linux-x64/bin/node
             curl https://www.npmjs.com/install.sh | sudo bash
       - run:
-          name: Check current version of node
-          command: node -v
+          name: Check current version of node and npm
+          command: |
+            node -v
+            npm -v
 
       - run:
-          name: Check current version of npm
-          command: npm -v
-
-      # install obfuscator
-      - run: sudo npm install -g javascript-obfuscator
-      
-      - run: ls -l
-      - run: pwd
-      - run: cd build
-      # add executeable flag
-      - run: sudo chmod ugo+x build.sh
-      - run: sudo chmod ugo+x deploy.sh
+          name: Install Dependencies and Build Initialize
+          command: |
+            sudo npm install -g javascript-obfuscator
+            ls -l
+            pwd
+            cd build
+            sudo chmod ugo+x build.sh
+            sudo chmod ugo+x deploy.sh
 
       - run:
           name: Build 🏗
