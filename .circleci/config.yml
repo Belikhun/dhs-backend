@@ -1,8 +1,5 @@
 version: 2.0
 
-orbs:
-  node: circleci/node@2.0.3
-
 jobs:
   build:
     branches:
@@ -19,9 +16,11 @@ jobs:
           path: ~/project
 
       - run: sudo apt update
-      - node/install:
-          install-yarn: true
-          node-version: latest
+      - run:
+          name: "Update Node.js and npm"
+          command: |
+            curl -sSL "https://nodejs.org/dist/v12.16.2/node-v12.16.2-linux-x64.tar.xz" | sudo tar --strip-components=2 -xJ -C /usr/local/bin/ node-v12.16.2-linux-x64/bin/node
+            curl https://www.npmjs.com/install.sh | sudo bash
       - run:
           name: Check current version of node and npm
           command: |
