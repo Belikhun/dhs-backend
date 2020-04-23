@@ -16,11 +16,9 @@ jobs:
           path: ~/project
 
       - run: sudo apt update
-      - run:
-          name: "Update Node.js and npm"
-          command: |
-            curl -sSL "https://nodejs.org/dist/v12.16.2/node-v12.16.2-linux-x64.tar.xz" | sudo tar --strip-components=2 -xJ -C /usr/local/bin/ node-v12.16.2-linux-x64/bin/node
-            curl https://www.npmjs.com/install.sh | sudo bash
+      - node/install:
+          install-yarn: true
+          node-version: latest
       - run:
           name: Check current version of node and npm
           command: |
@@ -30,14 +28,10 @@ jobs:
       - run:
           name: Install Dependencies and Build Initialize
           command: |
-            sudo apt-get install dos2unix -y
             sudo npm install -g javascript-obfuscator
             cd build
-            dos2unix build.sh
-            dos2unix deploy.sh
             sudo chmod ugo+x build.sh
             sudo chmod ugo+x deploy.sh
-            ls -l
 
       - run:
           name: Build 🏗
