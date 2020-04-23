@@ -33,7 +33,7 @@ for dir in */ ; do
 	javascript-obfuscator "${dir: : -1}/script.js" --compact true --string-array true --self-defending true --unicode-escape-sequence true -o "${dir: : -1}/script.min.js" > /dev/null && echo -e "   \033[1;32m✓\033[0m DONE!" || echo -e "   \033[1;31m✗\033[0m ERRORED!"
 	end=$(date +%s.%N)
 
-	echo -e "   \033[1;37m→ \033[1;30m$(php -r "echo $end - $start;")s"
+	echo -e "   \033[1;37m→ \033[1;30m$(node -pe "$end - $start")s"
 done
 
 popd > /dev/null
