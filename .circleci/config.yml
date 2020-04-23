@@ -1,8 +1,13 @@
-version: 2.1
+version: 2.0
+
 jobs:
   build:
+    branches:
+      only:
+        - master
+        
     working_directory: ~/project
-
+    
     docker:
       - image: circleci/buildpack-deps:bionic
 
