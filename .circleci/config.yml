@@ -1,0 +1,25 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/buildpack-deps:bionic
+
+    steps:
+      - checkout
+
+      - run: sudo apt update
+      # install node
+      - run: sudo apt install node
+      # install obfuscator
+      - run: npm install -g javascript-obfuscator
+      - run: cd build
+      # add executeable flag
+      - run: sudo chmod ugo+x build.sh
+      - run: sudo chmod ugo+x deploy.sh
+
+      - run:
+          name: Build
+          command: "./build.sh"
+      - run:
+          name: Deploy
+          command: ./deploy.sh
