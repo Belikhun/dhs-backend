@@ -22,7 +22,7 @@ jobs:
           command: npm -v
 
       # install obfuscator
-      - run: npm install -g javascript-obfuscator
+      - run: sudo npm install -g javascript-obfuscator
       - run: cd build
       # add executeable flag
       - run: sudo chmod ugo+x build.sh
