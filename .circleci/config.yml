@@ -8,8 +8,19 @@ jobs:
       - checkout
 
       - run: sudo apt update
-      # install node
-      - run: sudo apt install nodejs
+      - run:
+          name: "Update Node.js and npm"
+          command: |
+            curl -sSL "https://nodejs.org/dist/v12.16.2/node-v12.16.2-linux-x64.tar.xz" | sudo tar --strip-components=2 -xJ -C /usr/local/bin/ node-v12.16.2-linux-x64/bin/node
+            curl https://www.npmjs.com/install.sh | sudo bash
+      - run:
+          name: Check current version of node
+          command: node -v
+
+      - run:
+          name: Check current version of npm
+          command: npm -v
+
       # install obfuscator
       - run: npm install -g javascript-obfuscator
       - run: cd build
@@ -18,8 +29,8 @@ jobs:
       - run: sudo chmod ugo+x deploy.sh
 
       - run:
-          name: Build
+          name: Build 🏗
           command: "./build.sh"
       - run:
-          name: Deploy
+          name: Deploy 🚀
           command: ./deploy.sh
