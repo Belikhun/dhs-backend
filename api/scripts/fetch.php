@@ -7,7 +7,7 @@
     //? |-----------------------------------------------------------------------------------------------|
 
     // SET PAGE TYPE
-    define("PAGE_TYPE", "NORMAL");
+    define("PAGE_TYPE", "API");
     
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ratelimit.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
@@ -56,5 +56,17 @@
     if (!file_exists($scriptDir) || !file_exists($scriptFile))
         stop(44, "Không tìm thấy Script ID: ". $id, 404, Array( "id" => $id ));
 
-    contentType("js");
-    readfile($scriptFile);
+    // BEGIN ENCRYPTION
+    $script = (new fip($scriptFile, "")) -> read();
+    $iv = random_bytes(16);
+    $ivHex = bin2hex($iv);
+    $secret = hash_hmac("sha256", $_SESSION["apiToken"] . $ivHex, $_SESSION["authKey"], true);
+    $encrypted = openssl_encrypt($script, "AES-256-CBC", $secret, 0, $iv);
+
+    if ($encrypted === false)
+        stop(-1, "Thất bại khi mã hóa dữ liệu", 500);
+
+    stop(0, "Success", 200, Array(
+        "script" => $encrypted,
+        "iv" => $ivHex
+    ));
