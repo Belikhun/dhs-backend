@@ -33,16 +33,15 @@ jobs:
             sudo chmod ugo+x build.sh
             sudo chmod ugo+x deploy.sh
             ls -l
-            echo $CIRCLE_BUILD_NUM
 
       - run:
           name: Build 🏗
           working_directory: ~/project/build
-          command: sudo bash build.sh
+          command: ./build.sh
       - run:
           name: Deploy 🚀
           working_directory: ~/project/build
-          command: sudo bash deploy.sh
+          command: ./deploy.sh
           environment:
             BUILD_NUMBER: $CIRCLE_BUILD_NUM
             GH_TOKEN: $GH_TOKEN
