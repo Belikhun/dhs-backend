@@ -9,7 +9,7 @@ jobs:
 
       - run: sudo apt update
       # install node
-      - run: sudo apt install node
+      - run: sudo apt install nodejs
       # install obfuscator
       - run: npm install -g javascript-obfuscator
       - run: cd build
