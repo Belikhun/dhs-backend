@@ -460,7 +460,7 @@
 			clearInterval(updateInfoInterval);
 
 			let successCount = 0;
-			let accountList = settings.accountList
+			let accountList = this.settings.accountList
 				.split("\n")
 				.filter(String)
 				.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
