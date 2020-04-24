@@ -35,7 +35,7 @@
 		foreach ($orderDirs as $dir)
 			$orderLogs = array_merge($orderLogs, json_decode((new fip($dir ."/". ORDERLOG_FILE, "[]")) -> read(), true));
 
-		stop(0, "Success", 200, $orderLogs, true);
+		stop(0, "Success", 200, array_reverse($orderLogs), true);
 	}
 
     if (!isset($_SESSION["authKey"]))
