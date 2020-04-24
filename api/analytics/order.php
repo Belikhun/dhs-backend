@@ -11,10 +11,14 @@
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ezsql.php";
 	require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
-	define("ORDER_LOG_FILE", $_SERVER["DOCUMENT_ROOT"]. "/data/orderLogs.data");
+	define("ORDERLOG_ROOT", $_SERVER["DOCUMENT_ROOT"] ."/data/order");
+	define("ORDERLOG_FILE", "log.json");
 	
 	// SET PAGE TYPE
 	define("PAGE_TYPE", "API");
+
+	if (!file_exists(ORDERLOG_ROOT))
+		mkdir(ORDERLOG_ROOT);
 
 	if (getForm("action") === "getData") {
 		if (!isLoggedIn())
@@ -25,7 +29,12 @@
 
 		checkToken();
 
-		$orderLogs = array_reverse(unserialize((new fip(ORDER_LOG_FILE, "a:0:{}")) -> read()));
+		$orderLogs = Array();
+		$orderDirs = glob(ORDERLOG_ROOT ."/*", GLOB_ONLYDIR);
+		
+		foreach ($orderDirs as $dir)
+			$orderLogs = array_merge($orderLogs, json_decode((new fip($dir ."/". ORDERLOG_FILE, "[]")) -> read(), true));
+
 		stop(0, "Success", 200, $orderLogs, true);
 	}
 
@@ -58,9 +67,14 @@
 		"time"		=>	time()
 	);
 
-	$orderLogs = new fip(ORDER_LOG_FILE, "a:0:{}");
-	$logs = unserialize($orderLogs -> read());
+	$datestamp = strtotime(date("Y-m-d"));
+
+	if (!file_exists(ORDERLOG_ROOT ."/$datestamp"))
+		mkdir(ORDERLOG_ROOT ."/$datestamp");
+
+	$orderLogs = new fip(ORDERLOG_ROOT ."/$datestamp/". ORDERLOG_FILE, "[]");
+	$logs = json_decode($orderLogs -> read(), true);
 	array_push($logs, $data);
-	$orderLogs -> write(serialize($logs));
+	$orderLogs -> write(json_encode($logs, JSON_PRETTY_PRINT));
 
 	stop(0, "Success!", 200, $data);

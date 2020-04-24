@@ -1,5 +1,5 @@
 data/logs.json
-data/orderLogs.data
+data/order/*
 data/avatar/*
 !data/avatar/avt.default
 !data/avatar/change.php
