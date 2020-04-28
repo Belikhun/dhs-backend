@@ -17,6 +17,8 @@ function cvdate(d, m, y) {
 		.join("-");
 }
 
+const priceFormat = (num) => num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+
 const core = {
     initialized: false,
 
@@ -171,13 +173,13 @@ const core = {
 
 								${
 									(item.oldPrice && typeof item.oldPrice === "number")
-										? `<t class="origialPrice price">${item.oldPrice}</t>`
+										? `<t class="origialPrice price">${priceFormat(item.oldPrice)}</t>`
 										: ""
 								}
 
 								<span class="priceBox">
-									${(item.runPrice) ? `<t class="runPrice price">${item.runPrice}</t>` : ""}
-									<t class="buyPrice price">${item.price}</t>
+									${(item.runPrice) ? `<t class="runPrice price">${priceFormat(item.runPrice)}</t>` : ""}
+									<t class="buyPrice price">${priceFormat(item.price)}</t>
 									<t class="buyCount">${item.count}</t>
 								</span>
 							</span>
