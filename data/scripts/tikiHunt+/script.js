@@ -609,6 +609,7 @@
 			checkPriceHistory: { type: "checkbox", label: "KTLSG", color: "blue", value: false },
 			autobuy: { type: "checkbox", label: "Auto", color: "pink", value: false, depend: "checkPriceHistory" },
 			autobuyRatio: { type: "number", label: "TLG", value: 8.5, step: 0.01, depend: "autobuy" },
+			autobuyFrom: { type: "number", label: "GTT", value: 0, depend: "autobuy" },
 			autoRebuy: { type: "number", label: "TĐML", value: 1, depend: "autobuy" },
 			randomIp: { type: "checkbox", label: "R.IP", color: "blue", value: false, depend: "autobuy" },
 			ip: { type: "text", label: "IP", depend: "randomIp", doubt: true },
@@ -745,6 +746,11 @@
 					let showItemDetail = !settings.checkPriceHistory;
 
 					if (settings.checkPriceHistory) {
+						if (item.price < settings.autobuyFrom) {
+							log(`🛑 GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
+							return;
+						}
+
 						log(`     + Đang kiểm tra lịch sử giá`);
 						log(`       + ID: ${item.id} PID: ${item.pid}`);
 						let beeCost = {}

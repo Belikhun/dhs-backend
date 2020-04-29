@@ -758,6 +758,11 @@
 					let showItemDetail = !settings.checkPriceHistory;
 
 					if (settings.checkPriceHistory) {
+						if (item.price < settings.autobuyFrom) {
+							log(`🛑 GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
+							return;
+						}
+
 						log(`🐝 Đang kiểm tra lịch sử giá`);
 						log(` + ID: ${item.id} PID: ${item.pid}`);
 						let beeCost = {}
@@ -795,11 +800,6 @@
 							let priceRatio = min / item.price;
 							log(`🐝 PRICE RATIO: ${priceRatio}`);
 
-							if (item.price < settings.autobuyFrom) {
-								log(`🐝 🛑 GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
-								return;
-							}
-
 							if (priceRatio >= settings.autobuyRatio) {
 								let orderCount = settings.autobuyCount;
 
@@ -826,7 +826,7 @@
 
 										if (calcCount < minSale) {
 											log(`🤝 🛑 Số lượng tính được nhỏ hơn MIN SALE`);
-											return;
+											calcCount = minSale;
 										}
 
 										orderCount = calcCount;
