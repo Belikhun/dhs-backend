@@ -633,6 +633,7 @@
 			.filter(String)
 			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
 
+
 		log("Đang bắt đầu chạy...");
 		run();
 		
