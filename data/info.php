@@ -37,7 +37,6 @@
 
 	ob_start(); ?>
 		<ul style="margin: unset">
-			<li><b>Tiki và Tiki Multiple Account</b> hiện đang là <b><i>bản thử nghiệm</i></b>! Vui lòng báo lại lỗi cho Admin nếu gặp</li>
 			<li><b>Shopee Auto Click</b> sẽ tạm thời thay thế cho <b>Shopee</b></li>
 		</ul>
 	<?php
