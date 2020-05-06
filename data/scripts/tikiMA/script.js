@@ -24,7 +24,7 @@
 		var itemName = "";
 	
 		try {
-			itemName = (await command("queryText", { query: `div > div.header.border-bottom > h1` })).text
+			itemName = (await command("queryText", { query: `div.header > h1.title` })).text
 		} catch(e) {
 			try {
 				itemName = (await command("queryText", { query: `#product-name > span:nth-child(3)` })).text
@@ -109,7 +109,7 @@
 							label: "Chọn loại hàng",
 							list: configList
 						}
-					}, { confirm: "Tiếp", saveKey: "productSelect" });
+					}, { confirm: "Tiếp" });
 	
 					if (select.customPID) {
 						clog("DEBG", `Custom PID: ${select.customPID}`);
@@ -142,27 +142,8 @@
 			} else {
 				let _pid = PID;
 
-				if (itemData.current_seller) {
+				if (itemData.current_seller)
 					_pid = parseInt(itemData.current_seller.product_id);
-					clog("DEBG", "Have current_seller:", itemData.current_seller);
-				} else {
-					clog("DEBG", "No current_seller. Fetching page to get PID");
-
-					if (updateItemData) {
-						clog("DEBG", "Disabling fetchItemData");
-						updateItemData = false;
-					}
-
-					heartbeat({ color: "red" });
-					let itemPage = await myajax({
-						url: `${HOSTADDRESS}/${itemData.url_path}`,
-						method: "GET",
-						type: "text"
-					})
-
-					let itemDOM = (new DOMParser()).parseFromString(itemPage, "text/html");
-					_pid = parseInt(itemDOM.getElementById("product_id_add_cart").value);
-				}
 
 				if (_pid !== PID) {
 					log(`PID Change: ${PID} -> ${_pid} (2)`);
@@ -170,30 +151,56 @@
 				}
 			}
 
-			if (!PID)
-				throw { code: -1, description: "Không xác định được PID của sản phẩm" }
-
-			let data = await myajax({
-				url: `${HOSTADDRESS}/ajaxProductRender`,
-				method: "GET",
-				query: {
-					pid: ID,
-					spid: PID
-				}
-			})
-
-			if (!data || data.id !== PID || !data.current_seller.id) {
-				clog("DEBG", "No Item Data. Returning INIT Data");
-				itemStatus = (!data) ? "NO_DATA" : (data.id !== PID ? "ID_MISMATCH" : (!data.current_seller.id ? "NO_SELLER" : "UNKNOWN"));
+			if (!PID) {
+				clog("DEBG", "No PID. Returning INIT Data");
+				itemStatus = "NO_PID";
 				itemQTY = "?";
 				minSale = "?";
 				maxSale = "?";
 			} else {
-				itemPrice = data.price;
-				itemStatus = data.inventory_status;
-				itemQTY = (data.stock_item) ? data.stock_item.qty : "?";
-				minSale = (data.stock_item) ? data.stock_item.min_sale_qty : "?";
-				maxSale = (data.stock_item) ? data.stock_item.max_sale_qty : "?";
+				let data = await myajax({
+					url: `${HOSTADDRESS}/api/v2/products/${ID}`,
+					method: "GET",
+					header: {
+						"X-Access-Token": getToken()
+					},
+					query: {
+						spid: PID,
+						include: [
+							"tag",
+							"badges",
+							"stock_item",
+							"variants",
+							"discount_tag"
+						].join(",")
+					}
+				})
+	
+				let _id = data.current_seller.id || null;
+				let _pid = parseInt(data.current_seller.product_id);
+	
+				if (!data || _pid !== PID || !_id) {
+					clog("DEBG", "No Item Data. Returning INIT Data");
+					itemStatus =
+						(!data)
+							? "NO_DATA"
+							: (_pid !== PID
+								? "ID_MISMATCH"
+								: (!_id
+									? "NO_SELLER"
+									: "UNKNOWN")
+							)
+	
+					itemQTY = "?";
+					minSale = "?";
+					maxSale = "?";
+				} else {
+					itemPrice = data.price;
+					itemStatus = data.inventory_status;
+					itemQTY = (data.stock_item) ? data.stock_item.qty : "?";
+					minSale = (data.stock_item) ? data.stock_item.min_sale_qty : "?";
+					maxSale = (data.stock_item) ? data.stock_item.max_sale_qty : "?";
+				}
 			}
 
 			if (!itemInitPrice)
@@ -345,16 +352,6 @@
 		await fetchItemData();
 		await updatePriceHistory(3, ID, PID);
 		log("Đã lấy thông tin Item");
-
-		let randomTikiPage = await myajax({
-			url: `${HOSTADDRESS}/deal-hot`,
-			method: "GET",
-			type: "text"
-		})
-
-		let randomTikiDoc = (new DOMParser()).parseFromString(randomTikiPage, "text/html");
-		const TIKI_CSRF_TOKEN = randomTikiDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-		log(`🗝 CSRF: ${TIKI_CSRF_TOKEN}`);
 	
 		log("Đang chờ cài đặt từ người dùng");
 		let prevAccountList = (await this.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
@@ -746,14 +743,21 @@
 			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
-			await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
-				method: "POST",
-				form: {
-					address_id: shippingID,
-					TIKI_CSRF_TOKEN: TIKI_CSRF_TOKEN
+			let applyAddress = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_addresses/${shippingID}`,
+				method: "PUT",
+				header: {
+					"X-Access-Token": await getToken()
 				}
 			})
+			
+			if (applyAddress.error) {
+				await errored("Lỗi khi áp dụng Địa Chỉ");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${applyAddress.error.code}`);
+				log(` + MSG : ${applyAddress.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể chọn địa chỉ", data: applyAddress.error }
+			}
 
 			runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Thay đổi cài đặt thanh toán" });
 			log(`🛒 Đang lấy thông tin Thanh Toán`);
@@ -970,51 +974,62 @@
 			log(`🛒 Đang lấy danh sách giỏ hàng`);
 			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang lấy danh sách" });
 
-			let placeOrderHTML = await myajax({
-				url: `${HOSTADDRESS}/checkout/cart`,
+			let cartList = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine`,
 				method: "GET",
-				type: "text"
+				header: {
+					"X-Access-Token": await getToken()
+				},
+				query: {
+					include: [
+						"items",
+						"badges",
+						"payment_method",
+						"messages",
+						"price_summary"
+					].join(",")
+				}
 			});
 
-			let placeOrderDOM = (new DOMParser()).parseFromString(placeOrderHTML, "text/html");
-			let deleteNodeList = placeOrderDOM.querySelectorAll("#shopping-cart > div.shopping-cart-item > div.col-right > div.box-info-product > p.action > a.btn.btn-link.btn-item-delete");
+			if (cartList.error) {
+				await errored("Lỗi khi lấy thông tin Giỏ Hàng");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${cartList.error.code}`);
+				log(` + MSG : ${cartList.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể lấy thông tin Giỏ Hàng", data: cartList.error }
+			}
 
 			heartbeat();
-			log(`🛒 ${deleteNodeList.length} item hiện trong giỏ hàng`);
+			log(`🛒 ${cartList.items.length} item hiện trong giỏ hàng`);
 
-			let CSRF_CART = placeOrderDOM.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(`CSRF: ${CSRF_CART}`);
-
-			for (let item of deleteNodeList) {
-				let id = item.dataset.itemId;
-				log(`🛒 Đang xóa đơn hàng ID ${id}`);
+			for (let item of cartList.items) {
+				log(`🛒 Đang xóa ${item.product_name} (${id})`);
 
 				try {
 					await myajax({
-						url: `${HOSTADDRESS}/checkout/cart/ajax_delete`,
-						method: "POST",
+						url: `${HOSTADDRESS}/api/v2/carts/mine/items/${item.id}`,
+						method: "DELETE",
 						header: {
-							"X-Access-Token": await getToken(),
-							apikey: null
-						},
-						form: {
-							id,
-							TIKI_CSRF_TOKEN: CSRF_CART
+							"X-Access-Token": await getToken()
 						}
 					})
 				} catch(e) {
-					log("🛒 Không thể xóa Item khỏi Giỏ");
-					log(` + ID  : ${id}`);
-					log(` + Code: ${e.code}`);
-					log(` + MSG : ${e.description || "Không rõ"}`);
-					log(` + Bỏ qua lỗi: true`);
+					if (e.code !== 2) {
+						heartbeat({ color: "red" });
 
-					clog("ERRR", `Remove Cart ${id}`, e);
-					continue;
+						log("🛒 Không thể xóa Item khỏi Giỏ");
+						log(` + ID  : ${item.id}`);
+						log(` + Code: ${e.code}`);
+						log(` + MSG : ${e.description || "Không rõ"}`);
+						log(` + Bỏ qua lỗi: true`);
+	
+						clog("ERRR", `Remove Cart ${item.id}`, e);
+						continue;
+					}
 				}
 
 				heartbeat({ color: "blue" });
-				log(`🛒 Xóa thành công`);
+				log(` + Xóa thành công`);
 			}
 		}
 	

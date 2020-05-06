@@ -458,16 +458,6 @@
 		allList.append(allListHeader, allListItem);
 		container.appendChild(allList);
 
-		let randomTikiPage = await myajax({
-			url: `${HOSTADDRESS}/deal-hot`,
-			method: "GET",
-			type: "text"
-		})
-
-		let randomTikiDoc = (new DOMParser()).parseFromString(randomTikiPage, "text/html");
-		var TIKI_CSRF_TOKEN = randomTikiDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-		log(`🗝 CSRF: ${TIKI_CSRF_TOKEN}`);
-
 		//? BLACK LIST
 		const addToBlackList = async (id) => {
 			let list = await getBlackList();
@@ -539,6 +529,7 @@
 		run();
 
 		runInfo({
+			status: "Đang Khởi Chạy",
 			end: "100%",
 			current: "0",
 			itemStatus: `Đang quét lần đầu`,
@@ -613,8 +604,6 @@
 			autobuyRatio: { type: "number", label: "TLG", value: 8.5, step: 0.01, depend: "autobuy" },
 			autobuyFrom: { type: "number", label: "GTT", value: 0, depend: "autobuy" },
 			autoRebuy: { type: "number", label: "TĐML", value: 1, depend: "autobuy" },
-			randomIp: { type: "checkbox", label: "R.IP", color: "blue", value: false, depend: "autobuy" },
-			ip: { type: "text", label: "IP", depend: "randomIp", doubt: true },
 			paymentMethod: {
 				type: "radio",
 				label: "Phương Thức Thanh Toán",
@@ -797,6 +786,7 @@
 
 								let successCount = 0;
 								log(`💠 BẮT ĐẦU ĐẶT MUA`);
+								order();
 
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
 									let account = accountList[orderNth];
@@ -853,11 +843,13 @@
 										oldPrice: item.oldPrice,
 										thumbnail: item.thumbnail,
 										note: [
-											`ID        : ${ID}`,
+											`ID        : ${item.id}`,
 											...beaconNote
 										].join("\n")
 									});
 								}
+
+								run();
 							}
 						}
 					}
@@ -1076,14 +1068,21 @@
 			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
-			await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
-				method: "POST",
-				form: {
-					address_id: shippingID,
-					TIKI_CSRF_TOKEN: TIKI_CSRF_TOKEN
+			let applyAddress = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_addresses/${shippingID}`,
+				method: "PUT",
+				header: {
+					"X-Access-Token": await getToken()
 				}
 			})
+			
+			if (applyAddress.error) {
+				await errored("Lỗi khi áp dụng Địa Chỉ");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${applyAddress.error.code}`);
+				log(` + MSG : ${applyAddress.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể chọn địa chỉ", data: applyAddress.error }
+			}
 
 			runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Thay đổi cài đặt thanh toán" });
 			log(`🛒 Đang lấy thông tin Thanh Toán`);
@@ -1300,51 +1299,62 @@
 			log(`🛒 Đang lấy danh sách giỏ hàng`);
 			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang lấy danh sách" });
 
-			let placeOrderHTML = await myajax({
-				url: `${HOSTADDRESS}/checkout/cart`,
+			let cartList = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine`,
 				method: "GET",
-				type: "text"
+				header: {
+					"X-Access-Token": await getToken()
+				},
+				query: {
+					include: [
+						"items",
+						"badges",
+						"payment_method",
+						"messages",
+						"price_summary"
+					].join(",")
+				}
 			});
 
-			let placeOrderDOM = (new DOMParser()).parseFromString(placeOrderHTML, "text/html");
-			let deleteNodeList = placeOrderDOM.querySelectorAll("#shopping-cart > div.shopping-cart-item > div.col-right > div.box-info-product > p.action > a.btn.btn-link.btn-item-delete");
+			if (cartList.error) {
+				await errored("Lỗi khi lấy thông tin Giỏ Hàng");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${cartList.error.code}`);
+				log(` + MSG : ${cartList.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể lấy thông tin Giỏ Hàng", data: cartList.error }
+			}
 
 			heartbeat();
-			log(`🛒 ${deleteNodeList.length} item hiện trong giỏ hàng`);
+			log(`🛒 ${cartList.items.length} item hiện trong giỏ hàng`);
 
-			let CSRF_CART = placeOrderDOM.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(`CSRF: ${CSRF_CART}`);
-
-			for (let item of deleteNodeList) {
-				let id = item.dataset.itemId;
-				log(`🛒 Đang xóa đơn hàng ID ${id}`);
+			for (let item of cartList.items) {
+				log(`🛒 Đang xóa ${item.product_name} (${id})`);
 
 				try {
 					await myajax({
-						url: `${HOSTADDRESS}/checkout/cart/ajax_delete`,
-						method: "POST",
+						url: `${HOSTADDRESS}/api/v2/carts/mine/items/${item.id}`,
+						method: "DELETE",
 						header: {
-							"X-Access-Token": await getToken(),
-							apikey: null
-						},
-						form: {
-							id,
-							TIKI_CSRF_TOKEN: CSRF_CART
+							"X-Access-Token": await getToken()
 						}
 					})
 				} catch(e) {
-					log("🛒 Không thể xóa Item khỏi Giỏ");
-					log(` + ID  : ${id}`);
-					log(` + Code: ${e.code}`);
-					log(` + MSG : ${e.description || "Không rõ"}`);
-					log(` + Bỏ qua lỗi: true`);
+					if (e.code !== 2) {
+						heartbeat({ color: "red" });
 
-					clog("ERRR", `Remove Cart ${id}`, e);
-					continue;
+						log("🛒 Không thể xóa Item khỏi Giỏ");
+						log(` + ID  : ${item.id}`);
+						log(` + Code: ${e.code}`);
+						log(` + MSG : ${e.description || "Không rõ"}`);
+						log(` + Bỏ qua lỗi: true`);
+	
+						clog("ERRR", `Remove Cart ${item.id}`, e);
+						continue;
+					}
 				}
 
 				heartbeat({ color: "blue" });
-				log(`🛒 Xóa thành công`);
+				log(` + Xóa thành công`);
 			}
 		}
 

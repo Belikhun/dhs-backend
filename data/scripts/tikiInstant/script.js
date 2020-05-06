@@ -29,21 +29,23 @@
 		log(`|===========================|`);
 	
 		const getToken = async () => {
-			let at = await core.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
+			let at = await this.core.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
 	
 			if (!at || !at.value)
-				return (await core.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
+				return (await this.core.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
 	
 			return at.value;
 		}
 
 		// Get itemName
 		var itemName = "";
-		var itemInitPrice = 0;
+		var itemInitPrice = null;
+		var updateItemData = true;
+		var itemData = {}
 		var thumbnail = null;
 	
 		try {
-			itemName = (await command("queryText", { query: `div > div.header.border-bottom > h1` })).text
+			itemName = (await command("queryText", { query: `div.header > h1.title` })).text
 		} catch(e) {
 			try {
 				itemName = (await command("queryText", { query: `#product-name > span:nth-child(3)` })).text
@@ -54,61 +56,170 @@
 		}
 	
 		log("itemName: " + itemName);
-
-		try {
-			itemInitPrice = parseInt((await command("queryText", { query: "#span-price" })).text.replace(/\./gi, ""));
-		} catch(e) {
-			itemInitPrice = null;
-		}
-	
-		log("itemInitPrice: " + itemInitPrice);
-
-		try {
-			thumbnail = (await command("eval", { script: `document.querySelector(\`head > meta[name="og:image"]\`).content` })).result
-		} catch(e) {
-			try {
-				thumbnail = (await command("eval", { script: `document.querySelector(\`head > meta[property="og:image"]\`).content` })).result
-			} catch(e) {
-				rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(thumbnail not found)</i>");
-				return;
-			}
-		}
 	
 		// Get ID
 		var ID = null;
 		var PID = null;
 
-		//? GET ITEM ID
-		runInfo({ status: "running", info: "Đang lấy thông tin Item", progress: 0 });
-		let urlRe = /(?:http|https):\/\/tiki\.vn\/.*\-p(\d+)\.html\?.+spid=(\d+).*/gm.exec(core.page.url.href);
+		const fetchItemData = async () => {
+			if (updateItemData) {
+				itemData = await myajax({
+					url: `${HOSTADDRESS}/api/v2/products/${ID}`,
+					method: "GET",
+					changeState: false
+				});
+	
+				if (ID !== itemData.id) {
+					log(`ID Change: ${ID} -> ${itemData.id}`);
+					ID = itemData.id;
+				}
+			}
 
-		if (!urlRe[1]) {
+			let itemPrice = itemData.price;
+			let itemOldPrice = itemData.list_price;
+			let itemStatus = itemData.inventory_status;
+			let itemQTY = (itemData.stock_item) ? itemData.stock_item.qty : "?";
+			let minSale = (itemData.stock_item) ? itemData.stock_item.min_sale_qty : "?";
+			let maxSale = (itemData.stock_item) ? itemData.stock_item.max_sale_qty : "?";
+
+			if (itemData.configurable_products) {
+				if (!CFID) {
+					let configList = []
+
+					for (let item of itemData.configurable_products)
+						configList.push({
+							name: item.name,
+							color: "pink",
+							value: item.child_id
+						});
+	
+					let select = await setup({
+						customPID: { type: "number", label: "PID tùy chỉnh", save: false },
+						config: {
+							type: "radio",
+							label: "Chọn loại hàng",
+							list: configList
+						}
+					}, { confirm: "Tiếp" });
+	
+					if (select.customPID) {
+						clog("DEBG", `Custom PID: ${select.customPID}`);
+						CFID = "custom";
+						PID = select.customPID;
+					} else {
+						if (!select.config)
+							throw { code: -1, description: "Vui lòng chọn loại hàng!" }
+
+						CFID = parseInt(select.config);
+					}
+
+					log(`Config ID: ${CFID}`);
+					await delayAsync(400);
+				}
+
+				if (CFID !== "custom")
+					for (let item of itemData.configurable_products)
+						if (item.child_id === CFID) {
+							itemPrice = item.price;
+							itemStatus = item.inventory_status;
+
+							if (item.id !== PID) {
+								log(`PID Change: ${PID} -> ${item.id} (1)`);
+								PID = parseInt(item.id);
+							}
+
+							break;
+						}
+			} else {
+				let _pid = PID;
+
+				if (itemData.current_seller)
+					_pid = parseInt(itemData.current_seller.product_id);
+
+				if (_pid !== PID) {
+					log(`PID Change: ${PID} -> ${_pid} (2)`);
+					PID = _pid;
+				}
+			}
+
+			if (!PID) {
+				clog("DEBG", "No PID. Returning INIT Data");
+				itemStatus = "NO_PID";
+				itemQTY = "?";
+				minSale = "?";
+				maxSale = "?";
+			} else {
+				let data = await myajax({
+					url: `${HOSTADDRESS}/api/v2/products/${ID}`,
+					method: "GET",
+					header: {
+						"X-Access-Token": getToken()
+					},
+					query: {
+						spid: PID,
+						include: [
+							"tag",
+							"badges",
+							"stock_item",
+							"variants",
+							"discount_tag"
+						].join(",")
+					}
+				})
+	
+				let _id = data.current_seller.id || null;
+				let _pid = parseInt(data.current_seller.product_id);
+	
+				if (!data || _pid !== PID || !_id) {
+					clog("DEBG", "No Item Data. Returning INIT Data");
+					itemStatus =
+						(!data)
+							? "NO_DATA"
+							: (_pid !== PID
+								? "ID_MISMATCH"
+								: (!_id
+									? "NO_SELLER"
+									: "UNKNOWN")
+							)
+	
+					itemQTY = "?";
+					minSale = "?";
+					maxSale = "?";
+				} else {
+					itemPrice = data.price;
+					itemStatus = data.inventory_status;
+					itemQTY = (data.stock_item) ? data.stock_item.qty : "?";
+					minSale = (data.stock_item) ? data.stock_item.min_sale_qty : "?";
+					maxSale = (data.stock_item) ? data.stock_item.max_sale_qty : "?";
+				}
+			}
+
+			if (!itemInitPrice)
+				itemInitPrice = itemPrice;
+
+			return {
+				price: parseInt(itemPrice),
+				oldPrice: parseInt(itemOldPrice),
+				thumbnail: itemData.thumbnail_url,
+				status: itemStatus,
+				qty: parseInt(itemQTY)
+			}
+		}
+
+		//? GET ITEM ID
+		let urlRe = /(?:http|https):\/\/tiki\.vn\/.*\-p(\d+)\.html.*/gm.exec(this.core.page.url.href)
+
+		if (!urlRe || !urlRe[1]) {
 			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(ID not found)</i>");
 			return;
 		}
 
-		if (!urlRe[2]) {
-			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(PID not found)</i>");
-			return;
-		}
-
 		ID = parseInt(urlRe[1]);
-		PID = parseInt(urlRe[2]);
 	
 		log(`Item ID: ${ID}`);
-		log(`Product ID: ${PID}`);
 		runInfo({ progress: 20 });
 
-		let randomTikiPage = await myajax({
-			url: `${HOSTADDRESS}/deal-hot`,
-			method: "GET",
-			type: "text"
-		})
-
-		let randomTikiDoc = (new DOMParser()).parseFromString(randomTikiPage, "text/html");
-		const TIKI_CSRF_TOKEN = randomTikiDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-		log(`🗝 CSRF: ${TIKI_CSRF_TOKEN}`);
-
+		thumbnail = (await fetchItemData()).thumbnail;
 		runInfo({ progress: 40 });
 
 		// Check for id change
@@ -116,17 +227,13 @@
 			let _ID = null;
 			let _PID = null;
 
-			let urlRe = /(?:http|https):\/\/tiki\.vn\/.*\-p(\d+)\.html\?.+spid=(\d+).*/gm.exec(core.page.url.href);
+			let urlRe = /(?:http|https):\/\/tiki\.vn\/.*\-p(\d+)\.html\?.+spid=(\d+).*/gm.exec(this.core.page.url.href);
 
-			if (!urlRe[1]) {
-				rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(ID not found)</i>");
+			if (!urlRe || !urlRe[1])
 				return;
-			}
 
-			if (!urlRe[2]) {
-				rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(PID not found)</i>");
+			if (!urlRe || !urlRe[2])
 				return;
-			}
 	
 			_ID = parseInt(urlRe[1]);
 			_PID = parseInt(urlRe[2]);
@@ -165,9 +272,9 @@
 		runInfo({ info: "Đang tạo nút",  progress: 80 });
 		log("Creating Button");
 		let btn = await command("createButton", {
-			container: `#add-cart-action > div > div > div.cta-box`,
+			container: `div.body > div.summary > div.left > div:nth-child(3)`,
 			color: "blue",
-			text: `<h3 style="margin: unset">MUA NGAY</h3><br>ID: ${ID} PID: ${PID}`,
+			text: `<h3 style="margin: unset; font-size: 22px;">MUA NGAY</h3><br>ID: ${ID} PID: ${PID}`,
 			style: {
 				width: "calc(100% - 30px)",
 				marginTop: "10px"
@@ -362,14 +469,21 @@
 			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
-			await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
-				method: "POST",
-				form: {
-					address_id: shippingID,
-					TIKI_CSRF_TOKEN: TIKI_CSRF_TOKEN
+			let applyAddress = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_addresses/${shippingID}`,
+				method: "PUT",
+				header: {
+					"X-Access-Token": await getToken()
 				}
 			})
+			
+			if (applyAddress.error) {
+				await errored("Lỗi khi áp dụng Địa Chỉ");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${applyAddress.error.code}`);
+				log(` + MSG : ${applyAddress.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể chọn địa chỉ", data: applyAddress.error }
+			}
 
 			runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Thay đổi cài đặt thanh toán" });
 			log(`🛒 Đang lấy thông tin Thanh Toán`);

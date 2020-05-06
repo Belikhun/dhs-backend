@@ -24,7 +24,7 @@
 		var itemName = "";
 	
 		try {
-			itemName = (await command("queryText", { query: `div > div.header.border-bottom > h1` })).text
+			itemName = (await command("queryText", { query: `div.header > h1.title` })).text
 		} catch(e) {
 			try {
 				itemName = (await command("queryText", { query: `#product-name > span:nth-child(3)` })).text
@@ -142,27 +142,8 @@
 			} else {
 				let _pid = PID;
 
-				if (itemData.current_seller) {
+				if (itemData.current_seller)
 					_pid = parseInt(itemData.current_seller.product_id);
-					clog("DEBG", "Have current_seller:", itemData.current_seller);
-				} else {
-					clog("DEBG", "No current_seller. Fetching page to get PID");
-
-					if (updateItemData) {
-						clog("DEBG", "Disabling fetchItemData");
-						updateItemData = false;
-					}
-
-					heartbeat({ color: "red" });
-					let itemPage = await myajax({
-						url: `${HOSTADDRESS}/${itemData.url_path}`,
-						method: "GET",
-						type: "text"
-					})
-
-					let itemDOM = (new DOMParser()).parseFromString(itemPage, "text/html");
-					_pid = parseInt(itemDOM.getElementById("product_id_add_cart").value);
-				}
 
 				if (_pid !== PID) {
 					log(`PID Change: ${PID} -> ${_pid} (2)`);
@@ -170,30 +151,56 @@
 				}
 			}
 
-			if (!PID)
-				throw { code: -1, description: "Không xác định được PID của sản phẩm" }
-
-			let data = await myajax({
-				url: `${HOSTADDRESS}/ajaxProductRender`,
-				method: "GET",
-				query: {
-					pid: ID,
-					spid: PID
-				}
-			})
-
-			if (!data || data.id !== PID || !data.current_seller.id) {
-				clog("DEBG", "No Item Data. Returning INIT Data");
-				itemStatus = (!data) ? "NO_DATA" : (data.id !== PID ? "ID_MISMATCH" : (!data.current_seller.id ? "NO_SELLER" : "UNKNOWN"));
+			if (!PID) {
+				clog("DEBG", "No PID. Returning INIT Data");
+				itemStatus = "NO_PID";
 				itemQTY = "?";
 				minSale = "?";
 				maxSale = "?";
 			} else {
-				itemPrice = data.price;
-				itemStatus = data.inventory_status;
-				itemQTY = (data.stock_item) ? data.stock_item.qty : "?";
-				minSale = (data.stock_item) ? data.stock_item.min_sale_qty : "?";
-				maxSale = (data.stock_item) ? data.stock_item.max_sale_qty : "?";
+				let data = await myajax({
+					url: `${HOSTADDRESS}/api/v2/products/${ID}`,
+					method: "GET",
+					header: {
+						"X-Access-Token": getToken()
+					},
+					query: {
+						spid: PID,
+						include: [
+							"tag",
+							"badges",
+							"stock_item",
+							"variants",
+							"discount_tag"
+						].join(",")
+					}
+				})
+	
+				let _id = data.current_seller.id || null;
+				let _pid = parseInt(data.current_seller.product_id);
+	
+				if (!data || _pid !== PID || !_id) {
+					clog("DEBG", "No Item Data. Returning INIT Data");
+					itemStatus =
+						(!data)
+							? "NO_DATA"
+							: (_pid !== PID
+								? "ID_MISMATCH"
+								: (!_id
+									? "NO_SELLER"
+									: "UNKNOWN")
+							)
+	
+					itemQTY = "?";
+					minSale = "?";
+					maxSale = "?";
+				} else {
+					itemPrice = data.price;
+					itemStatus = data.inventory_status;
+					itemQTY = (data.stock_item) ? data.stock_item.qty : "?";
+					minSale = (data.stock_item) ? data.stock_item.min_sale_qty : "?";
+					maxSale = (data.stock_item) ? data.stock_item.max_sale_qty : "?";
+				}
 			}
 
 			if (!itemInitPrice)
@@ -335,7 +342,7 @@
 		//? GET ITEM ID
 		let urlRe = /(?:http|https):\/\/tiki\.vn\/.*\-p(\d+)\.html.*/gm.exec(this.page.url.href)
 
-		if (!urlRe[1]) {
+		if (!urlRe || !urlRe[1]) {
 			rejectSetup("Hãy đi tới trang mặt hàng trước khi chạy! <i>(ID not found)</i>");
 			return;
 		}
@@ -346,16 +353,6 @@
 		await updatePriceHistory(3, ID, PID);
 		log("Đã lấy thông tin Item");
 
-		let randomTikiPage = await myajax({
-			url: `${HOSTADDRESS}/deal-hot`,
-			method: "GET",
-			type: "text"
-		})
-
-		let randomTikiDoc = (new DOMParser()).parseFromString(randomTikiPage, "text/html");
-		const TIKI_CSRF_TOKEN = randomTikiDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-		log(`🗝 CSRF: ${TIKI_CSRF_TOKEN}`);
-	
 		log("Đang chờ cài đặt từ người dùng");
 		// Wait for settings
 		const settings = await setup({
@@ -817,14 +814,21 @@
 			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
-			await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
-				method: "POST",
-				form: {
-					address_id: shippingID,
-					TIKI_CSRF_TOKEN: TIKI_CSRF_TOKEN
+			let applyAddress = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_addresses/${shippingID}`,
+				method: "PUT",
+				header: {
+					"X-Access-Token": await getToken()
 				}
 			})
+			
+			if (applyAddress.error) {
+				await errored("Lỗi khi áp dụng Địa Chỉ");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${applyAddress.error.code}`);
+				log(` + MSG : ${applyAddress.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể chọn địa chỉ", data: applyAddress.error }
+			}
 
 			runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Thay đổi cài đặt thanh toán" });
 			log(`🛒 Đang lấy thông tin Thanh Toán`);
