@@ -133,8 +133,8 @@
 								let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
 			
 								let price = parseInt(item.dataset.price);
-								let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular").innerText;
-								let oldPrice = (_priceBox !== "") ? parseInt(_priceBox.match(/\d/g).join("")) : price;
+								let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular");
+								let oldPrice = (_priceBox) ? parseInt(_priceBox.innerText.match(/\d/g).join("")) : price;
 								let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 			
 								if (priceSale < saleFilter)
