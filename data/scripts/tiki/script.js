@@ -49,8 +49,14 @@
 		const getToken = async () => {
 			let at = await this.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
 	
-			if (!at || !at.value)
-				return (await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
+			if (!at || !at.value) {
+				let gt = await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN");
+
+				if (!gt || !gt.value)
+					throw { code: -1, description: "Tiki Token Not Found" }
+
+				return gt.value;
+			}
 	
 			return at.value;
 		}

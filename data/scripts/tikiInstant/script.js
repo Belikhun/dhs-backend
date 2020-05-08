@@ -23,7 +23,7 @@
 
 	try {
 		log(`|===========================|`);
-		log(`|     Tiki Instant Buy      |`);
+		log(`|      Tiki Instant Buy     |`);
 		log(`|          Belikhun         |`);
 		log(`|  LU: 23:54:32 05/05/2020  |`);
 		log(`|===========================|`);
@@ -31,8 +31,14 @@
 		const getToken = async () => {
 			let at = await this.core.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
 	
-			if (!at || !at.value)
-				return (await this.core.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN")).value
+			if (!at || !at.value) {
+				let gt = await this.core.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN");
+
+				if (!gt || !gt.value)
+					throw { code: -1, description: "Tiki Token Not Found" }
+
+				return gt.value;
+			}
 	
 			return at.value;
 		}
@@ -82,64 +88,14 @@
 			let minSale = (itemData.stock_item) ? itemData.stock_item.min_sale_qty : "?";
 			let maxSale = (itemData.stock_item) ? itemData.stock_item.max_sale_qty : "?";
 
-			if (itemData.configurable_products) {
-				if (!CFID) {
-					let configList = []
+			let _pid = null;
 
-					for (let item of itemData.configurable_products)
-						configList.push({
-							name: item.name,
-							color: "pink",
-							value: item.child_id
-						});
-	
-					let select = await setup({
-						customPID: { type: "number", label: "PID tùy chỉnh", save: false },
-						config: {
-							type: "radio",
-							label: "Chọn loại hàng",
-							list: configList
-						}
-					}, { confirm: "Tiếp" });
-	
-					if (select.customPID) {
-						clog("DEBG", `Custom PID: ${select.customPID}`);
-						CFID = "custom";
-						PID = select.customPID;
-					} else {
-						if (!select.config)
-							throw { code: -1, description: "Vui lòng chọn loại hàng!" }
+			if (itemData.current_seller)
+				_pid = parseInt(itemData.current_seller.product_id);
 
-						CFID = parseInt(select.config);
-					}
-
-					log(`Config ID: ${CFID}`);
-					await delayAsync(400);
-				}
-
-				if (CFID !== "custom")
-					for (let item of itemData.configurable_products)
-						if (item.child_id === CFID) {
-							itemPrice = item.price;
-							itemStatus = item.inventory_status;
-
-							if (item.id !== PID) {
-								log(`PID Change: ${PID} -> ${item.id} (1)`);
-								PID = parseInt(item.id);
-							}
-
-							break;
-						}
-			} else {
-				let _pid = PID;
-
-				if (itemData.current_seller)
-					_pid = parseInt(itemData.current_seller.product_id);
-
-				if (_pid !== PID) {
-					log(`PID Change: ${PID} -> ${_pid} (2)`);
-					PID = _pid;
-				}
+			if (_pid !== PID) {
+				log(`PID Change: ${PID} -> ${_pid} (2)`);
+				PID = _pid;
 			}
 
 			if (!PID) {
@@ -254,8 +210,6 @@
 			note: { type: "note", level: "warning", text: "Chọn loại hàng trên trang sản phẩm" },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
-			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false },
-			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
 			paymentMethod: {
 				type: "radio",
 				label: "Phương Thức Thanh Toán",
@@ -350,6 +304,12 @@
 				log(` + MSG : ${loginResponse.messages.password || "Không Rõ"}`);
 				throw { code: -1, description: loginResponse.messages.password, data: loginResponse }
 			}
+
+			log("📤 Cập nhật Cookies 🍪");
+			await myajax({
+				url: `${HOSTADDRESS}/api/v2/me`,
+				method: "GET"
+			})
 
 			log(`📥 Đăng nhập thành công (${loginTimer.stop}s)`);
 		}
