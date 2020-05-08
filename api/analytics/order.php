@@ -12,7 +12,6 @@
 	require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
 	define("ORDERLOG_ROOT", $_SERVER["DOCUMENT_ROOT"] ."/data/order");
-	define("ORDERLOG_FILE", "log.json");
 	
 	// SET PAGE TYPE
 	define("PAGE_TYPE", "API");
@@ -30,10 +29,12 @@
 		checkToken();
 
 		$orderLogs = Array();
-		$orderDirs = glob(ORDERLOG_ROOT ."/*", GLOB_ONLYDIR);
+		$orderFiles = glob(ORDERLOG_ROOT ."/order.*", GLOB_NOSORT);
 		
-		foreach ($orderDirs as $dir)
-			$orderLogs = array_merge($orderLogs, json_decode((new fip($dir ."/". ORDERLOG_FILE, "[]")) -> read(), true));
+		foreach ($orderFiles as $file)
+			array_push($orderLogs, unserialize((new fip($file)) -> read()));
+
+		usort($orderLogs, function($a, $b) { return $a["time"] > $b["time"]; });
 
 		stop(0, "Success", 200, array_reverse($orderLogs), true);
 	}
@@ -44,13 +45,14 @@
     $key = $_SESSION["authKey"];
     $keyDB = new ezsql(DB_TABLE);
     
-    $query = "SELECT `name` FROM `keylist` WHERE `key` = ?";
+    $query = "SELECT `id`, `name` FROM `keylist` WHERE `key` = ?";
     $result = $keyDB -> query($query, $key);
 
     if (empty($result))
 		stop(-1, "Key không tồn tại trong máy chủ!", 403, Array( "key" => $key ));
 	
 	checkToken();
+	$timestamp = microtime(true);
 
 	$note = getForm("note");
 	$data = Array(
@@ -64,17 +66,10 @@
 		"oldPrice"	=>	withType(getForm("oldPrice"), "integer", null),
 		"thumbnail"	=>	getForm("thumbnail"),
 		"note"		=>	$note ? explode("\n", $note) : null,
-		"time"		=>	time()
+		"time"		=>	$timestamp
 	);
 
-	$datestamp = strtotime(date("Y-m-d"));
-
-	if (!file_exists(ORDERLOG_ROOT ."/$datestamp"))
-		mkdir(ORDERLOG_ROOT ."/$datestamp");
-
-	$orderLogs = new fip(ORDERLOG_ROOT ."/$datestamp/". ORDERLOG_FILE, "[]");
-	$logs = json_decode($orderLogs -> read(), true);
-	array_push($logs, $data);
-	$orderLogs -> write(json_encode($logs, JSON_PRETTY_PRINT));
+	$orderLogs = new fip(ORDERLOG_ROOT ."/order.". $result[0]["id"] .".". $timestamp * 10000, "a:0:{}");
+	$orderLogs -> write(serialize($data));
 
 	stop(0, "Success!", 200, $data);
