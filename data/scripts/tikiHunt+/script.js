@@ -822,7 +822,15 @@
 										heartbeat({ color: "red" });
 										log(`💠 Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 										clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
-										await __clearCart();
+
+										try {
+											log(`🛒 Đang dọn dẹp giỏ hàng`);
+											await __clearCart();
+										} catch(e) {
+											log(`🛒 Không thể xóa Giỏ Hàng`);
+											clog("ERRR", e);
+										}
+
 										continue;
 									}
 
