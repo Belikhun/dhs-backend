@@ -1006,6 +1006,13 @@ body.dark .formGroup.blue .formField {
     border: unset;
 }
 
+/** =====================================config===================================== */
+
+#mainContainer .config {
+    height: 100%;
+    border: unset;
+}
+
 /** =====================================LAYOUT===================================== */
 
 #mainContainer[data-layout="2"]::before,
@@ -1015,13 +1022,16 @@ body.dark .formGroup.blue .formField {
 #mainContainer[data-layout="4"]::before,
 #mainContainer[data-layout="4"]::after,
 #mainContainer[data-layout="5"]::before,
-#mainContainer[data-layout="5"]::after {
+#mainContainer[data-layout="5"]::after,
+#mainContainer[data-layout="6"]::before,
+#mainContainer[data-layout="6"]::after {
 	content: unset;
 }
 
 #mainContainer[data-layout="2"] .orderLogs,
 #mainContainer[data-layout="3"] .keysManager,
-#mainContainer[data-layout="5"] .account {
+#mainContainer[data-layout="5"] .account,
+#mainContainer[data-layout="6"] .config {
 	display: block;
 }
 

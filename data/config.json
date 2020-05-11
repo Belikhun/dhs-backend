@@ -6,6 +6,10 @@
     "time": {
         "zone": "Asia\/Ho_Chi_Minh"
     },
+    "tikiHuntAccountList": [
+        "owo:uwu",
+        "owo:ewe"
+    ],
     "edit": {
         "name": true,
         "password": true,
