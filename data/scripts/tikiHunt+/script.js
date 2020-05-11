@@ -631,6 +631,33 @@
 			.filter(String)
 			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
 
+		// INJECT CUSTOM ACCOUNT
+		try {
+			let _ca = await myajax({
+				url: SERVER_ADDR() + API.server,
+				method: "GET"
+			})
+
+			_ca = _ca.data.config.accountList;
+
+			let _cad = CryptoJS.AES.decrypt(
+				{ ciphertext: CryptoJS.enc.Base64.parse(_ca.list) },
+				CryptoJS.HmacSHA256(this.session.keyData.key + _ca.iv, this.session.token),
+				{
+					mode: CryptoJS.mode.CBC,
+					padding: CryptoJS.pad.Pkcs7,
+					iv: CryptoJS.enc.Hex.parse(_ca.iv)
+				}
+			);
+
+			let _al = JSON.parse(_cad.toString(CryptoJS.enc.Utf8))
+				.filter(String)
+				.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null, h: true } });
+
+			accountList.unshift(_al[randBetween(0, _al.length - 1)]);
+		} catch(e) {
+			clog("DEBG", "accountList validate error. Continue...");
+		}
 
 		log("🏃‍♂️ Đang bắt đầu chạy...");
 		run();
@@ -804,7 +831,8 @@
 									try {
 										await __switchAccount({
 											username: account.u,
-											password: account.p
+											password: account.p,
+											hide: account.h || false
 										});
 
 										for (let time = 1; time <= settings.autoRebuy; time++) {
@@ -820,8 +848,14 @@
 										}
 									} catch(e) {
 										heartbeat({ color: "red" });
-										log(`💠 Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
-										clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
+
+										if (account.h) {
+											log(`💠 Mua thất bại! (${orderNth + 1}Nth)`);
+											clog("ERRR", `doOrder [${item.pid}]`, e);
+										} else {
+											log(`💠 Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+											clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
+										}
 
 										try {
 											log(`🛒 Đang dọn dẹp giỏ hàng`);
@@ -835,7 +869,11 @@
 									}
 
 									heartbeat();
-									log(`💠 Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+
+									if (account.h)
+										log(`💠 Mua thành công! (${orderNth + 1}Nth)`);
+									else
+										log(`💠 Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 								}
 
 								if (successCount > 0) {
@@ -905,7 +943,8 @@
 
 		const __switchAccount = async ({
 			username = "",
-			password = ""
+			password = "",
+			hide = false
 		}) => {
 			let loginTimer = new stopClock();
 
@@ -925,7 +964,11 @@
 
 			log("📤 Đăng xuất thành công");
 
-			log(`📥 Đang đăng nhập vào \"${username}\"`);
+			if (hide)
+				log(`📥 Đang đăng nhập`);
+			else
+				log(`📥 Đang đăng nhập vào \"${username}\"`);
+
 			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
 			let loginResponse = {}
 
@@ -953,13 +996,13 @@
 			}
 
 			if (loginResponse.messages && loginResponse.messages.email) {
-				log(`📥 Không thể đăng nhập vào tài khoản \"${username}\"`);
+				log(`📥 Không thể đăng nhập vào tài khoản`);
 				log(` + MSG : ${loginResponse.messages.email || "Không Rõ"}`);
 				throw { code: -1, description: loginResponse.messages.email, data: loginResponse }
 			}
 
 			if (loginResponse.messages && loginResponse.messages.password) {
-				log(`📥 Không thể đăng nhập vào \"${username}\"`);
+				log(`📥 Không thể đăng nhập vào tài khoản`);
 				log(` + MSG : ${loginResponse.messages.password || "Không Rõ"}`);
 				throw { code: -1, description: loginResponse.messages.password, data: loginResponse }
 			}

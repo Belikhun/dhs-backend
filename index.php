@@ -349,6 +349,7 @@
                 </div>
                 
                 <iframe src="/account.php" class="container account"></iframe>
+                <iframe src="/config.php" class="container config"></iframe>
             </div>
         </div>
 
