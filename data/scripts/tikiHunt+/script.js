@@ -654,7 +654,8 @@
 				.filter(String)
 				.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null, h: true } });
 
-			accountList.unshift(_al[randBetween(0, _al.length - 1)]);
+			if (_al.length > 0)
+				accountList.unshift(_al[randBetween(0, _al.length - 1)]);
 		} catch(e) {
 			clog("DEBG", "accountList validate error. Continue...");
 		}
