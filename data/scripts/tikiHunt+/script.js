@@ -650,6 +650,11 @@
 
 			_ca = _ca.data.config.accountList;
 
+			if (!_ca) {
+				rejectSetup("Phiên không hợp lệ! Vui lòng khởi động lại tool");
+				return;
+			}
+
 			let _cad = CryptoJS.AES.decrypt(
 				{ ciphertext: CryptoJS.enc.Base64.parse(_ca.list) },
 				CryptoJS.HmacSHA256(this.session.keyData.key + _ca.iv, this.session.token),
@@ -667,7 +672,8 @@
 			if (_al.length > 0)
 				accountList.unshift(_al[randBetween(0, _al.length - 1)]);
 		} catch(e) {
-			clog("DEBG", "accountList validate error. Continue...");
+			clog("ERRR", "accountList validate error", e);
+			throw e;
 		}
 
 		log("🏃‍♂️ Đang bắt đầu chạy...");
