@@ -13,6 +13,25 @@
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
+    $accountList = null;
+
+    if (isset($_SESSION["authKey"])) {
+        // BEGIN ENCRYPTION
+        $iv = random_bytes(16);
+        $ivHex = bin2hex($iv);
+
+        $secret = hash_hmac("sha256", $_SESSION["authKey"] . $ivHex, $_SESSION["apiToken"], true);
+        $encrypted = openssl_encrypt(json_encode($config["tikiHuntAccountList"]), "AES-256-CBC", $secret, 0, $iv);
+    
+        if ($encrypted === false)
+            stop(-1, "Thất bại khi mã hóa dữ liệu", 500);
+    
+        $accountList = Array(
+            "list" => $encrypted,
+            "iv" => $ivHex
+        );
+    }
+
     stop(0, "Success", 200, Array(
         "version" => VERSION,
         "versionTag" => VERSION_TAG,
@@ -34,8 +53,7 @@
         "HTTP_USER_AGENT" => $_SERVER["HTTP_USER_AGENT"],
         "REMOTE_ADDR" => $_SERVER["REMOTE_ADDR"],
         "config" => Array(
-            "allowRegister" => $config["allowRegister"]
+            "allowRegister" => $config["allowRegister"],
+            "accountList" => $accountList
         )
     ));
-
-?>

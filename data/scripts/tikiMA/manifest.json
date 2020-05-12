@@ -3,6 +3,6 @@
     "description": "Tự động mua hàng nhiều tài khoản cho Tiki",
     "site": "tiki.vn/",
     "match": "tiki\\.vn.*",
-    "version": 5,
+    "version": 9,
     "hide": true
 }

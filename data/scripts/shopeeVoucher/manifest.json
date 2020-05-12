@@ -1,0 +1,8 @@
+{
+    "name": "Shopee Voucher",
+    "description": "Tự động thêm voucher vào ví cho Shopee",
+    "site": "shopee.vn/",
+    "match": "*",
+    "version": 2,
+    "hide": true
+}

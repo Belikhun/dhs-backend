@@ -120,21 +120,26 @@
 						let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
 	
 						let price = parseInt(item.dataset.price);
-						let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular").innerText;
-						let oldPrice = (_priceBox !== "") ? parseInt(_priceBox.match(/\d/g).join("")) : price;
+						let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular");
+						let oldPrice = (_priceBox && _priceBox.innerText !== "") ? parseInt(_priceBox.innerText.match(/\d/g).join("")) : price;
 						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 	
 						if (priceSale < saleFilter)
 							continue;
 
-						let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
+						let couponBox = item.querySelector("div.price-tag-wrap p.price-tag > span.tag > span.code");
 						let couponCode = null;
 						let couponPrice = null;
 						let couponSale = null;
 	
-						if (couponBox) {
+						if (couponBox && couponBox.innerText) {
+							let couponPriceBox = item.querySelector("div.price-tag-wrap p.price-tag > span.price > span");
+
 							couponCode = couponBox.innerText;
-							couponPrice = parseInt(item.querySelector("a > div.price-tag-wrap > p.price-tag > span.price > span").innerText.match(/\d/g).join(""));
+							couponPrice = (couponPriceBox && couponPriceBox.innerText)
+								? parseInt(couponPriceBox.innerText.match(/\d/g).join(""))
+								: price;
+								
 							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
 						}
 	
@@ -513,6 +518,7 @@
 		run();
 
 		runInfo({
+			status: "Đang Khởi Chạy",
 			end: "100%",
 			current: "0",
 			itemStatus: `Đang quét lần đầu`,

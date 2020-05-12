@@ -8,7 +8,18 @@
 		doCheck = false;
 	})
 
+	const HOSTADDRESS = `https://shopee.vn`;
+	const MALLADDRESS = `https://mall.shopee.vn`;
+
 	const log = (text) => writeLog(text);
+
+	const craftURL = (url, query) => {
+		let queryKey = Object.keys(query);
+		for (let key of queryKey)
+			url += `${(queryKey[0] === key) ? "?" : ""}${key}=${query[key]}${(queryKey[queryKey.length - 1] !== key) ? "&" : ""}`;
+			
+		return encodeURIComponent(url);
+	}
 
 	//* ================================= BEGIN ENCRYPT/DECRYPT =================================
 
@@ -113,8 +124,8 @@
 
 		// Define
 		const updateItemData = async () => {
-			let data = await command("ajax", {
-				url: `/api/v2/item/get`,
+			let data = await myajax({
+				url: `${HOSTADDRESS}/api/v2/item/get`,
 				method: "GET",
 				query: {
 					itemid: ID,
@@ -312,13 +323,18 @@
 		var FREESHIP = null;
 		var COUPON = null;
 
-		let vouchersList = await command("ajax", {
-			url: "/api/v2/voucher_wallet/get_recommend_vouchers",
+		let vouchersList = await myajax({
+			url: `${HOSTADDRESS}/api/v2/voucher_wallet/get_recommend_vouchers`,
 			method: "POST",
 			header: {
 				"X-API-SOURCE": "pc",
 				"X-CSRFToken": CSRF,
-				"X-Requested-With": "XMLHttpRequest"
+				"X-Requested-With": "XMLHttpRequest",
+				"FH_Origin": HOSTADDRESS,
+				"FH_Referer": HOSTADDRESS,
+				"FH_Sec-Fetch-Dest": "empty",
+				"FH_Sec-Fetch-Mode": "cors",
+				"FH_Sec-Fetch-Site": "same-origin",
 			},
 			json: {
 				check_voucher_payment_criteria: false,
@@ -400,7 +416,8 @@
 			couponNote: { type: "note", text: COUPON_DESC },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
 			useAirPay: { type: "checkbox", label: `Thanh toán bằng AirPay`, color: "blue", value: false, required: true },
-			APISource: { type: "text", label: "X-API-SOURCE", value: "pc" }
+			userAgent: { type: "text", label: "User-Agent", value: "Android app Shopee appver=25312" },
+			APISource: { type: "text", label: "X-API-Source", value: "rn" }
 		});
 	
 		log("CÀI ĐẶT:");
@@ -438,13 +455,18 @@
 			let addCartData = null;
 
 			try {
-				addCartData = await command("ajax", {
-					url: "/api/v2/cart/add_to_cart",
+				addCartData = await myajax({
+					url: `${HOSTADDRESS}/api/v2/cart/add_to_cart`,
 					method: "POST",
 					header: {
 						"X-API-SOURCE": APISource,
 						"X-CSRFToken": CSRF,
-						"X-Requested-With": "XMLHttpRequest"
+						"X-Requested-With": "XMLHttpRequest",
+						"FH_Origin": HOSTADDRESS,
+						"FH_Referer": HOSTADDRESS,
+						"FH_Sec-Fetch-Dest": "empty",
+						"FH_Sec-Fetch-Mode": "cors",
+						"FH_Sec-Fetch-Site": "same-origin",
 					},
 					json: {
 						quantity: count,
@@ -470,8 +492,8 @@
 				throw { code: -1, description: addCartData.error_msg, data: addCartData };
 			}
 
-			let ordersData = await command("ajax", {
-				url: "/api/v2/cart/get_orders",
+			let ordersData = await myajax({
+				url: `${HOSTADDRESS}/api/v2/cart/get_orders`,
 				method: "GET",
 				header: {
 					"X-API-SOURCE": APISource,
@@ -525,8 +547,8 @@
 
 			heartbeat();
 			log(" + Fetching /checkout/get");
-			CHECKOUT_GET = await command("ajax", {
-				url: "/api/v2/checkout/get",
+			CHECKOUT_GET = await myajax({
+				url: `${HOSTADDRESS}/api/v2/checkout/get`,
 				method: "POST",
 				header: {
 					"X-API-SOURCE": APISource,
@@ -557,8 +579,8 @@
 
 				heartbeat();
 				log(" + Đang lấy danh sách giỏ hàng");
-				let ordersData = await command("ajax", {
-					url: "/api/v2/cart/get_orders",
+				let ordersData = await myajax({
+					url: `${HOSTADDRESS}/api/v2/cart/get_orders`,
 					method: "GET",
 					header: {
 						"X-API-SOURCE": APISource,
@@ -573,8 +595,8 @@
 
 				heartbeat();
 				log(" + Đang áp dụng Coupon");
-				let response = await command("ajax", {
-					url: "/api/v2/checkout/coupon",
+				let response = await myajax({
+					url: `${HOSTADDRESS}/api/v2/checkout/coupon`,
 					method: "POST",
 					header: {
 						"X-API-SOURCE": APISource,
@@ -642,18 +664,31 @@
 			let placeOrder = "";
 
 			try {
-				placeOrder = await command("ajax", {
-					url: "/api/v2/checkout/place_order",
+				placeOrder = await myajax({
+					url: `${MALLADDRESS}/api/v2/checkout/place_order`,
 					method: "POST",
 					type: "text",
 					header: {
 						"Content-Type": "text/plain;charset=UTF-8",
-						"X-API-SOURCE": APISource,
-						"X-CSRFToken": CSRF,
-						"X-Requested-With": "XMLHttpRequest",
-						"X-CV-ID": 100,
-						"X-Track-Id": HASH,
-						"If-None-Match-": `55b03-08d47a57630009d06d3011de11a9df6c`
+						"FH_User-Agent": settings.userAgent,
+						"x-api-source": APISource,
+						"x-csrftoken": CSRF,
+						"x-cv-id": 100,
+						"x-track-id": HASH,
+						"FH_Origin": MALLADDRESS,
+						"FH_Referer": `${MALLADDRESS}/bridge_cmd?cmd=` + craftURL("reactPath", {
+							tab: "buy",
+							path: craftURL("shopee/OPC_HOME", {
+								promotionData: "[object Object]",
+								shopOrders: "[object Object]",
+								source: "RN_CART"
+							})
+						}),
+						"FH_Host": "mall.shopee.vn",
+						"FH_Sec-Fetch-Dest": "empty",
+						"FH_Sec-Fetch-Mode": "cors",
+						"FH_Sec-Fetch-Site": "same-origin",
+						"If-None-Match-": `55b03-b077f915899b0282bd340776cace647e`,
 					},
 					raw: encrypt(JSON.stringify(CHECKOUT_GET), HASH)
 				})
@@ -741,8 +776,8 @@
 
 				heartbeat();
 				log(" + Đang lấy danh sách giỏ hàng");
-				var ordersData = await command("ajax", {
-					url: "/api/v2/cart/get_orders",
+				var ordersData = await myajax({
+					url: `${HOSTADDRESS}/api/v2/cart/get_orders`,
 					method: "GET",
 					header: {
 						"X-API-SOURCE": settings.APISource,
@@ -762,8 +797,8 @@
                     let info = {}
 
 					try {
-						info = await command("ajax", {
-							url: "/api/v2/checkout/coupon",
+						info = await myajax({
+							url: `${HOSTADDRESS}/api/v2/checkout/coupon`,
 							method: "POST",
 							header: {
 								"X-API-SOURCE": settings.APISource,
@@ -824,11 +859,10 @@
 					if (typeof currentPrice === "number" && (info.invalid_message_code === 0)) {
 						log(`ACP> ${settings.coupon}: ${info.voucher_info.error || "Mã Hợp Lệ"}`);
 						let orderTimer = new stopClock();
-
 						doCheck = false;
+						
 						order();
 						sounds.notification();
-
 						await __doOrder({
 							APISource: settings.APISource
 						});
@@ -841,6 +875,17 @@
 							progress: 100,
 							progWarn: false,
 							checkDetail: "Đặt hàng thành công"
+						});
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-i.${SID}.${ID}`,
+							price: currentPrice,
+							count: settings.orderCount,
+							runPrice: itemInitPrice,
+							oldPrice: ordersData.data.shoporders[0].iteminfos[0].oldprice,
+							thumbnail: `https://cf.shopee.vn/file/${ordersData.data.shoporders[0].iteminfos[0].image}`
 						});
 
 						log("CHẠY KẾT THÚC");
@@ -875,8 +920,8 @@
 					let data = {}
 
 					try {
-						data = await command("ajax", {
-							url: `/api/v2/item/get`,
+						data = await myajax({
+							url: `${HOSTADDRESS}/api/v2/item/get`,
 							method: "GET",
 							query: {
 								itemid: ID,
@@ -966,6 +1011,17 @@
 							progress: 100,
 							progWarn: false,
 							checkDetail: "Đặt hàng thành công"
+						});
+
+						await sendBeacon({
+							script: SCRIPT.id,
+							name: itemName,
+							link: `${HOSTADDRESS}/item-i.${SID}.${ID}`,
+							price: currentPrice,
+							count: settings.orderCount,
+							runPrice: itemInitPrice,
+							oldPrice: data.item.price_before_discount,
+							thumbnail: `https://cf.shopee.vn/file/${data.item.image}`
 						});
 
 						log("CHẠY KẾT THÚC");

@@ -546,6 +546,7 @@
 		run();
 
 		runInfo({
+			status: "Đang Khởi Chạy",
 			end: "100%",
 			current: "0",
 			itemStatus: `Đang quét lần đầu`,

@@ -1,6 +1,7 @@
 // Script begin here
 (async () => {
 	var doCheck = true;
+	var beaconNote = []
 	var infoUpdateInterval = null;
 	var timeUpdateInterval = null;
 
@@ -32,12 +33,13 @@
 	})
 
 	const log = (text) => writeLog(text);
+	const errored = () => {}
 
 	try {
 		log(`|===========================|`);
 		log(`|   Tiki Deal Hunter Prime  |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 00:13:08 18/03/2020  |`);
+		log(`|  LU: 23:54:32 05/05/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -52,6 +54,31 @@
 					listObj[i] = true;
 
 			await this.dataSave({ tikiHuntBlackList: listObj });
+		}
+
+		const getToken = async (retry = true) => {
+			let at = await this.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
+	
+			if (!at || !at.value) {
+				let gt = await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN");
+
+				if (!gt || !gt.value) {
+					if (retry) {
+						log("🔐 Cập nhật Cookies 🍪");
+						await myajax({
+							url: `${HOSTADDRESS}/api/v2/me`,
+							method: "GET"
+						});
+
+						return await getToken(false);
+					} else
+						throw { code: -1, description: "Tiki Token Not Found" }
+				}
+
+				return gt.value;
+			}
+	
+			return at.value;
 		}
 
 		const scanItem = async ({
@@ -72,16 +99,17 @@
 
 			for (let itemNth = 0; itemNth < selectedPageList.length; itemNth++) {
 				let item = selectedPageList[itemNth];
+				let pageLoaded = 0;
+				let pageList = [];
 				let start = time();
 
 				log(`   + Đang tải: ${item.title}`);
 				
-				for (let page = 1; page <= pageCount; page++) {
-					var result = {}
-					heartbeat({ color: "yellow" });
+				await new Promise((resolve, reject) => {
+					for (let page = 1; page <= pageCount; page++) {
+						heartbeat({ color: "yellow" });
 
-					try {
-						result = await myajax({
+						myajax({
 							url: HOSTADDRESS + item.path,
 							method: "GET",
 							query: {
@@ -90,76 +118,88 @@
 								page: page
 							},
 							type: "text"
-						});
-					} catch(e) {
-						heartbeat({ color: "red" });
-						log(" + Lỗi đã xảy ra khi lấy danh sách Item");
-						log(`    + Code: ${e.code}`);
-						log(`    + MSG : ${e.description || "Không Rõ"}`);
-						log(`    + Bỏ qua lỗi: true`);
+						}).catch(e => {
+							heartbeat({ color: "red" });
+							log(" + Lỗi đã xảy ra khi lấy danh sách Item");
+							log(`    + Code: ${e.code}`);
+							log(`    + MSG : ${e.description || "Không Rõ"}`);
+							log(`    + Bỏ qua lỗi: true`);
 
-						continue;
-					}
+							pageLoaded++;
+							return;
+						}).then((result) => {
+							// Calc progress
+							pageLoaded++;
 
-					// Calc progress
-					let now = (itemNth * pageCount + page);
-					let end = pageCount * selectedPageList.length;
-					set((now / end) * 100, now, end);
-					delete now;
-					delete end;
-					heartbeat();
+							let now = (itemNth * pageCount + pageLoaded);
+							let end = pageCount * selectedPageList.length;
+							set((now / end) * 100, now, end);
+							delete now;
+							delete end;
+							heartbeat();
+				
+							let itemPage = (new DOMParser()).parseFromString(result, "text/html");
+							let itemList = itemPage.querySelectorAll("div.product-item[data-id]");
+			
+							for (let item of itemList) {
+								if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
+									continue;
+
+								let link = item.querySelector("a[data-id]").href;
+								let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
+			
+								let price = parseInt(item.dataset.price);
+								let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular");
+								let oldPrice = (_priceBox && _priceBox.innerText !== "") ? parseInt(_priceBox.innerText.match(/\d/g).join("")) : price;
+								let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
+			
+								if (priceSale < saleFilter)
+									continue;
+
+								let couponBox = item.querySelector("div.price-tag-wrap p.price-tag > span.tag > span.code");
+								let couponCode = null;
+								let couponPrice = null;
+								let couponSale = null;
+			
+								if (couponBox && couponBox.innerText) {
+									let couponPriceBox = item.querySelector("div.price-tag-wrap p.price-tag > span.price > span");
 		
-					let itemPage = (new DOMParser()).parseFromString(result, "text/html");
-					let itemList = itemPage.querySelectorAll("div.product-item[data-id]");
-	
-					for (let item of itemList) {
-						if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
-							continue;
+									couponCode = couponBox.innerText;
+									couponPrice = (couponPriceBox && couponPriceBox.innerText)
+										? parseInt(couponPriceBox.innerText.match(/\d/g).join(""))
+										: price;
+										
+									couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
+								}
+			
+								list[item.dataset.id] = {
+									id: item.dataset.id,
+									pid: item.dataset.sellerProductId,
+									title: item.dataset.title,
+									link: link,
+									price,
+									priceSale,
+									thumbnail,
+									oldPrice,
+									coupon: { code: couponCode, price: couponPrice, sale: couponSale },
+									sale: couponSale || priceSale
+								}
+			
+								if (doSort)
+									sortedList.push(list[item.dataset.id]);
 
-						let link = item.querySelector("a[data-id]").href;
-						let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
-	
-						let price = parseInt(item.dataset.price);
-						let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular").innerText;
-						let oldPrice = (_priceBox !== "") ? parseInt(_priceBox.match(/\d/g).join("")) : price;
-						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
-	
-						if (priceSale < saleFilter)
-							continue;
+								pageList.push(list[item.dataset.id]);
+							}
 
-						let couponBox = item.querySelector("a > div.price-tag-wrap > p.price-tag > span.tag > span.code");
-						let couponCode = null;
-						let couponPrice = null;
-						let couponSale = null;
-	
-						if (couponBox) {
-							couponCode = couponBox.innerText;
-							couponPrice = parseInt(item.querySelector("a > div.price-tag-wrap > p.price-tag > span.price > span").innerText.match(/\d/g).join(""));
-							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
-						}
-	
-						list[item.dataset.id] = {
-							id: item.dataset.id,
-							pid: item.dataset.sellerProductId,
-							title: item.dataset.title,
-							link: link,
-							price,
-							priceSale,
-							thumbnail,
-							oldPrice,
-							coupon: { code: couponCode, price: couponPrice, sale: couponSale },
-							sale: couponSale || priceSale
-						}
+							delete result;
 
-						// Item Handling Function
-						await itemHandler(list[item.dataset.id]);
-	
-						if (doSort)
-							sortedList.push(list[item.dataset.id]);
-					}
+							if (pageLoaded >= pageCount)
+								resolve();
+						})
+				}})
 
-					delete result;
-				}
+				for (let item of pageList)
+					await itemHandler(item);
 				
 				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
 			}
@@ -470,7 +510,7 @@
 
 		let pageListSetup = await setup(pageListSetupData, { confirm: "Tiếp", saveKey: "pageList" });
 
-		log("DANH SÁCH TRANG:");
+		log("📃 DANH SÁCH TRANG:");
 
 		for (let key of Object.keys(pageListSetup)) {
 			log(` + ` + pleft(key, 18, true) + ` = ${pageListSetup[key]}`);
@@ -513,6 +553,7 @@
 		run();
 
 		runInfo({
+			status: "Đang Khởi Chạy",
 			end: "100%",
 			current: "0",
 			itemStatus: `Đang quét lần đầu`,
@@ -588,8 +629,9 @@
 			autobuyFrom: { type: "number", label: "Giá tối thiểu", value: 0, depend: "autobuy" },
 			autobuyCount: { type: "number", label: "Số Lượng Mua", value: 1, depend: "autobuy" },
 			autoRebuy: { type: "number", label: "Số Lần Mua Lại", value: 1, depend: "autobuy" },
-			randomIp: { type: "checkbox", label: "IP Ngẫu nhiên", color: "blue", value: false, depend: "autobuy" },
-			ip: { type: "text", label: "IP", depend: "randomIp", doubt: true },
+			checkMaxDeal: { type: "checkbox", label: "Kiểm tra thông tin sale", value: false, depend: "autobuy" },
+			itemQtyMinus: { type: "number", label: "Trừ số lượng trong kho", value: 4, depend: "checkMaxDeal" },
+			applyCoupon: { type: "checkbox", label: "Áp mã giảm giá nếu có", color: "blue", value: false, depend: "autobuy" },
 			paymentMethod: {
 				type: "radio",
 				label: "Phương Thức Thanh Toán",
@@ -600,14 +642,18 @@
 					{ name: `MOMO`, color: "blue", value: "momo" }
 				]
 			},
-			accountList: { type: "textarea", label: "Danh Sách Tài Khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false }
+			accountList: { type: "textarea", label: "Danh Sách Tài Khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false },
+			xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 		})
 
-		log(" + Đang lưu danh sách tài khoản");
+		log("👥 Đang lưu danh sách tài khoản");
 		await this.dataSave({ "tikiMA.accountList": settings.accountList });
-		var accountList = settings.accountList.split("\n").filter(String).map(a => { let i = a.split(":"); return { u: i[0], p: i[1] } });
+		var accountList = settings.accountList
+			.split("\n")
+			.filter(String)
+			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
 
-		log("Đang bắt đầu chạy...");
+		log("🏃‍♂️ Đang bắt đầu chạy...");
 		run();
 		
 		// Start
@@ -640,9 +686,9 @@
 			if (runTime <= 0) {
 				let startCheck = time();
 				log("");
-				log(`Bắt đầu kiểm tra (lần ${runNth})`);
+				log(`🛫 Bắt đầu kiểm tra (lần ${runNth})`);
 				await __doUpdate();
-				log(` + KIỂM TRA HOÀN THÀNH`);
+				log(`🛫 KIỂM TRA HOÀN THÀNH`);
 				log(` + Thời gian: ${(time() - startCheck).toFixed(2)}s`);
 
 				// Reset
@@ -720,8 +766,13 @@
 					let showItemDetail = !settings.checkPriceHistory;
 
 					if (settings.checkPriceHistory) {
-						log(`     + Đang kiểm tra lịch sử giá`);
-						log(`       + ID: ${item.id} PID: ${item.pid}`);
+						if (item.price < settings.autobuyFrom) {
+							log(`🛑 GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
+							return;
+						}
+
+						log(`🐝 Đang kiểm tra lịch sử giá`);
+						log(` + ID: ${item.id} PID: ${item.pid}`);
 						let beeCost = {}
 
 						try {
@@ -745,25 +796,66 @@
 						showItemDetail = true;
 						
 						if (beeCost.status === "error") {
-							log("     + Không thể lấy lịch sử giá Item");
-							log(`       + Code : ${beeCost.meta.code || "Không Rõ"}`);
-							log(`       + MSG  : ${beeCost.meta.message || "Không Rõ"}`);
-							log(`       + Bỏ qua lỗi: true`);
+							log("🐝 Không thể lấy lịch sử giá Item");
+							log(` + Code : ${beeCost.meta.code || "Không Rõ"}`);
+							log(` + MSG  : ${beeCost.meta.message || "Không Rõ"}`);
+							log(` + Bỏ qua lỗi: true`);
 						} else {
 							let costData = beeCost.data.price_classification;
 							let min = costData ? costData.min_price : Math.min.apply(this, beeCost.data.item_history.price);
-							log(`   + GIÁ THẤP NHẤT: ${min}`);
+							log(`🐝 GIÁ THẤP NHẤT: ${min}`);
 
 							let priceRatio = min / item.price;
-							log(`   + PRICE RATIO: ${priceRatio}`);
-
-							if (item.price < settings.autobuyFrom) {
-								log(`   + GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
-								return;
-							}
+							log(`🐝 PRICE RATIO: ${priceRatio}`);
 
 							if (priceRatio >= settings.autobuyRatio) {
-								log(`   + BẮT ĐẦU ĐẶT MUA`);
+								let orderCount = settings.autobuyCount;
+
+								if (settings.checkMaxDeal) {
+									log(`🤝 Đang kiểm tra thông tin Sale`);
+
+									let data = await myajax({
+										url: `${HOSTADDRESS}/api/v2/products/${item.id}`,
+										method: "GET",
+										header: {
+											"X-Access-Token": getToken()
+										},
+										query: {
+											spid: item.pid,
+											include: [
+												"tag",
+												"badges",
+												"stock_item",
+												"variants",
+												"discount_tag"
+											].join(",")
+										}
+									})
+
+									if (data && parseInt(data.current_seller.product_id) === item.pid && data.stock_item && data.stock_item.max_sale_qty) {
+										let itemQTY = data.stock_item.qty;
+										let minSale = data.stock_item.min_sale_qty;
+										let maxSale = data.stock_item.max_sale_qty;
+										log(`🤝 QTY/MIN/MAX: ${itemQTY}/${minSale}/${maxSale}`);
+
+										let calcCount = Math.min(orderCount, Math.max(itemQTY - settings.itemQtyMinus), maxSale);
+										log(`🤝 Số lượng mua tính được: ${calcCount}`);
+
+										if (calcCount < minSale) {
+											log(`🤝 🛑 Số lượng tính được nhỏ hơn MIN SALE`);
+											calcCount = minSale;
+										}
+
+										orderCount = calcCount;
+									} else {
+										log(`🤝 🛑 Không có thông tin Sale`);
+										return;
+									}
+								}
+
+								let successCount = 0;
+								log(`💠 BẮT ĐẦU ĐẶT MUA`);
+								order();
 
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
 									let account = accountList[orderNth];
@@ -783,30 +875,60 @@
 											sounds.notification();
 											await __doOrder({
 												id: item.pid,
-												count: settings.autobuyCount,
-												paymentMethod: settings.paymentMethod
+												count: orderCount,
+												coupon: (settings.applyCoupon && item.coupon && item.coupon.code) ? item.coupon.code : "",
+												paymentMethod: settings.paymentMethod,
+												shippingAddress: account.a
 											});
+
+											successCount++;
 										}
 									} catch(e) {
 										heartbeat({ color: "red" });
-										log(`Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+										log(`💠 Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 										clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
-										await __clearCart();
+
+										try {
+											log(`🛒 Đang dọn dẹp giỏ hàng`);
+											await __clearCart();
+										} catch(e) {
+											log(`🛒 Không thể xóa Giỏ Hàng`);
+											clog("ERRR", e);
+										}
+										
 										continue;
 									}
 
 									heartbeat();
-									log(`Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+									log(`💠 Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 								}
 
-								chrome.notifications.create({
-									type: "basic",
-									title: "Deal Hunter Suite",
-									message: `Đã mua: ${item.title} (${item.id})`,
-									contextMessage: `${(time() - start).toFixed(2)}s`,
-									iconUrl: "/assets/img/icon@32x32.png",
-									requireInteraction: true
-								});
+								if (successCount > 0) {
+									chrome.notifications.create({
+										type: "basic",
+										title: "Deal Hunter Suite",
+										message: `Đã mua: ${item.title} (${item.id})`,
+										contextMessage: `${(time() - start).toFixed(2)}s`,
+										iconUrl: "/assets/img/icon@32x32.png",
+										requireInteraction: true
+									});
+
+									await sendBeacon({
+										script: SCRIPT.id,
+										name: item.title,
+										link: item.link,
+										price: item.price,
+										count: successCount,
+										oldPrice: item.oldPrice,
+										thumbnail: item.thumbnail,
+										note: [
+											`ID        : ${item.id}`,
+											...beaconNote
+										].join("\n")
+									});
+								}
+
+								run();
 							}
 						}
 					}
@@ -842,6 +964,10 @@
 			runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công", dataType: "time" });
 		}
 
+		//! |===============================|
+		//! |       ORDER MAIN LOGIC        |
+		//! |===============================|
+
 		const __switchAccount = async ({
 			username = "",
 			password = ""
@@ -849,24 +975,27 @@
 			let loginTimer = new stopClock();
 
 			heartbeat();
-			log(`Đang đăng xuất khỏi tài khoản hiện tại`);
+			log(`📤 Đang đăng xuất`);
 			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang đăng xuất" });
-
-			await myajax({
-				url: `${HOSTADDRESS}/api/v2/account/logout`,
-				method: "GET",
-				header: {
-					"x-access-token": cookie.get("TIKI_ACCESS_TOKEN")
-				}
-			});
-
-			log("Đăng xuất thành công");
-
-			log(`Đang đăng nhập vào tài khoản \"${username}\"`);
-			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
 
 			try {
 				await myajax({
+					url: `${HOSTADDRESS}/api/v2/account/logout`,
+					method: "GET",
+					header: {
+						"X-Access-Token": await getToken()
+					}
+				});
+			} finally {}
+
+			log("📤 Đăng xuất thành công");
+
+			log(`📥 Đang đăng nhập vào \"${username}\"`);
+			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
+			let loginResponse = {}
+
+			try {
+				loginResponse = await myajax({
 					url: `${HOSTADDRESS}/customer/account/ajaxLogin`,
 					method: "POST",
 					form: {
@@ -875,287 +1004,450 @@
 					}
 				});
 			} catch(e) {
-				log(" + Không thể đăng nhập vào tài khoản");
-				log(`    + Code: ${e.data.data.error.code}`);
-				log(`    + MSG : ${e.data.data.error.message || "Không rõ"}`);
+				log("📥 Không thể đăng nhập vào tài khoản");
+				log(` + Code: ${e.data.data.error.code}`);
+				log(` + MSG : ${e.data.data.error.message || "Không rõ"}`);
 				
 				if (e.data.data.error.errors)
 					for (let item of e.data.data.error.errors) {
-						log(`      + FIELD   : ${item.field}`);
-						log(`      + MESSAGE : ${item.message || "Không rõ"}`);
+						log(`  + FIELD   : ${item.field}`);
+						log(`  + MESSAGE : ${item.message || "Không rõ"}`);
 					}
 
 				throw { code: -1, description: "Thất bại khi đăng nhập vào tài khoản", data: e.data.data }
 			}
 
-			log(`Đăng nhập thành công (${loginTimer.stop}s)`);
+			if (loginResponse.messages && loginResponse.messages.email) {
+				log(`📥 Không thể đăng nhập vào tài khoản \"${username}\"`);
+				log(` + MSG : ${loginResponse.messages.email || "Không Rõ"}`);
+				throw { code: -1, description: loginResponse.messages.email, data: loginResponse }
+			}
+
+			if (loginResponse.messages && loginResponse.messages.password) {
+				log(`📥 Không thể đăng nhập vào \"${username}\"`);
+				log(` + MSG : ${loginResponse.messages.password || "Không Rõ"}`);
+				throw { code: -1, description: loginResponse.messages.password, data: loginResponse }
+			}
+
+			log("📤 Cập nhật Cookies 🍪");
+			await myajax({
+				url: `${HOSTADDRESS}/api/v2/me`,
+				method: "GET"
+			})
+
+			log(`📥 Đăng nhập thành công (${loginTimer.stop}s)`);
 		}
 
-		const __doOrder = async ({
+		const addIntoCart = async ({
 			id = 0,
-			count = 1,
-			coupon = "",
-			paymentMethod = "cod"
-		}) => {
-			let orderTimer = new stopClock();
-
-			log("Đang thêm Item vào Giỏ Hàng");
-			runInfo({ now: `Bước 3`, progress: 20, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
-			heartbeat();
+			count = 0,
+		} = {}) => {
+			log(`🛒 Đang thêm Item ${id} C:${count} vào Giỏ Hàng`);
 			let addData = {}
 
 			try {
 				addData = await myajax({
-					url: `${HOSTADDRESS}/checkout/cart/ajaxAdd`,
+					url: `${HOSTADDRESS}/api/v2/carts/mine/items`,
 					method: "POST",
-					form: {
-						id: id,
-						qty: count
+					header: {
+						"X-Access-Token": await getToken()
+					},
+					json: {
+						products: [{
+							product_id: id,
+							qty: count
+						}]
 					}
 				});
 			} catch(e) {
-				log(" + Không thể thêm Item vào Giỏ");
-				log(`    + Code: ${e.code}`);
-				log(`    + MSG : ${e.description || "Không rõ"}`);
-				throw { code: -1, description: "Không thể thêm Item vào Giỏ", data: e }
+				if (e.code !== 2)
+					throw e;
 			}
 	
 			if (addData.error) {
-				log(" + Không thể thêm Item vào Giỏ");
-				log(`    + Code: ${addData.error.code}`);
-				log(`    + MSG : ${addData.error.message || "Không rõ"}`);
-				throw { code: -1, description: "Không thể thêm Item vào Giỏ", data: addData.error }
+				await errored("Lỗi khi thêm Item vào Giỏ");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + MSG : ${addData.error.message || "Không rõ"}`);
+				throw { code: -1, description: "Không thể thêm Item vào Giỏ: " + addData.error.message, data: addData.error }
 			}
 
+			log("🛒 Thêm vào giỏ thành công!");
+		}
+		
+		const __doOrder = async ({
+			id = 0,
+			count = 0,
+			coupon = "",
+			itemInit = true,
+			paymentMethod = "cod",
+			shippingAddress = null
+		}) => {
+			sounds.notification();
+			let orderTimer = new stopClock();
+
+			if (itemInit) {
+				runInfo({ now: `Bước 1`, end: `Bước 4`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
+				heartbeat();
+				await addIntoCart({ id: id, count: count });
+				heartbeat();
+	
+				if (coupon !== "") {
+					runInfo({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
+	
+					log(`🎫 Đang áp dụng Coupon: ${coupon}`)
+					await myajax({
+						url: `${HOSTADDRESS}/checkout/cart/ajaxCoupon`,
+						method: "POST",
+						form: {
+							coupon_code: coupon
+						}
+					})
+	
+					log(`🎫 Áp dụng Coupon thành công!`);
+				}
+			}
+			
 			heartbeat();
-			log(" + Thêm vào giỏ thành công!");
+			runInfo({ now: `Bước 2`, progress: 30, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
+			log(`🏡 Đang chọn địa chỉ Giao Hàng`);
+			let shippingID = shippingAddress;
 
-			if (coupon !== "") {
-				runInfo({ progress: 30, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
-
-				log(` + Đang áp dụng Coupon: ${coupon}`)
-				await myajax({
-					url: `${HOSTADDRESS}/checkout/cart/ajaxCoupon`,
-					method: "POST",
-					form: {
-						coupon_code: coupon
+			if (!shippingID) {
+				log(`🏡 Đang lấy thông tin địa chỉ`);
+				let addressBook = await myajax({
+					url: `${HOSTADDRESS}/api/v2/me/addresses`,
+					method: "GET",
+					header: {
+						"X-Access-Token": await getToken(),
+						apikey: null
+					},
+					query: {
+						page: 1,
+						limit: 30
 					}
 				})
 
-				log(` + Áp dụng Coupon thành công!`);
+				if (addressBook.error) {
+					await errored("Lỗi khi lấy ID Địa Chỉ");
+					log("⚠ Tiki trả về mã lỗi");
+					log(` + Code : ${addressBook.error.code}`);
+					log(` + MSG  : ${addressBook.error.message}`);
+					throw { code: addressBook.error.code, description: addressBook.error.message, data: addressBook.error }
+				}
+	
+				heartbeat();
+				runInfo({ progress: 50, progWarn: false });
+				log(`🏡 Đang phân tích thông tin`);
+				
+				shippingID = addressBook.data.filter(i => (i.is_default && i.id));
+
+				if (!shippingID[0]) {
+					await errored("Lỗi khi lấy ID Địa Chỉ");
+					log("🏡 Không tìm thấy địa chỉ mặc định");
+					throw { code: -1, description: "Không tìm thấy địa chỉ mặc định", data: addressBook.data }
+				}
+
+				shippingID = shippingID[0].id;
 			}
-			
-			heartbeat();
-			runInfo({ now: `Bước 4`, progress: 40, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
-			log(`Đang chọn địa chỉ Giao Hàng`);
 
-			log(` + Đang lấy thông tin địa chỉ`);
-			let shippingRAW = await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping`,
-				method: "GET",
-				type: "text"
+			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
+			heartbeat();
+
+			let applyAddress = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_addresses/${shippingID}`,
+				method: "PUT",
+				header: {
+					"X-Access-Token": await getToken()
+				}
 			})
+			
+			if (applyAddress.error) {
+				await errored("Lỗi khi áp dụng Địa Chỉ");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${applyAddress.error.code}`);
+				log(` + MSG : ${applyAddress.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể chọn địa chỉ", data: applyAddress.error }
+			}
 
+			runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Thay đổi cài đặt thanh toán" });
+			log(`🛒 Đang lấy thông tin Thanh Toán`);
 			heartbeat();
-			runInfo({ progress: 50, progWarn: false });
-			log(` + Đang phân tích thông tin`);
-			let shippingDoc = (new DOMParser()).parseFromString(shippingRAW, "text/html");
 
-			let CSRF_SHIPPING = shippingDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(` + CSRF: ${CSRF_SHIPPING}`);
+			let doCartVerify = false;
 
-			let shippingID = shippingDoc.querySelector("div.address-item.is-default > div > p.action > button.btn.saving-address").dataset.id;
-			log(` + Đang chọn địa chỉ ID: ${shippingID}`);
-			heartbeat();
-
-			let selectAddress = await myajax({
-				url: `${HOSTADDRESS}/checkout/shipping/ajaxSave`,
-				method: "POST",
-				form: {
-					address_id: shippingID,
-					TIKI_CSRF_TOKEN: CSRF_SHIPPING
+			let cartInfo = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine`,
+				method: "GET",
+				header: {
+					"X-Access-Token": await getToken()
+				},
+				query: {
+					include: [
+						"items",
+						"shipping_address",
+						"messages",
+						"price_summary",
+						"shipping_methods",
+						"last_payment_method",
+						"payment_methods"
+					].join(",")
 				}
 			})
 
-			runInfo({ now: `Bước 5`, progress: 60, progWarn: false, checkDetail: "Đang lấy thông tin thanh toán" });
-			log(`Đang lấy thông tin Thanh Toán`);
-			heartbeat();
-
-			log(` + Đang nhận thông tin`);
-			let paymentRAW = await myajax({
-				url: `${HOSTADDRESS}/checkout/payment`,
-				method: "GET",
-				type: "text"
-			})
+			if (cartInfo.error) {
+				await errored("Lỗi khi lấy thông tin Thanh Toán");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${cartInfo.error.code}`);
+				log(` + MSG : ${cartInfo.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể lấy thông tin Thanh Toán", data: cartInfo.error }
+			}
 			
-			heartbeat();
-			log(` + Đang phân tích thông tin`);
-			runInfo({ progress: 70, progWarn: false });
-			let paymentDoc = (new DOMParser()).parseFromString(paymentRAW, "text/html");
-			
-			let CSRF_PAYMENT = paymentDoc.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(` + CSRF: ${CSRF_PAYMENT}`);
+			if (cartInfo.last_payment_method.method !== paymentMethod) {
+				log(`🛒 Đang chuyển sang: ${paymentMethod}`);
+				heartbeat();
 
-			let paymentInput = paymentDoc.querySelectorAll("#form-payment input[name][type][value]");
-			let paymentData = {}
+				let changeMethod = {}
 
-			for (let item of paymentInput)
-				if (item.name !== "")
-					paymentData[item.name] = item.value;
+				try {
+					changeMethod = await myajax({
+						url: `${HOSTADDRESS}/api/v2/carts/mine/payment_methods/${paymentMethod}`,
+						method: "PUT",
+						type: "text",
+						header: {
+							"X-Access-Token": await getToken()
+						}
+					})
+				} catch(e) {
+					await errored("Lỗi khi thay đổi phương thức thanh toán");
+					log(`⚠ Lỗi khi gửi yêu cầu`);
+					log(` + Code: ${e.code}`);
+					log(` + MSG : ${e.message || "Không Rõ"}`);
+					throw { code: -1, description: "Không thể đổi phương thức thanh toán", data: e }
+				}
 
-			log(` + Phương thức thanh toán: ${paymentMethod.toUpperCase()}`);
-			paymentData.selected_payment_method = paymentMethod;
+				if (changeMethod.error) {
+					await errored("Lỗi khi thay đổi phương thức thanh toán");
+					log("⚠ Tiki trả về mã lỗi");
+					log(` + Code: ${changeMethod.error.code}`);
+					log(` + MSG : ${changeMethod.error.message || "Không Rõ"}`);
+					throw { code: -1, description: "Không thể đổi phương thức thanh toán", data: changeMethod.error }
+				}
 
-			if (paymentDoc.getElementById("plan-3")) {
-				log(` + Phát hiện Tiki Now!`);
-				log(`   + Đang cập nhật thông tin giỏ`);
+				doCartVerify = true;
+			} else
+				log(`🛒 Phương thức thanh toán: ${cartInfo.last_payment_method.method_name}`);
 
-				await myajax({
-					url: "/checkout/payment/ajax_update_cart",
-					method: "POST",
-					header: {
-						"x-access-token": cookie.get("TIKI_ACCESS_TOKEN"),
-						apikey: null
-					},
-					form: {
-						selected_payment_method: paymentData.selected_payment_method,
-						shipping_plan_id: 3,
-						is_tikinow_free_trial: 0,
-						is_using_reward_point: 0,
-						TIKI_CSRF_TOKEN: CSRF_PAYMENT
+			for (let item of cartInfo.shipping_methods)
+				if (item.id === 3 && item.is_disabled === false) {
+					log(`🕑 Phát hiện Tiki Now!`);
+					log(` + Code: ${item.code}`);
+					log(` + Name: ${item.name}`);
+					log(` + Est : ${item.estimation_text}`);
+					log(` + Fee : ${item.shipping_fee}`);
+
+					if (item.is_selected !== true) {
+						log(`🕑 Đang chuyển sang Tiki Now`);
+						heartbeat();
+
+						let shipPlan = {}
+
+						try {
+							shipPlan = await myajax({
+								url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_plans/${item.id}`,
+								method: "PUT",
+								type: "text",
+								header: {
+									"X-Access-Token": await getToken()
+								}
+							})
+						} catch(e) {
+							await errored("Lỗi khi chuyển sang Tiki Now");
+							log(`⚠ Lỗi khi gửi yêu cầu`);
+							log(` + Code: ${e.code}`);
+							log(` + MSG : ${e.message || "Không Rõ"}`);
+							throw { code: -1, description: "Không thể chuyển sang Tiki Now", data: e }
+						}
+
+						if (shipPlan.error) {
+							await errored("Lỗi khi chuyển sang Tiki Now");
+							log("⚠ Tiki trả về mã lỗi");
+							log(` + Code: ${shipPlan.error.code}`);
+							log(` + MSG : ${shipPlan.error.message || "Không Rõ"}`);
+							throw { code: -1, description: "Không thể chuyển sang Tiki Now", data: shipPlan.error }
+						}
+
+						doCartVerify = true;
 					}
-				});
 
-				paymentData.shipping_plan = parseInt(paymentDoc.getElementById("plan-3").value);
-				paymentData.transaction_type = "sale,create_payment_token";
-				delete paymentData.payment_method_tikixu;
-				delete paymentData.card_number;
-				delete paymentData["input-card-type"];
-				delete paymentData.card_expiry_date;
-				delete paymentData.card_cvn;
-				delete paymentData.card_type;
+					break;
+				}
 
-				paymentData["atm-id"] = "";
-				paymentData.signature = "";
-				paymentData.gift_message = "";
-				paymentData.tax_company_address = "";
+			log(`🛒 Đã Áp Dụng Cài Đặt`);
+			heartbeat({ color: "green" });
+
+			if (doCartVerify) {
+				log(`🛒 Đang xác thực thông tin`);
+				heartbeat();
+
+				cartInfo = await myajax({
+					url: `${HOSTADDRESS}/api/v2/carts/mine`,
+					method: "GET",
+					header: {
+						"X-Access-Token": await getToken()
+					},
+					query: {
+						include: [
+							"items",
+							"shipping_address",
+							"messages",
+							"price_summary",
+							"shipping_methods",
+							"last_payment_method",
+							"payment_methods"
+						].join(",")
+					}
+				})
+
+				if (cartInfo.last_payment_method.method !== paymentMethod) {
+					await errored("Lỗi khi thay đổi phương thức thanh toán");
+					log(`⚠ Xác thực lại không khớp`);
+					log(` + Current : ${cartInfo.last_payment_method.method}`);
+					log(` + Expected: ${paymentMethod}`);
+					throw { code: -1, description: "Không thể đổi phương thức thanh toán" }
+				}
+
+				for (let item of cartInfo.shipping_methods)
+					if (item.id === 3 && item.is_disabled === false && item.is_selected !== true) {
+						await errored("Lỗi khi chuyển sang Tiki Now");
+						log(`⚠ Xác thực lại không khớp`);
+						log(` + Current : ${cartInfo.shipping_method.name}`);
+						log(` + Expected: TikiNOW Giao Nhanh`);
+						throw { code: -1, description: "Không thể chuyển sang Tiki Now" }
+					}
+
+				log(`🛒 Xác thực thành công`);
 			}
 
-			log(` + Phương thức giao hàng: ${["Bình thường", null, "Tiki Now"][paymentData.shipping_plan - 1] || `PLAN#${paymentData.shipping_plan}` }`);
-			paymentData.current_plan = paymentData.shipping_plan;
+			log(` + ID         : ${cartInfo.id}`);
+			log(` + CID        : ${cartInfo.customer_id}`);
+			log(` + Coupon     : ${cartInfo.coupon_code || "Không Có"}`);
+			log(` + Thanh toán : ${cartInfo.last_payment_method.method_name}`);
+			log(` + Giao hàng  : ${cartInfo.shipping_method.name} (${cartInfo.shipping_method.code}) [${cartInfo.shipping_method.id}]`);
+			log(`----------------------------------------`);
+			log(`💵 Tạm tính   : <a class="price">${priceFormat(cartInfo.subtotal)}</a>`);
+			log(`💵 Vận chuyển : <a class="price">${priceFormat(cartInfo.shipping_amount)}</a>`);
+			log(`💵 THÀNH TIỀN : <a class="price" style="font-size: 26px;">${priceFormat(cartInfo.grand_total)}</a>`);
 
-			if (settings.randomIp)
-				settings.ip = [
-					randBetween(1, 255),
-					randBetween(1, 255),
-					randBetween(1, 255),
-					randBetween(1, 255)
-				].join(".");
-
-			if (settings.ip !== "") {
-				log(` + Áp dụng địa chỉ IP: ${settings.ip}`);
-				paymentData.customer_ip_address = settings.ip;
-			}
-
-			log(` + Gửi quà: false`);
-			paymentData.is_sent_as_gift = 0;
-			paymentData.is_gift_wrapping = 0;
-			paymentData.gift_from = "";
-			paymentData.gift_to = "";
-
-			paymentData.is_using_card = 0;
-
-			runInfo({ now: `Bước 6`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
-			log(`Đang tiến hành đặt hàng`);
+			runInfo({ now: `Bước 4`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
+			log(`🛒 Đang tiến hành đặt hàng`);
 			heartbeat();
 
-			log(` + Đang nhận thông tin`);
 			let placeOrder = await myajax({
-				url: `${HOSTADDRESS}/checkout/payment/ajax_check_place_order`,
+				url: `${HOSTADDRESS}/api/v2/carts/mine/checkout`,
 				method: "POST",
 				header: {
-					"x-access-token": cookie.get("TIKI_ACCESS_TOKEN"),
-					apikey: null
+					"X-Access-Token": await getToken(),
+					"X-Platform": settings.xPlatform
 				},
-				form: {
-					...paymentData,
-					TIKI_CSRF_TOKEN: CSRF_PAYMENT
+				json: {
+					cybersource_information: {},
+					payment: { method: paymentMethod, option_id: null },
+					tax_info: null
 				}
 			})
 
-			if (placeOrder.message) {
-				log(" + Errored while ordering out Items");
-				log(`    + Type: ${placeOrder.message.type}`);
-				log(`    + MSG : ${placeOrder.message.content || "Không Rõ"}`);
-				throw { code: -1, description: "Không thể tiến hành Order", data: placeOrder };
+			if (placeOrder.error) {
+				await errored("Lỗi khi tiến hành Đặt Hàng");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${placeOrder.error.code}`);
+				log(` + MSG : ${placeOrder.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể tiến hành Order", data: placeOrder.error }
 			}
 
 			runInfo({ progress: 100, progWarn: false, checkDetail: "Đặt hàng thành công" });
 			heartbeat();
-			log(" + doOrder đã hoàn thành!");
-			log("=========== KẾT QUẢ ===========");
+			log("🛒 doOrder đã hoàn thành!");
+			log("=============== KẾT QUẢ ===============");
+			log(` + Order Code    : ${placeOrder.redirect_data.order_code}`);
+			log(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
+
+			beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code}`);
+			beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
 
 			if (paymentMethod === "momo") {
-				log(` + Order Code    : ${placeOrder.order_code}`);
-				log(` + TransactionID : ${placeOrder.payment.transactionId}`);
-				log(` + payURL        : <a href="${placeOrder.payment.payUrl}" target="_blank">LINK</a>`);
-				log(` + QR Code       : <a href="${placeOrder.payment.qrCode}" target="_blank">LINK</a>`);
-				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.payment.qrCode}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
+				log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
+				log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
+				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+
+				beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
+				beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
 			}
 
-			log(` + Thời gian   : ${orderTimer.stop}s`);
+			log(`⌚ Thời gian     : ${orderTimer.stop}s`);
 		}
 
 		const __clearCart = async () => {
 			heartbeat();
-			log(`Đang lấy danh sách giỏ hàng`);
+			log(`🛒 Đang lấy danh sách giỏ hàng`);
 			runInfo({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang lấy danh sách" });
 
-			let placeOrderHTML = await myajax({
-				url: `${HOSTADDRESS}/checkout/cart`,
+			let cartList = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine`,
 				method: "GET",
-				type: "text"
+				header: {
+					"X-Access-Token": await getToken()
+				},
+				query: {
+					include: [
+						"items",
+						"badges",
+						"payment_method",
+						"messages",
+						"price_summary"
+					].join(",")
+				}
 			});
 
-			let placeOrderDOM = (new DOMParser()).parseFromString(placeOrderHTML, "text/html");
-			let deleteNodeList = placeOrderDOM.querySelectorAll("#shopping-cart > div.shopping-cart-item > div.col-right > div.box-info-product > p.action > a.btn.btn-link.btn-item-delete");
+			if (cartList.error) {
+				await errored("Lỗi khi lấy thông tin Giỏ Hàng");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${cartList.error.code}`);
+				log(` + MSG : ${cartList.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể lấy thông tin Giỏ Hàng", data: cartList.error }
+			}
 
 			heartbeat();
-			log(` + Phát hiện ${deleteNodeList.length} item hiện đang trong giỏ hàng`);
+			log(`🛒 ${cartList.items.length} item hiện trong giỏ hàng`);
 
-			let CSRF_CART = placeOrderDOM.querySelector(`input[name="TIKI_CSRF_TOKEN"]`).value;
-			log(` + CSRF: ${CSRF_CART}`);
-
-			for (let item of deleteNodeList) {
-				let id = item.dataset.itemId;
-				log(` + Đang xóa đơn hàng ID ${id}`);
+			for (let item of cartList.items) {
+				log(`🛒 Đang xóa ${item.product_name} (${id})`);
 
 				try {
 					await myajax({
-						url: `${HOSTADDRESS}/checkout/cart/ajax_delete`,
-						method: "POST",
+						url: `${HOSTADDRESS}/api/v2/carts/mine/items/${item.id}`,
+						method: "DELETE",
 						header: {
-							"x-access-token": cookie.get("TIKI_ACCESS_TOKEN"),
-							apikey: null
-						},
-						form: {
-							id,
-							TIKI_CSRF_TOKEN: CSRF_CART
+							"X-Access-Token": await getToken()
 						}
 					})
 				} catch(e) {
-					log("   + Không thể xóa Item khỏi Giỏ");
-					log(`      + ID  : ${id}`);
-					log(`      + Code: ${e.code}`);
-					log(`      + MSG : ${e.description || "Không rõ"}`);
-					log(`      + Bỏ qua lỗi: true`);
+					if (e.code !== 2) {
+						heartbeat({ color: "red" });
 
-					clog("ERRR", `Remove Cart ${id}`, e);
-					continue;
+						log("🛒 Không thể xóa Item khỏi Giỏ");
+						log(` + ID  : ${item.id}`);
+						log(` + Code: ${e.code}`);
+						log(` + MSG : ${e.description || "Không rõ"}`);
+						log(` + Bỏ qua lỗi: true`);
+	
+						clog("ERRR", `Remove Cart ${item.id}`, e);
+						continue;
+					}
 				}
 
 				heartbeat({ color: "blue" });
-				log(`   + Xóa thành công`);
+				log(` + Xóa thành công`);
 			}
 		}
 
