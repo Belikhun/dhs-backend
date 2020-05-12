@@ -1,3 +1,4 @@
+data/config.json
 data/logs.json
 data/avatar/*
 !data/avatar/avt.default
