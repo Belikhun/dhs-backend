@@ -189,7 +189,7 @@ const core = {
 								<t class="name">${item.name}</t>
 								<t class="date">${(new Date(item.time * 1000)).toLocaleString()}</t>
 								<timer>
-									<style scoped="scoped" onload="liveTime(this.parentElement, ${item.time}, {type: 'minimal'});"></style>
+									<style scoped="scoped" onload="liveTime(this.parentElement, ${item.time}, { type: 'minimal', ended: 'Vừa mới' });"></style>
 								</timer>
 							</span>
 						</a>
