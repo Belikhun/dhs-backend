@@ -60,7 +60,7 @@
 							method: "GET"
 						});
 
-						return await getToken(false);
+						return (await getToken(false));
 					} else
 						throw { code: -1, description: "Tiki Token Not Found" }
 				}
@@ -178,7 +178,7 @@
 					url: `${HOSTADDRESS}/api/v2/products/${ID}`,
 					method: "GET",
 					header: {
-						"X-Access-Token": getToken()
+						"X-Access-Token": await getToken()
 					},
 					query: {
 						spid: PID,
@@ -191,6 +191,14 @@
 						].join(",")
 					}
 				})
+
+				if (data.error) {
+					await errored("Lỗi khi lấy thông tin Sản Phẩm");
+					log("⚠ Tiki trả về mã lỗi");
+					log(` + Code : ${data.error.code}`);
+					log(` + MSG  : ${data.error.message}`);
+					throw { code: data.error.code, description: data.error.message, data: data.error }
+				}
 	
 				let _id = data.current_seller.id || null;
 				let _pid = parseInt(data.current_seller.product_id);

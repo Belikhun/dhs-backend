@@ -70,7 +70,7 @@
 							method: "GET"
 						});
 
-						return await getToken(false);
+						return (await getToken(false));
 					} else
 						throw { code: -1, description: "Tiki Token Not Found" }
 				}
@@ -818,7 +818,7 @@
 										url: `${HOSTADDRESS}/api/v2/products/${item.id}`,
 										method: "GET",
 										header: {
-											"X-Access-Token": getToken()
+											"X-Access-Token": await getToken()
 										},
 										query: {
 											spid: item.pid,
