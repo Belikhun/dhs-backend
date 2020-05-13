@@ -70,7 +70,7 @@
 							method: "GET"
 						});
 
-						return await getToken(false);
+						return (await getToken(false));
 					} else
 						throw { code: -1, description: "Tiki Token Not Found" }
 				}
