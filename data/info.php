@@ -35,20 +35,6 @@
 	define("EXTENSION_ZIP_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.zip");
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 
-	ob_start(); ?>
-		<ul style="margin: unset">
-			<li>Toàn bộ <b>Tiki Suite</b> hiện đang là bản thử nghiệm do thay đổi bên phía <b>Tiki</b>. Vui lòng báo lỗi nếu xảy ra!</li>
-			<li><b>Shopee Auto Click</b> sẽ tạm thời thay thế cho <b>Shopee</b></li>
-		</ul>
-	<?php
-	$ANNOUNCEMENT = ob_get_clean();
-
-	define("EXTENSION_ANNOUNCEMENT", Array(
-		"enabled" => true,
-		"level" => "warning",
-		"message" => $ANNOUNCEMENT
-	));
-
 	// CACHE
 	define("CACHE_LOCATION", $_SERVER["DOCUMENT_ROOT"] ."/.cache");
 	define("CACHE_DEFAULT_AGE", 10);

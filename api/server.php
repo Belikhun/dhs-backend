@@ -42,7 +42,7 @@
         "CONTACT" => CONTACT_LINK,
         "EXTENSION_VERSION" => EXTENSION_VERSION,
         "EXTENSION_UPDATE" => "/api/updates/latest",
-        "EXTENSION_ANNOUNCEMENT" => EXTENSION_ANNOUNCEMENT,
+        "EXTENSION_ANNOUNCEMENT" => $config["announcement"],
         "API_TOKEN" => isset($_SESSION["apiToken"]) ? $_SESSION["apiToken"] : null,
         "REPO_ADDRESS" => REPO_ADDRESS,
         "REPORT_ERROR" => REPORT_ERROR,

@@ -140,6 +140,37 @@
 				</div>
 			</div>
 
+			<div class="group info">
+				<t class="title">Thông Báo</t>
+
+				<div class="item lr sound" data-soundhoversoft>
+					<t class="left">Bật thông báo</t>
+					<label class="sq-checkbox right">
+						<input id="announcementEnabled" type="checkbox" class="sound" data-soundcheck>
+						<span class="checkmark"></span>
+					</label>
+				</div>
+
+				<div class="item sound" data-soundhoversoft>
+					<div class="formGroup sound" data-color="blue" data-soundselectsoft>
+						<select id="announcementLevel" class="formField" autocomplete="off" placeholder="Level">
+							<option value="info">Thông Tin</option>
+							<option value="okay">Hoàn Thành</option>
+							<option value="warning">Cảnh Báo</option>
+							<option value="error">Lỗi</option>
+						</select>
+						<label for="announcementLevel">Level</label>
+					</div>
+				</div>
+
+				<div class="item sound" data-soundhoversoft>
+					<div class="formGroup sound" data-color="blue" data-soundselectsoft>
+						<textarea id="announcementMessage" class="formField" style="height: 200px;" autocomplete="off" placeholder="Nội Dung"></textarea>
+						<label for="announcementMessage">Nội Dung</label>
+					</div>
+				</div>
+			</div>
+
 			<div class="group cart">
 				<t class="title">Tiki Hunt</t>
 

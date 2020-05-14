@@ -18,6 +18,12 @@ var app = {
     description: $("#contest_description")
 }
 
+var announcement = {
+    enabled: $("#announcementEnabled"),
+    level: $("#announcementLevel"),
+    message: $("#announcementMessage")
+}
+
 var tikiHuntAccountList = $("#tikiHunt_accountList")
 
 var time = {
@@ -76,6 +82,9 @@ function update() {
 
         app.title.value = data.app.title;
         app.description.value = data.app.description;
+        announcement.enabled.checked = data.announcement.enabled;
+        announcement.level.value = data.announcement.level;
+        announcement.message.value = data.announcement.message;
         tikiHuntAccountList.value = data.tikiHuntAccountList.join("\n");
         time.zone.value = data.time.zone;
         pageTitle.value = data.pageTitle;
@@ -199,6 +208,9 @@ $("#formContainer").addEventListener("submit", e => {
         form: {
             "app.title": app.title.value,
             "app.description": app.description.value,
+            "announcement.enabled": announcement.enabled.checked,
+            "announcement.level": announcement.level.value,
+            "announcement.message": announcement.message.value,
             "tikiHuntAccountList": JSON.stringify(tikiHuntAccountList.value.split("\n")),
             "time.zone": time.zone.value,
             "pageTitle": pageTitle.value,
