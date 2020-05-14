@@ -1,8 +1,8 @@
 // Script begin here
 (async () => {
+	var runNth = 1;
 	var doCheck = true;
 	var beaconNote = []
-	var infoUpdateInterval = null;
 	var timeUpdateInterval = null;
 
 	const HOSTADDRESS = "https://tiki.vn";
@@ -27,7 +27,6 @@
 
 	onCancel(() => {
 		this.subScreen.hide();
-		clearInterval(infoUpdateInterval);
 		clearInterval(timeUpdateInterval);
 		doCheck = false;
 	})
@@ -39,7 +38,7 @@
 		log(`|===========================|`);
 		log(`|    Tiki Deal Hunter Pro   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:54:32 05/05/2020  |`);
+		log(`|  LU: 18:24:27 14/05/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -86,6 +85,7 @@
 			pageCount = 1,
 			saleFilter = 0,
 			doSort = true,
+			printLog = true,
 			itemHandler = () => {}
 		} = {}, set = () => {}) => {
 			let list = {}
@@ -93,15 +93,21 @@
 			let blackList = await getBlackList();
 
 			heartbeat();
-			log(` + Đang lấy danh sách item`);
-			log(`   + sortBy    = ${sortBy}`);
-			log(`   + pageCount = ${pageCount}`);
+			if (printLog) {
+				log(`📃 Đang lấy danh sách item`);
+				log(` + sortBy    = ${sortBy}`);
+				log(` + pageCount = ${pageCount}`);
+			}
 
 			for (let itemNth = 0; itemNth < selectedPageList.length; itemNth++) {
 				let item = selectedPageList[itemNth];
 				let start = time();
 
-				log(`   + Đang tải: ${item.title}`);
+				runInfo({
+					itemStatus: `[${runNth}] ${item.title}`,
+					itemStatusColor: "green",
+					dataType: "time"
+				})
 				
 				for (let page = 1; page <= pageCount; page++) {
 					var result = {}
@@ -120,10 +126,10 @@
 						});
 					} catch(e) {
 						heartbeat({ color: "red" });
-						log(" + Lỗi đã xảy ra khi lấy danh sách Item");
-						log(`    + Code: ${e.code}`);
-						log(`    + MSG : ${e.description || "Không Rõ"}`);
-						log(`    + Bỏ qua lỗi: true`);
+						log("⚠ Lỗi đã xảy ra khi lấy danh sách Item");
+						log(` + Code: ${e.code}`);
+						log(` + MSG : ${e.description || "Không Rõ"}`);
+						log(` + Bỏ qua lỗi: true`);
 
 						continue;
 					}
@@ -193,14 +199,15 @@
 					delete result;
 				}
 				
-				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
+				runInfo({
+					checkDetail: `Lần quét vừa rồi dài ${(time() - start).toFixed(2)}s`,
+					dataType: "time"
+				})
 			}
-
-			log(`   + Lấy danh sách thành công`);
 
 			if (doSort) {
 				heartbeat();
-				log(`   + Đang sắp xếp dữ liệu`);
+				log(`🔩 Đang sắp xếp dữ liệu`);
 	
 				switch (sortBy) {
 					case "sale":
@@ -226,8 +233,6 @@
 					default:
 						break;
 				}
-	
-				log(`   + Sắp xếp dữ liệu thành công!`);
 			}
 
 			return { list, sortedList }
@@ -614,12 +619,12 @@
 		let prevAccountList = (await this.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
 
 		const settings = await setup({
-			delay: { type: "number", label: "TGN", value: 10 },
-			checkPriceHistory: { type: "checkbox", label: "KTLSG", color: "blue", value: false },
-			autobuy: { type: "checkbox", label: "Auto", color: "pink", value: false, depend: "checkPriceHistory" },
-			autobuyRatio: { type: "number", label: "TLG", value: 8.5, step: 0.01, depend: "autobuy" },
-			autobuyFrom: { type: "number", label: "GTT", value: 0, depend: "autobuy" },
-			autoRebuy: { type: "number", label: "TĐML", value: 1, depend: "autobuy" },
+			checkPriceHistory: { type: "checkbox", label: "Kiểm tra lịch sử giá", color: "blue", value: false },
+			autobuy: { type: "checkbox", label: "Tự động mua", color: "pink", value: false, depend: "checkPriceHistory" },
+			autobuyRatio: { type: "number", label: "Tỉ lệ", value: 8.5, step: 0.01, depend: "autobuy" },
+			autobuyFrom: { type: "number", label: "Giá tối thiểu", value: 0, depend: "autobuy" },
+			autobuyCount: { type: "number", label: "Số Lượng Mua", value: 1, depend: "autobuy" },
+			autoRebuy: { type: "number", label: "Số Lần Mua Lại", value: 1, depend: "autobuy" },
 			paymentMethod: {
 				type: "radio",
 				label: "Phương Thức Thanh Toán",
@@ -630,7 +635,7 @@
 					{ name: `MOMO`, color: "blue", value: "momo" }
 				]
 			},
-			accountList: { type: "textarea", label: "ACL", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false },
+			accountList: { type: "textarea", label: "Danh Sách Tài Khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false },
 			xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 		})
 
@@ -680,7 +685,6 @@
 		run();
 		
 		// Start
-		var runNth = 1;
 		var checkNth = 0;
 		var checkPer = 60;
 		var startTime = time();
@@ -690,43 +694,19 @@
 		var checker = async () => {
 			checkNth++;
 
-			let curTime = time();
-			let runTime = end - curTime;
-			let progress = (curTime - start) / (end - start);
-			
-			runInfo({
-				current: runTime.toFixed(2),
-				target: "0.00",
-				progress: progress * 100,
-				now: parseInt((end - start) - runTime),
-				end: parseInt(end - start),
-				saved: progress * 100,
-				itemStatus: `Chạy lần ${runNth}`,
-				itemStatusColor: "green",
-				dataType: "time"
-			})
+			let startCheck = time();
+			log("");
+			log(`🛫 Bắt đầu kiểm tra (lần ${runNth})`);
+			await __doUpdate();
+			log(`🛫 KIỂM TRA HOÀN THÀNH`);
+			log(` + Thời gian: ${(time() - startCheck).toFixed(2)}s`);
 
-			if (runTime <= 0) {
-				let startCheck = time();
-				log("");
-				log(`🛫 Bắt đầu kiểm tra (lần ${runNth})`);
-				await __doUpdate();
-				log(`🛫 KIỂM TRA HOÀN THÀNH`);
-				log(` + Thời gian: ${(time() - startCheck).toFixed(2)}s`);
-
-				// Reset
-				runNth++;
-				start = time();
-				end = start + settings.delay;
-				this.script.status.container.dataset.triColor = "dark";
-			}
+			// Reset
+			runNth++;
+			start = time();
+			end = start + settings.delay;
+			this.script.status.container.dataset.triColor = "dark";
 		}
-
-		infoUpdateInterval = setInterval(() => {
-			heartbeat({ color: "blue" });
-			runInfo({ checkDetail: `TPS: ${checkNth}`, dataType: "time" });
-			checkNth = 0;
-		}, 1000)
 
 		timeUpdateInterval = setInterval(() => {
 			runInfo({
@@ -753,13 +733,19 @@
 				pageCount: firstScanSetup.scanPage,
 				saleFilter: firstScanSetup.saleFilter,
 				doSort: false,
+				printLog: false,
 				itemHandler: async (item) => {
 					if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))
 						return;
 
+					runInfo({
+						checkDetail: `Item ID ${item.id}`,
+						dataType: "time"
+					})
+
 					let blackList = await getBlackList();
 					if (blackList.indexOf(item.id) !== -1) {
-						log(` + ITEM trong BlackList: ${item.id}`);
+						log(`🏴 ITEM trong BlackList: ${item.id}`);
 						return;
 					}
 
@@ -770,14 +756,14 @@
 					let sendNotification = false;
 
 					if (itemList.list[item.id]) {
-						log(`   + ITEM Thay Đổi: ${item.id} [${changed}]`);
-						log(`     + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
-						log(`     + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
+						log(`🛍 ITEM Thay Đổi: ${item.id} [${changed}]`);
+						log(` + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
+						log(` + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
 						sendNotification = true;
 					} else {
-						log(`   + ITEM Mới: ${item.id} [${changed}]`);
-						log(`     + GIÁ:  ${item.price}`);
-						log(`     + SALE: ${item.sale.toFixed(2)}%`);
+						log(`🛍 ITEM Mới: ${item.id} [${changed}]`);
+						log(` + GIÁ:  ${item.price}`);
+						log(` + SALE: ${item.sale.toFixed(2)}%`);
 						sendNotification = true;
 					}
 		
@@ -841,7 +827,12 @@
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
 									let account = accountList[orderNth];
 				
-									runInfo({ itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`, itemStatusColor: "yellow" });
+									runInfo({
+										itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`,
+										itemStatusColor: "yellow",
+										runInfo: `Tài khoản ${account.h ? (orderNth + 1) : account.u}`
+									});
+
 									heartbeat();
 									log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
 				
@@ -857,7 +848,7 @@
 											sounds.notification();
 											await __doOrder({
 												id: item.pid,
-												count: 1,
+												count: settings.autobuyCount,
 												paymentMethod: settings.paymentMethod
 											})
 
@@ -1434,12 +1425,12 @@
 				}
 
 				heartbeat({ color: "blue" });
-				log(` + Xóa thành công`);
+				log(`🛒 Xóa thành công`);
 			}
 		}
 
-		__checkHandler();
 		log("Bắt đầu chạy");
+		__checkHandler();
 	} catch(e) {
 		triggerError(e);
 		return;

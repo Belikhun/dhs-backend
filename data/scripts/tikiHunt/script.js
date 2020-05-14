@@ -1,7 +1,7 @@
 // Script begin here
 (async () => {
+	var runNth = 1;
 	var doCheck = true;
-	var infoUpdateInterval = null;
 	var timeUpdateInterval = null;
 
 	const HOSTADDRESS = "https://tiki.vn/";
@@ -26,7 +26,6 @@
 
 	onCancel(() => {
 		this.subScreen.hide();
-		clearInterval(infoUpdateInterval);
 		clearInterval(timeUpdateInterval);
 		doCheck = false;
 	})
@@ -37,7 +36,7 @@
 		log(`|===========================|`);
 		log(`|      Tiki Deal Hunter     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 00:13:48 18/03/2020  |`);
+		log(`|  LU: 18:24:27 14/05/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
@@ -66,15 +65,19 @@
 			let blackList = await getBlackList();
 
 			heartbeat();
-			log(` + Đang lấy danh sách item`);
-			log(`   + sortBy    = ${sortBy}`);
-			log(`   + pageCount = ${pageCount}`);
+			log(`📃 Đang lấy danh sách item`);
+			log(` + sortBy    = ${sortBy}`);
+			log(` + pageCount = ${pageCount}`);
 
 			for (let itemNth = 0; itemNth < selectedPageList.length; itemNth++) {
 				let item = selectedPageList[itemNth];
 				let start = time();
 
-				log(`   + Đang tải: ${item.title}`);
+				runInfo({
+					itemStatus: `[${runNth}] ${item.title}`,
+					itemStatusColor: "green",
+					dataType: "time"
+				})
 				
 				for (let page = 1; page <= pageCount; page++) {
 					var result = {}
@@ -93,10 +96,10 @@
 						});
 					} catch(e) {
 						heartbeat({ color: "red" });
-						log(" + Lỗi đã xảy ra khi lấy danh sách Item");
-						log(`    + Code: ${e.code}`);
-						log(`    + MSG : ${e.description || "Không Rõ"}`);
-						log(`    + Bỏ qua lỗi: true`);
+						log("⚠ Lỗi đã xảy ra khi lấy danh sách Item");
+						log(` + Code: ${e.code}`);
+						log(` + MSG : ${e.description || "Không Rõ"}`);
+						log(` + Bỏ qua lỗi: true`);
 
 						continue;
 					}
@@ -166,14 +169,15 @@
 					delete result;
 				}
 				
-				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
+				runInfo({
+					checkDetail: `Lần quét vừa rồi dài ${(time() - start).toFixed(2)}s`,
+					dataType: "time"
+				})
 			}
-
-			log(`   + Lấy danh sách thành công`);
 
 			if (doSort) {
 				heartbeat();
-				log(`   + Đang sắp xếp dữ liệu`);
+				log(`🔩 Đang sắp xếp dữ liệu`);
 	
 				switch (sortBy) {
 					case "sale":
@@ -200,7 +204,7 @@
 						break;
 				}
 	
-				log(`   + Sắp xếp dữ liệu thành công!`);
+				log(`🔩 Sắp xếp dữ liệu thành công!`);
 			}
 
 			return { list, sortedList }
@@ -587,7 +591,7 @@
 			delay: { type: "number", label: "Thời Gian Nghỉ", value: 10 }
 		})
 
-		log("Đang bắt đầu chạy...");
+		log("🏃‍♂️ Đang bắt đầu chạy...");
 		run();
 		
 		// Start
@@ -620,9 +624,9 @@
 			if (runTime <= 0) {
 				let startCheck = time();
 				log("");
-				log(`Bắt đầu kiểm tra (lần ${runNth})`);
+				log(`🛫 Bắt đầu kiểm tra (lần ${runNth})`);
 				await __doUpdate();
-				log(` + KIỂM TRA HOÀN THÀNH`);
+				log(`🛫 KIỂM TRA HOÀN THÀNH`);
 				log(` + Thời gian: ${(time() - startCheck).toFixed(2)}s`);
 
 				// Reset
@@ -632,12 +636,6 @@
 				this.script.status.container.dataset.triColor = "dark";
 			}
 		}
-
-		infoUpdateInterval = setInterval(() => {
-			heartbeat({ color: "blue" });
-			runInfo({ checkDetail: `TPS: ${checkNth}`, dataType: "time" });
-			checkNth = 0;
-		}, 1000)
 
 		timeUpdateInterval = setInterval(() => {
 			runInfo({
@@ -668,9 +666,14 @@
 					if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))
 						return;
 
+					runInfo({
+						checkDetail: `Item ID ${item.id}`,
+						dataType: "time"
+					})
+
 					let blackList = await getBlackList();
 					if (blackList.indexOf(item.id) !== -1) {
-						log(` + ITEM trong BlackList: ${item.id}`);
+						log(`🏴 ITEM trong BlackList: ${item.id}`);
 						return;
 					}
 
@@ -681,9 +684,9 @@
 					sounds.notification();
 
 					if (itemList.list[item.id]) {
-						log(`   + ITEM Thay Đổi: ${item.id} [${changed}]`);
-						log(`     + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
-						log(`     + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
+						log(`🛍 ITEM Thay Đổi: ${item.id} [${changed}]`);
+						log(` + GIÁ:  ${itemList.list[item.id].price} -> ${item.price}`);
+						log(` + SALE: ${itemList.list[item.id].sale.toFixed(2)}% -> ${item.sale.toFixed(2)}%`);
 
 						chrome.notifications.create({
 							type: "basic",
@@ -693,9 +696,9 @@
 							iconUrl: "/assets/img/icon@32x32.png"
 						});
 					} else {
-						log(`   + ITEM Mới: ${item.id} [${changed}]`);
-						log(`     + GIÁ:  ${item.price}`);
-						log(`     + SALE: ${item.sale.toFixed(2)}%`);
+						log(`🛍 ITEM Mới: ${item.id} [${changed}]`);
+						log(` + GIÁ:  ${item.price}`);
+						log(` + SALE: ${item.sale.toFixed(2)}%`);
 
 						chrome.notifications.create({
 							type: "basic",
@@ -729,8 +732,8 @@
 			runInfo({ now: `Bước 2`, progress: 100, progWarn: false, checkDetail: "Thành Công", dataType: "time" });
 		}
 
-		__checkHandler();
 		log("Bắt đầu chạy");
+		__checkHandler();
 	} catch(e) {
 		triggerError(e);
 		return;
