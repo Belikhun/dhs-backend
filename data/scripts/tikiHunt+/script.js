@@ -777,6 +777,7 @@
 					if (settings.checkPriceHistory) {
 						if (item.price < settings.autobuyFrom) {
 							log(`🛑 GIÁ ITEM KHÔNG ĐẠT TỐI THIỂU (${item.price} < ${settings.autobuyFrom})`);
+							itemList.list[item.id] = item;
 							return;
 						}
 
