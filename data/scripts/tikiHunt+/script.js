@@ -909,6 +909,7 @@
 									});
 								}
 
+								beaconNote = []
 								run();
 							}
 						}

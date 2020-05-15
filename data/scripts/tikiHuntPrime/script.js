@@ -915,6 +915,7 @@
 									});
 								}
 
+								beaconNote = []
 								run();
 							}
 						}
