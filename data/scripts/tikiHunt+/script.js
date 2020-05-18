@@ -1401,7 +1401,7 @@
 			log(`🛒 ${cartList.items.length} item hiện trong giỏ hàng`);
 
 			for (let item of cartList.items) {
-				log(`🛒 Đang xóa ${item.product_name} (${id})`);
+				log(`🛒 Đang xóa ${item.product_name} (${item.id})`);
 
 				try {
 					await myajax({
