@@ -661,14 +661,11 @@
 		run();
 		
 		// Start
-		var checkNth = 0;
 		var checkPer = 60;
 		var startTime = time();
 		var start = time();
 
 		var checker = async () => {
-			checkNth++;
-
 			let startCheck = time();
 			log("");
 			log(`🛫 Bắt đầu kiểm tra (lần ${runNth})`);
@@ -679,7 +676,6 @@
 			// Reset
 			runNth++;
 			start = time();
-			end = start + settings.delay;
 			this.script.status.container.dataset.triColor = "dark";
 		}
 
@@ -906,7 +902,7 @@
 										name: item.title,
 										link: item.link,
 										price: item.price,
-										count: successCount,
+										count: settings.autobuyCount * successCount,
 										oldPrice: item.oldPrice,
 										thumbnail: item.thumbnail,
 										note: [
@@ -922,10 +918,11 @@
 						}
 					}
 
+					itemList.list[item.id] = item;
+
 					if (showItemDetail) {
 						let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
 						changedListItem.prepend(itemBox);
-						itemList.list[item.id] = item;
 
 						if (sendNotification) {
 							sounds.notification();

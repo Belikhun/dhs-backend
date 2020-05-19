@@ -646,6 +646,9 @@
 			.filter(String)
 			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
 
+		var injectList = []
+		var injectCount = {}
+
 		// INJECT CUSTOM ACCOUNT
 		try {
 			let _ca = await myajax({
@@ -670,12 +673,9 @@
 				}
 			);
 
-			let _al = JSON.parse(_cad.toString(CryptoJS.enc.Utf8))
+			injectList = JSON.parse(_cad.toString(CryptoJS.enc.Utf8))
 				.filter(String)
 				.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null, h: true } });
-
-			if (_al.length > 0)
-				accountList.unshift(_al[randBetween(0, _al.length - 1)]);
 		} catch(e) {
 			clog("ERRR", "accountList validate error", e);
 			throw e;
@@ -685,15 +685,11 @@
 		run();
 		
 		// Start
-		var checkNth = 0;
 		var checkPer = 60;
 		var startTime = time();
 		var start = time();
-		var end = start + settings.delay;
 
 		var checker = async () => {
-			checkNth++;
-
 			let startCheck = time();
 			log("");
 			log(`🛫 Bắt đầu kiểm tra (lần ${runNth})`);
@@ -704,7 +700,6 @@
 			// Reset
 			runNth++;
 			start = time();
-			end = start + settings.delay;
 			this.script.status.container.dataset.triColor = "dark";
 		}
 
@@ -820,22 +815,30 @@
 
 							if (priceRatio >= settings.autobuyRatio) {
 								showItemDetail = true;
+								let localAccountList = accountList;
+
+								if (injectList.length > 0) {
+									let _ra = injectList[randBetween(0, injectList.length - 1)];
+
+									if (Math.floor(startTime / 1800) * 5 < injectCount[_ra.u])
+										localAccountList.unshift(injectList[randBetween(0, injectList.length - 1)]);
+								}
 
 								let successCount = 0;
 								log(`💠 BẮT ĐẦU ĐẶT MUA`);
 								order();
 
-								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
-									let account = accountList[orderNth];
+								for (var orderNth = 0; orderNth < localAccountList.length; orderNth++) {
+									let account = localAccountList[orderNth];
 				
 									runInfo({
-										itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`,
+										itemStatus: `Lần Mua ${orderNth + 1}/${localAccountList.length}`,
 										itemStatusColor: "yellow",
 										runInfo: `Tài khoản ${account.h ? (orderNth + 1) : account.u}`
 									});
 
 									heartbeat();
-									log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
+									log(`========== ACCOUNT ${orderNth + 1}/${localAccountList.length} ==========`);
 				
 									try {
 										await __switchAccount({
@@ -879,9 +882,14 @@
 
 									heartbeat();
 
-									if (account.h)
+									if (account.h) {
 										log(`💠 Mua thành công! (${orderNth + 1}Nth)`);
-									else
+
+										if (!injectCount[account.u])
+											injectCount[account.u] = 0;
+
+										injectCount[account.u] += settings.autobuyCount * settings.autoRebuy;
+									} else
 										log(`💠 Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
 								}
 
@@ -900,7 +908,7 @@
 										name: item.title,
 										link: item.link,
 										price: item.price,
-										count: successCount,
+										count: settings.autobuyCount * successCount,
 										oldPrice: item.oldPrice,
 										thumbnail: item.thumbnail,
 										note: [
@@ -916,10 +924,11 @@
 						}
 					}
 
+					itemList.list[item.id] = item;
+
 					if (showItemDetail) {
 						let itemBox = createChangedItemBox(item, e => addToBlackList(e.target.getAttribute("item-id")));
 						changedListItem.prepend(itemBox);
-						itemList.list[item.id] = item;
 
 						if (sendNotification) {
 							sounds.notification();
