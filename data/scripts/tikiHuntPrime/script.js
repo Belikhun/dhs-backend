@@ -647,6 +647,9 @@
 				]
 			},
 			accountList: { type: "textarea", label: "Danh Sách Tài Khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false },
+			limitOrder: { type: "checkbox", label: "Giới hạn số lượng mua cho mỗi tài khoản", color: "blue", value: false, depend: "autobuy" },
+			limitOrderTime: { type: "number", label: "Thời gian giới hạn (phút)", value: 30, depend: "limitOrder" },
+			limitOrderCount: { type: "number", label: "Số lượng mua tối đa trong thời gian giới hạn", value: 5, depend: "limitOrder" },
 			xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 		})
 
@@ -656,6 +659,8 @@
 			.split("\n")
 			.filter(String)
 			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
+
+		var accountOrderCount = {}
 
 		log("🏃‍♂️ Đang bắt đầu chạy...");
 		run();
@@ -856,6 +861,12 @@
 
 										for (let time = 1; time <= settings.autoRebuy; time++) {
 											log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
+
+											if (settings.limitOrder && Math.floor(startTime / (settings.limitOrderTime * 60)) * settings.limitOrderCount > accountOrderCount[_ra.u]) {
+												log(`Tài khoản ${account.u} đã mua đủ số lượng\n\t(${accountOrderCount[_ra.u]} lần/${startTime / (settings.limitOrderTime * 60)} phút)`);
+												break;
+											}
+
 											sounds.notification();
 											await __doOrder({
 												id: item.pid,
@@ -866,10 +877,15 @@
 											});
 
 											successCount++;
+
+											if (!accountOrderCount[account.u])
+												accountOrderCount[account.u] = 0;
+
+											accountOrderCount[account.u] += settings.autobuyCount;
 										}
 									} catch(e) {
 										heartbeat({ color: "red" });
-										log(`💠 Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+										log(`💠 Mua thất bại cho tài khoản ${account.u}! (lần ${orderNth + 1})`);
 										clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
 
 										try {
@@ -884,7 +900,7 @@
 									}
 
 									heartbeat();
-									log(`💠 Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+									log(`💠 Mua thành công cho tài khoản ${account.u}! (lần ${orderNth + 1})`);
 								}
 
 								if (successCount > 0) {

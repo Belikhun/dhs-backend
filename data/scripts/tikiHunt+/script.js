@@ -636,6 +636,9 @@
 				]
 			},
 			accountList: { type: "textarea", label: "Danh Sách Tài Khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false },
+			limitOrder: { type: "checkbox", label: "Giới hạn số lượng mua cho mỗi tài khoản", color: "blue", value: false, depend: "autobuy" },
+			limitOrderTime: { type: "number", label: "Thời gian giới hạn (phút)", value: 30, depend: "limitOrder" },
+			limitOrderCount: { type: "number", label: "Số lượng mua tối đa trong thời gian giới hạn", value: 5, depend: "limitOrder" },
 			xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 		})
 
@@ -646,10 +649,11 @@
 			.filter(String)
 			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
 
-		var injectList = []
-		var injectCount = {}
-
+		var accountOrderCount = {}
+		
 		// INJECT CUSTOM ACCOUNT
+		var injectList = []
+
 		try {
 			let _ca = await myajax({
 				url: SERVER_ADDR() + API.server,
@@ -817,12 +821,8 @@
 								showItemDetail = true;
 								let localAccountList = accountList;
 
-								if (injectList.length > 0) {
-									let _ra = injectList[randBetween(0, injectList.length - 1)];
-
-									if (Math.floor(startTime / 1800) * 5 < injectCount[_ra.u])
-										localAccountList.unshift(_ra);
-								}
+								if (injectList.length > 0)
+									localAccountList.unshift(injectList[randBetween(0, injectList.length - 1)]);
 
 								let successCount = 0;
 								log(`💠 BẮT ĐẦU ĐẶT MUA`);
@@ -849,6 +849,12 @@
 
 										for (let time = 1; time <= settings.autoRebuy; time++) {
 											log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
+
+											if ((settings.limitOrder || account.h) && Math.floor(startTime / (settings.limitOrderTime * 60)) * settings.limitOrderCount > accountOrderCount[_ra.u]) {
+												log(`Tài khoản ${(account.h) ? `thứ ${orderNth + 1}` : account.u} đã mua đủ số lượng\n\t(${accountOrderCount[_ra.u]} lần/${startTime / (settings.limitOrderTime * 60)} phút)`);
+												break;
+											}
+
 											sounds.notification();
 											await __doOrder({
 												id: item.pid,
@@ -857,15 +863,20 @@
 											})
 
 											successCount++;
+
+											if (!accountOrderCount[account.u])
+												accountOrderCount[account.u] = 0;
+
+											accountOrderCount[account.u] += settings.autobuyCount;
 										}
 									} catch(e) {
 										heartbeat({ color: "red" });
 
 										if (account.h) {
-											log(`💠 Mua thất bại! (${orderNth + 1}Nth)`);
+											log(`💠 Mua thất bại! (lần ${orderNth + 1})`);
 											clog("ERRR", `doOrder [${item.pid}]`, e);
 										} else {
-											log(`💠 Mua thất bại cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+											log(`💠 Mua thất bại cho tài khoản ${account.u}! (lần ${orderNth + 1})`);
 											clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
 										}
 
@@ -882,15 +893,10 @@
 
 									heartbeat();
 
-									if (account.h) {
-										log(`💠 Mua thành công! (${orderNth + 1}Nth)`);
-
-										if (!injectCount[account.u])
-											injectCount[account.u] = 0;
-
-										injectCount[account.u] += settings.autobuyCount * settings.autoRebuy;
-									} else
-										log(`💠 Mua thành công cho tài khoản ${account.u}! (${orderNth + 1}Nth)`);
+									if (account.h)
+										log(`💠 Mua thành công! (lần ${orderNth + 1})`);
+									else
+										log(`💠 Mua thành công cho tài khoản ${account.u}! (lần ${orderNth + 1})`);
 								}
 
 								if (successCount > 0) {
