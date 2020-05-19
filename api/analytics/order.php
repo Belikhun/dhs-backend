@@ -27,16 +27,38 @@
 			stop(31, "Access Denied!", 403);
 
 		checkToken();
-
-		$orderLogs = Array();
-		$orderFiles = glob(ORDERLOG_ROOT ."/order.*", GLOB_NOSORT);
 		
-		foreach ($orderFiles as $file)
-			array_push($orderLogs, unserialize((new fip($file)) -> read()));
+		// READ CHUNKS
+		$orderChunk = Array();
+		$orderChunks = glob(ORDERLOG_ROOT ."/chunk.*", GLOB_NOSORT);
 
-		usort($orderLogs, function($a, $b) { return $a["time"] > $b["time"]; });
+		foreach ($orderChunks as $file)
+			$orderChunk = array_merge($orderChunk, unserialize((new fip($file)) -> read()));
 
-		stop(0, "Success", 200, array_reverse($orderLogs), true);
+		usort($orderChunk, function($a, $b) { return $a["time"] > $b["time"]; });
+
+		// MERGE FILES
+		$orderFragment = Array();
+		$orderFragments = glob(ORDERLOG_ROOT ."/fragment.*", GLOB_NOSORT);
+
+		foreach ($orderFragments as $file)
+			array_push($orderFragment, unserialize((new fip($file)) -> read()));
+
+		usort($orderFragment, function($a, $b) { return $a["time"] > $b["time"]; });
+
+		if (count($orderFragment) > 200) {
+			$orderFragment = array_reverse($orderFragment);
+	
+			(new fip(ORDERLOG_ROOT ."/chunk.". $orderFragment[0]["time"] * 10000 .".". $orderFragment[count($orderFragment) - 1]["time"] * 10000, "a:0:{}")) -> write(serialize($orderFragment));
+
+			// CLEAN
+			foreach ($orderFragments as $file)
+				unlink($file);
+		}
+
+		// DATA PROCESS
+		$orderList = array_merge($orderFragments, $orderChunk);
+		stop(0, "Success", 200, array_reverse($orderList), true);
 	}
 
     if (!isset($_SESSION["authKey"]))
@@ -69,7 +91,7 @@
 		"time"		=>	$timestamp
 	);
 
-	$orderLogs = new fip(ORDERLOG_ROOT ."/order.". $result[0]["id"] .".". $timestamp * 10000, "a:0:{}");
-	$orderLogs -> write(serialize($data));
+	$orderFragment = new fip(ORDERLOG_ROOT ."/fragment.". $result[0]["id"] .".". $timestamp * 10000, "a:0:{}");
+	$orderFragment -> write(serialize($data));
 
 	stop(0, "Success!", 200, $data);
