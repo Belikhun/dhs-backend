@@ -38,7 +38,7 @@
 		log(`|===========================|`);
 		log(`|   Tiki Deal Hunter Prime  |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 18:24:27 14/05/2020  |`);
+		log(`|  LU: 19:40:30 19/05/2020  |`);
 		log(`|===========================|`);
 
 		const getBlackList = async () => {
