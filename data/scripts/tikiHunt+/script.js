@@ -821,7 +821,7 @@
 									let _ra = injectList[randBetween(0, injectList.length - 1)];
 
 									if (Math.floor(startTime / 1800) * 5 < injectCount[_ra.u])
-										localAccountList.unshift(injectList[randBetween(0, injectList.length - 1)]);
+										localAccountList.unshift(_ra);
 								}
 
 								let successCount = 0;
