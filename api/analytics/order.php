@@ -57,7 +57,7 @@
 		}
 
 		// DATA PROCESS
-		$orderList = array_merge($orderFragments, $orderChunk);
+		$orderList = array_merge($orderFragment, $orderChunk);
 		stop(0, "Success", 200, array_reverse($orderList), true);
 	}
 
