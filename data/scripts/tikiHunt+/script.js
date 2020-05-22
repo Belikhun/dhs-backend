@@ -850,8 +850,8 @@
 										for (let time = 1; time <= settings.autoRebuy; time++) {
 											log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
 
-											if ((settings.limitOrder || account.h) && Math.floor(startTime / (settings.limitOrderTime * 60)) * settings.limitOrderCount > accountOrderCount[_ra.u]) {
-												log(`Tài khoản ${(account.h) ? `thứ ${orderNth + 1}` : account.u} đã mua đủ số lượng\n\t(${accountOrderCount[_ra.u]} lần/${startTime / (settings.limitOrderTime * 60)} phút)`);
+											if ((settings.limitOrder || account.h) && Math.floor(startTime / (settings.limitOrderTime * 60)) * settings.limitOrderCount > accountOrderCount[account.u]) {
+												log(`Tài khoản ${(account.h) ? `thứ ${orderNth + 1}` : account.u} đã mua đủ số lượng\n\t(${accountOrderCount[account.u]} lần/${startTime / (settings.limitOrderTime * 60)} phút)`);
 												break;
 											}
 
