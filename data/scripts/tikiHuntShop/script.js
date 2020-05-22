@@ -1101,6 +1101,14 @@
 					].join(",")
 				}
 			})
+
+			if (cartInfo.error) {
+				await errored("Lỗi khi lấy Giỏ Hàng");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: ${cartInfo.error.code}`);
+				log(` + MSG : ${cartInfo.error.message || "Không Rõ"}`);
+				throw { code: -1, description: "Không thể lấy Giỏ Hàng", data: cartInfo.error }
+			}
 			
 			if (cartInfo.last_payment_method.method !== paymentMethod) {
 				log(`🛒 Đang chuyển sang: ${paymentMethod}`);
