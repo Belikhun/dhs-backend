@@ -397,6 +397,7 @@
 					{ name: `Ví Momo`, color: "blue", value: "momo" }
 				]
 			},
+			autoReOrderNote: { type: "note", level: "warning", text: "Chức năng tự động mua lại sẽ không hoạt động như mong muốn do Tiki chỉ cho phép đặt 1 đơn hàng mỗi 30s" },
 			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "blue", value: false, save: false, depend: "orderBy:orderByPrice" },
 			autoReOrderTimes: { type: "number", label: "Số lần tự động mua lại", value: 2, depend: "autoReOrder" },
 			continueRun: { type: "checkbox", label: "Tiếp tục chạy khi chưa mua đủ số lượng", color: "pink", depend: "autoReOrder" },
