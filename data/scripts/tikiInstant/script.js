@@ -29,10 +29,10 @@
 		log(`|===========================|`);
 	
 		const getToken = async (retry = true) => {
-			let at = await this.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
+			let at = await this.core.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
 	
 			if (!at || !at.value) {
-				let gt = await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN");
+				let gt = await this.core.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN");
 
 				if (!gt || !gt.value) {
 					if (retry) {
@@ -244,7 +244,7 @@
 		runInfo({ info: "Đang tạo nút",  progress: 80 });
 		log("Creating Button");
 		let btn = await command("createButton", {
-			container: `div.body > div.summary > div.left > div:nth-child(3)`,
+			container: `div.body > div.summary > div.left > div:nth-child(7)`,
 			color: "blue",
 			text: `<h3 style="margin: unset; font-size: 22px;">MUA NGAY</h3><br>ID: ${ID} PID: ${PID}`,
 			style: {
