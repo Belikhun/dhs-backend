@@ -35,8 +35,6 @@
 		foreach ($orderChunks as $file)
 			$orderChunk = array_merge($orderChunk, unserialize((new fip($file)) -> read()));
 
-		usort($orderChunk, function($a, $b) { return $a["time"] > $b["time"]; });
-
 		// MERGE FILES
 		$orderFragment = Array();
 		$orderFragments = glob(ORDERLOG_ROOT ."/fragment.*", GLOB_NOSORT);
@@ -44,11 +42,7 @@
 		foreach ($orderFragments as $file)
 			array_push($orderFragment, unserialize((new fip($file)) -> read()));
 
-		usort($orderFragment, function($a, $b) { return $a["time"] > $b["time"]; });
-
 		if (count($orderFragment) > 200) {
-			$orderFragment = array_reverse($orderFragment);
-	
 			(new fip(ORDERLOG_ROOT ."/chunk.". $orderFragment[0]["time"] * 10000 .".". $orderFragment[count($orderFragment) - 1]["time"] * 10000, "a:0:{}")) -> write(serialize($orderFragment));
 
 			// CLEAN
@@ -58,6 +52,8 @@
 
 		// DATA PROCESS
 		$orderList = array_merge($orderFragment, $orderChunk);
+		usort($orderList, function($a, $b) { return $a["time"] > $b["time"]; });
+		
 		stop(0, "Success", 200, array_reverse($orderList), true);
 	}
 
