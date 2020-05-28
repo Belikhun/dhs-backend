@@ -1204,15 +1204,9 @@
 				throw { code: -1, description: "Không thể lấy Giỏ Hàng", data: cartInfo.error }
 			}
 
-			if (cartInfo.error) {
-				await errored("Lỗi khi lấy thông tin Thanh Toán");
-				log("⚠ Tiki trả về mã lỗi");
-				log(` + Code: ${cartInfo.error.code}`);
-				log(` + MSG : ${cartInfo.error.message || "Không Rõ"}`);
-				throw { code: -1, description: "Không thể lấy thông tin Thanh Toán", data: cartInfo.error }
-			}
+			cartInfo.last_payment_method = cartInfo.payment_methods.filter(i => i.selected)[0];
 			
-			if (cartInfo.last_payment_method.method !== paymentMethod) {
+			if (!cartInfo.last_payment_method || cartInfo.last_payment_method.method !== paymentMethod) {
 				log(`🛒 Đang chuyển sang: ${paymentMethod}`);
 				heartbeat();
 
@@ -1318,12 +1312,14 @@
 					}
 				})
 
-				if (cartInfo.last_payment_method.method !== paymentMethod) {
+				cartInfo.last_payment_method = cartInfo.payment_methods.filter(i => i.selected)[0];
+
+				if (!cartInfo.last_payment_method || cartInfo.last_payment_method.method !== paymentMethod) {
 					await errored("Lỗi khi thay đổi phương thức thanh toán");
 					log(`⚠ Xác thực lại không khớp`);
 					log(` + Current : ${cartInfo.last_payment_method.method}`);
 					log(` + Expected: ${paymentMethod}`);
-					throw { code: -1, description: "Không thể đổi phương thức thanh toán" }
+					throw { code: -1, description: "Không thể đổi phương thức thanh toán", data: cartInfo.last_payment_method }
 				}
 
 				for (let item of cartInfo.shipping_methods)
