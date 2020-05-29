@@ -17,7 +17,7 @@
 		log(`|===========================|`);
 		log(`|   Tiki Multiple Account   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:54:32 05/05/2020  |`);
+		log(`|  LU: 17:37:23 29/05/2020  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -700,7 +700,8 @@
 			coupon = "",
 			itemInit = true,
 			paymentMethod = "cod",
-			shippingAddress = null
+			shippingAddress = null,
+			hideSensitiveDetail = false
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
@@ -770,7 +771,7 @@
 				shippingID = shippingID[0].id;
 			}
 
-			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
+			log(`🏡 Đang chọn địa chỉ ID: ${hideSensitiveDetail ? `[redacted]` : shippingID}`);
 			heartbeat();
 
 			let applyAddress = await myajax({
@@ -997,8 +998,11 @@
 			if (paymentMethod === "momo") {
 				log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
 				log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
-				log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
-				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				
+				if (!hideSensitiveDetail) {
+					log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
+					log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				}
 
 				beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
 				beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);

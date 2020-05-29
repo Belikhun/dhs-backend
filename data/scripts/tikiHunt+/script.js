@@ -851,7 +851,7 @@
 											log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
 
 											if ((settings.limitOrder || account.h) && Math.floor(startTime / (settings.limitOrderTime * 60)) * settings.limitOrderCount > accountOrderCount[account.u]) {
-												log(`Tài khoản ${(account.h) ? `thứ ${orderNth + 1}` : account.u} đã mua đủ số lượng\n\t(${accountOrderCount[account.u]} lần/${startTime / (settings.limitOrderTime * 60)} phút)`);
+												log(`Tài khoản ${(account.h) ? `thứ ${orderNth + 1}` : account.u} đã mua đủ số lượng\n\t(${accountOrderCount[account.u]} lần/${Math.floor((startTime / 60) / settings.limitOrderTime)} phút)`);
 												break;
 											}
 
@@ -1083,7 +1083,8 @@
 			coupon = "",
 			itemInit = true,
 			paymentMethod = "cod",
-			shippingAddress = null
+			shippingAddress = null,
+			hideSensitiveDetail = false
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
@@ -1153,7 +1154,7 @@
 				shippingID = shippingID[0].id;
 			}
 
-			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
+			log(`🏡 Đang chọn địa chỉ ID: ${hideSensitiveDetail ? `[redacted]` : shippingID}`);
 			heartbeat();
 
 			let applyAddress = await myajax({
@@ -1384,8 +1385,11 @@
 			if (paymentMethod === "momo") {
 				log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
 				log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
-				log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
-				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				
+				if (!hideSensitiveDetail) {
+					log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
+					log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				}
 
 				beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
 				beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
