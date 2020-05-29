@@ -56,8 +56,9 @@
     if (!file_exists($scriptDir) || !file_exists($scriptFile))
         stop(44, "Không tìm thấy Script ID: ". $id, 404, Array( "id" => $id ));
 
-    // BEGIN ENCRYPTION
     $script = (new fip($scriptFile, "")) -> read();
+
+    // BEGIN ENCRYPTION
     $iv = random_bytes(16);
     $ivHex = bin2hex($iv);
     $secret = hash_hmac("sha256", $_SESSION["apiToken"] . $ivHex, $_SESSION["authKey"], true);
