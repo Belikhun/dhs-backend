@@ -841,12 +841,6 @@
 									log(`========== ACCOUNT ${orderNth + 1}/${localAccountList.length} ==========`);
 				
 									try {
-										await __switchAccount({
-											username: account.u,
-											password: account.p,
-											hide: account.h || false
-										});
-
 										for (let time = 1; time <= settings.autoRebuy; time++) {
 											log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
 
@@ -855,11 +849,19 @@
 												break;
 											}
 
+											if (time === 1)
+												await __switchAccount({
+													username: account.u,
+													password: account.p,
+													hide: account.h || false
+												});
+
 											sounds.notification();
 											await __doOrder({
 												id: item.pid,
 												count: settings.autobuyCount,
-												paymentMethod: settings.paymentMethod
+												paymentMethod: settings.paymentMethod,
+												hideSensitiveDetail: account.h || false
 											})
 
 											successCount++;

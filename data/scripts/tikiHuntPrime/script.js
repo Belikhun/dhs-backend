@@ -854,11 +854,6 @@
 									log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
 				
 									try {
-										await __switchAccount({
-											username: account.u,
-											password: account.p
-										});
-
 										for (let time = 1; time <= settings.autoRebuy; time++) {
 											log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
 
@@ -866,6 +861,12 @@
 												log(`Tài khoản ${account.u} đã mua đủ số lượng\n\t(${accountOrderCount[_ra.u]} lần/${Math.floor((startTime / 60) / settings.limitOrderTime)} phút)`);
 												break;
 											}
+
+											if (time === 1)
+												await __switchAccount({
+													username: account.u,
+													password: account.p
+												});
 
 											sounds.notification();
 											await __doOrder({
