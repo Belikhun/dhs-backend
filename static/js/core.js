@@ -5,20 +5,6 @@
 //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 //? |-----------------------------------------------------------------------------------------------|
 
-function cvtime(h, m, s) {
-	return [h, m, s]
-		.map(v => v < 10 ? "0" + v : v)
-		.join(":");
-}
-
-function cvdate(d, m, y) {
-	return [y, m, d]
-		.map(v => v < 10 ? "0" + v : v)
-		.join("-");
-}
-
-const priceFormat = (num) => num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
-
 const core = {
     initialized: false,
 
@@ -466,8 +452,7 @@ const core = {
 	
 		addEditEntries(container, keyID, {
 			allow = "",
-			expireDate = "",
-			expireTime = "",
+			expire = 0,
 			expired = false
 		} = {}) {
 			let item = document.createElement("div");
@@ -476,11 +461,11 @@ const core = {
 				item.classList.add("expired");
 	
 			let allowInput = createInput({ id: `allow_${keyID}_${randString(4)}`, label: "Cho Phép", value: allow, color: "blue", required: true });
-			let expireDateInput = createInput({ type: "date", id: `expireDate_${keyID}_${randString(4)}`, label: "Ngày Hết Hạn", value: expireDate, color: "blue", required: true });
-			let expireTimeInput = createInput({ type: "time", id: `expireTime_${keyID}_${randString(4)}`, label: "Thời gian Hết Hạn", value: expireTime, color: "blue", required: true });
+			let expireDateInput = createInput({ type: "date", id: `expireDate_${keyID}_${randString(4)}`, label: "Ngày Hết Hạn", color: "blue", required: true });
+			let expireTimeInput = createInput({ type: "time", id: `expireTime_${keyID}_${randString(4)}`, label: "Thời gian Hết Hạn", color: "blue", required: true });
 			let expireNow = createBtn("Bây Giờ", "pink");
 			let remove = createBtn("Xóa", "red");
-			
+
 			expireNow.type = "button";
 			remove.type = "button";
 			allowInput.input.classList.add("allowInput");
@@ -493,21 +478,8 @@ const core = {
 			expireNow.classList.add("small");
 			remove.classList.add("small");
 	
-			expireNow.addEventListener("mouseup", e => {
-				let now = new Date();
-	
-				expireDateInput.input.value = cvdate(
-					now.getDate(),
-					now.getMonth() + 1,
-					now.getFullYear()
-				);
-	
-				expireTimeInput.input.value = cvtime(
-					now.getHours(),
-					now.getMinutes(),
-					0
-				);
-			})
+			expireNow.addEventListener("mouseup", e => setDateTimeValue(expireDateInput, expireTimeInput));
+			setDateTimeValue(expireDateInput, expireTimeInput, expire);
 	
 			remove.addEventListener("mouseup", e => container.removeChild(item));
 			item.append(allowInput.group, expireDateInput.group, expireTimeInput.group, expireNow, remove);
@@ -594,20 +566,10 @@ const core = {
 				tagsInput.value = data.tags.join(" ");
 	
 			for (let item of data.licenses) {
-				let expireTime = new Date(item.expire * 1000);
 				this.addEditEntries(licenses, keyID, {
 					allow: item.allow,
 					expired: item.expired,
-					expireDate: cvdate(
-						expireTime.getDate(),
-						expireTime.getMonth() + 1,
-						expireTime.getFullYear()
-					),
-					expireTime: cvtime(
-						expireTime.getHours(),
-						expireTime.getMinutes(),
-						0
-					)
+					expire: item.expire
 				});
 			}
 	
