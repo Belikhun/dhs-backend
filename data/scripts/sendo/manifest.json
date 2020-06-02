@@ -4,5 +4,5 @@
     "site": "sendo.vn/",
     "match": "sendo\\.vn.*",
     "version": 8,
-    "hide": true
+    "hide": false
 }

@@ -4,5 +4,5 @@
     "site": "sendo.vn/",
     "match": "*",
     "version": 1,
-    "hide": true
+    "hide": false
 }
