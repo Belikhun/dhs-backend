@@ -767,7 +767,7 @@
 			itemInit = true,
 			paymentMethod = "cod",
 			shippingAddress = null,
-			hideSensitiveDetail = false
+			isInjectedAccount = false
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
@@ -837,7 +837,7 @@
 				shippingID = shippingID[0].id;
 			}
 
-			log(`🏡 Đang chọn địa chỉ ID: ${hideSensitiveDetail ? `[redacted]` : shippingID}`);
+			log(`🏡 Đang chọn địa chỉ ID: ${isInjectedAccount ? `[redacted]` : shippingID}`);
 			heartbeat();
 
 			let applyAddress = await myajax({
@@ -1057,25 +1057,39 @@
 
 			runInfo({ progress: 100, progWarn: false, checkDetail: "Đặt hàng thành công" });
 			heartbeat();
-			log("🛒 doOrder đã hoàn thành!");
-			log("=============== KẾT QUẢ ===============");
-			log(` + Order Code    : ${placeOrder.redirect_data.order_code}`);
-			log(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
 
-			beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code}`);
-			beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
+			if (isInjectedAccount) {
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code: 450`);
+				log(` + MSG : Invalid Tokens`);
 
-			if (paymentMethod === "momo") {
-				log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
-				log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
-				
-				if (!hideSensitiveDetail) {
+				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code} [Tài Khoản Chèn]`);
+				beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
+	
+				if (paymentMethod === "momo") {
+					beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
+					beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
+					beaconNote.push(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				}
+			} else {
+				log("🛒 doOrder đã hoàn thành!");
+				log("=============== KẾT QUẢ ===============");
+				log(` + Order Code    : ${placeOrder.redirect_data.order_code}`);
+				log(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
+	
+				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code}`);
+				beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
+	
+				if (paymentMethod === "momo") {
+					log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
+					log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
+					
 					log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
 					log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+	
+					beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
+					beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
 				}
-
-				beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
-				beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
 			}
 
 			log(`⌚ Thời gian     : ${orderTimer.stop}s`);
