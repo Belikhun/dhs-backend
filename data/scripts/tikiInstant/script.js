@@ -375,7 +375,7 @@
 			itemInit = true,
 			paymentMethod = "cod",
 			shippingAddress = null,
-			hideSensitiveDetail = false
+			isInjectedAccount = false
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
@@ -445,7 +445,7 @@
 				shippingID = shippingID[0].id;
 			}
 
-			log(`🏡 Đang chọn địa chỉ ID: ${hideSensitiveDetail ? `[redacted]` : shippingID}`);
+			log(`🏡 Đang chọn địa chỉ ID: ${isInjectedAccount ? `[redacted]` : shippingID}`);
 			heartbeat();
 
 			let applyAddress = await myajax({
@@ -677,7 +677,7 @@
 				log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
 				log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
 
-				if (!hideSensitiveDetail) {
+				if (!isInjectedAccount) {
 					log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
 					log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
 				}
