@@ -267,6 +267,7 @@ const core = {
 		},
 
 		data: [],
+		idData: {},
 		searchTimeout: null,
 		tagsColor: {
 			vip: "#98ffa9",
@@ -440,6 +441,7 @@ const core = {
 			})
 	
 			this.data = response.data;
+			this.idData = this.data.reduce((ac, val) => { ac[val.id] = val; return ac; }, {});
 			this.updateData();
 			sounds.scan();
 		},
@@ -615,13 +617,13 @@ const core = {
 		async delete(targetElement) {
 			let keyID = targetElement.dataset.editTarget;
 
-			if (!this.data[keyID])
+			if (!this.idData[keyID])
 				throw { code: -1, description: `"Không tìm thấy dữ liệu key của ID ${keyID}` }
 	
 			let doIt = await popup.show({
 				level: "warning",
 				windowTitle: "Problems Editor",
-				title: `Xóa \"${this.data[keyID].name}\"`,
+				title: `Xóa \"${this.idData[keyID].name}\"`,
 				message: `Xác nhận`,
 				description: `Bạn có chắc muốn xóa <b>keyID${keyID}</b> không?`,
 				note: `Hành động này <b>không thể hoàn tác</b> một khi đã thực hiện!`,
@@ -631,7 +633,7 @@ const core = {
 				}
 			})
 	
-			if (doIt !== true)
+			if (doIt !== "delete")
 				return false;
 	
 			clog("WARN", "Đang xóa key", {
@@ -639,7 +641,7 @@ const core = {
 				color: flatc("yellow")
 			});
 	
-			let respond = await myajax({
+			await myajax({
 				url: "/api/keys/remove",
 				method: "POST",
 				form: {
