@@ -4,5 +4,5 @@
     "site": "bachhoaxanh.com/",
     "match": "*",
     "version": 1,
-    "hide": true
+    "hide": false
 }

@@ -4,5 +4,5 @@
     "site": "lazada.vn/",
     "match": "*",
     "version": 2,
-    "hide": true
+    "hide": false
 }

@@ -4,5 +4,5 @@
     "site": "lazada.vn/",
     "match": "pages\\.lazada\\.vn.*",
     "version": 3,
-    "hide": true
+    "hide": false
 }

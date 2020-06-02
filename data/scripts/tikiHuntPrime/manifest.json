@@ -4,5 +4,5 @@
     "site": "tiki.vn/",
     "match": "*",
     "version": 9,
-    "hide": true
+    "hide": false
 }
