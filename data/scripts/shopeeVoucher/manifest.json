@@ -4,5 +4,5 @@
     "site": "shopee.vn/",
     "match": "*",
     "version": 2,
-    "hide": false
+    "hide": true
 }

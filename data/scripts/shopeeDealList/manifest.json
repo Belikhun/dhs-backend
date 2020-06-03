@@ -4,5 +4,5 @@
     "site": "shopee.vn/",
     "match": "shopee\\.vn.*",
     "version": 1,
-    "hide": false
+    "hide": true
 }
