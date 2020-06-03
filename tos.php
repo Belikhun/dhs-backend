@@ -24,3 +24,9 @@
 	<li>Toàn bộ nội dung cũng như chức năng của Công Cụ Này tạo ra từ nhu cầu của người sử dụng và phục vụ mục đích của người sử dụng. Nên chúng tôi không chịu trách nhiệm về bất cứ hành động cũng như cách sử dụng của người dùng.</li>
 	<li>Chúng tôi hoàn toàn có thể chấm dứt dịch vụ nếu có bất cứ khiếu nại (nếu có) liên quan đến dịch vụ mà không cần thông báo trước.</li>
 </ul>
+
+<div class="note warning" style="margin: unset; width: auto;">
+	<i class="inner">
+		<b style="font-size: 15px;">Việc bạn tiếp tục sử dụng được mặc định hiểu là đã và đang đồng ý với các điều khoản kể trên</b>
+	</i>
+</div>
