@@ -4,5 +4,5 @@
     "site": "tiki.vn/",
     "match": "tiki\\.vn.*",
     "version": 9,
-    "hide": false
+    "hide": true
 }
