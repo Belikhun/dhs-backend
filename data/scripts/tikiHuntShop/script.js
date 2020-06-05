@@ -819,7 +819,7 @@
 										message: `Đã mua: ${item.title} (${item.id})`,
 										contextMessage: `${(time() - start).toFixed(2)}s`,
 										iconUrl: "/assets/img/icon@32x32.png",
-										requireInteraction: true
+										requireInteraction: false
 									});
 
 									await sendBeacon({
