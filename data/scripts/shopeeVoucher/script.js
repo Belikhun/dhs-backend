@@ -104,7 +104,7 @@
 				value: false
 			}
 
-		const voucherSetup = await setup(voucherSetupData, { confirm: "Tiếp" });
+		const voucherSetup = await setup(voucherSetupData, { confirm: "Tiếp", saveKey: "vouchers" });
 
 		log("DANH SÁCH VOUCHER:");
 
