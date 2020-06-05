@@ -777,7 +777,7 @@
 					contextMessage: `${(time() - start).toFixed(2)}s`,
 					iconUrl: "/assets/img/icon@32x32.png",
 					items: changedList,
-					requireInteraction: true
+					requireInteraction: false
 				});
 			}
 
