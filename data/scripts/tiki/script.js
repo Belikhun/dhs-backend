@@ -107,7 +107,7 @@
 					]
 				})
 
-			if (itemData.configurable_products) {
+			if (itemData.configurable_products && itemData.configurable_products.length > 0) {
 				if (!CFID) {
 					let configList = []
 
