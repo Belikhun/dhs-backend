@@ -145,6 +145,9 @@
 
 		var checker = async () => {
 			for (let i = 0; i < selectedVoucherList.length; i++) {
+				if (selectedVoucherList[i].added)
+					continue;
+
 				let item = selectedVoucherList[i];
 				checkNth++;
 
@@ -218,7 +221,7 @@
 				order();
 				successCount++;
 				log(` ✅ Thêm Thành Công (${successCount}/${total})`);
-				selectedVoucherList = selectedVoucherList.splice(i, 1);
+				selectedVoucherList[i].added = true;
 
 				if (successCount === total) {
 					doCheck = false;
