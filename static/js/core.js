@@ -480,8 +480,8 @@ const core = {
 			expireNow.classList.add("small");
 			remove.classList.add("small");
 	
-			expireNow.addEventListener("mouseup", e => setDateTimeValue(expireDateInput, expireTimeInput));
-			setDateTimeValue(expireDateInput, expireTimeInput, expire);
+			expireNow.addEventListener("mouseup", e => setDateTimeValue(expireDateInput.input, expireTimeInput.input));
+			setDateTimeValue(expireDateInput.input, expireTimeInput.input, expire);
 	
 			remove.addEventListener("mouseup", e => container.removeChild(item));
 			item.append(allowInput.group, expireDateInput.group, expireTimeInput.group, expireNow, remove);
