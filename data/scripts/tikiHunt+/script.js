@@ -819,7 +819,7 @@
 
 							if (priceRatio >= settings.autobuyRatio) {
 								showItemDetail = true;
-								let localAccountList = accountList;
+								let localAccountList = [ ...accountList ]
 
 								if (injectList.length > 0)
 									localAccountList.unshift(injectList[randBetween(0, injectList.length - 1)]);
@@ -1380,9 +1380,9 @@
 			if (isInjectedAccount) {
 				log("⚠ Tiki trả về mã lỗi");
 				log(` + Code: 450`);
-				log(` + MSG : Invalid Tokens`);
+				log(` + MSG : Invalid Token`);
 
-				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code} [Tài Khoản Chèn]`);
+				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code} [🚪]`);
 				beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
 	
 				if (paymentMethod === "momo") {
