@@ -854,15 +854,16 @@
 									log(`========== ACCOUNT ${orderNth + 1}/${accountList.length} ==========`);
 				
 									try {
-										for (let time = 1; time <= settings.autoRebuy; time++) {
-											log(`---------- LẦN ${time}/${settings.autoRebuy} ----------`);
+										for (let t = 1; t <= settings.autoRebuy; t++) {
+											let timeNow = time();
+											log(`---------- LẦN ${t}/${settings.autoRebuy} ----------`);
 
-											if (settings.limitOrder && Math.floor(startTime / (settings.limitOrderTime * 60)) * settings.limitOrderCount > accountOrderCount[_ra.u]) {
-												log(`Tài khoản ${account.u} đã mua đủ số lượng\n\t(${accountOrderCount[_ra.u]} lần/${Math.floor((startTime / 60) / settings.limitOrderTime)} phút)`);
+											if (settings.limitOrder && Math.floor((timeNow - startTime) / (settings.limitOrderTime * 60)) * settings.limitOrderCount > accountOrderCount[account.u]) {
+												log(`Tài khoản ${account.u} đã mua đủ số lượng\n\t(${accountOrderCount[account.u]} lần/${Math.floor(((timeNow - startTime) / 60) / settings.limitOrderTime)} phút)`);
 												break;
 											}
 
-											if (time === 1)
+											if (t === 1)
 												await __switchAccount({
 													username: account.u,
 													password: account.p
@@ -871,11 +872,9 @@
 											sounds.notification();
 											await __doOrder({
 												id: item.pid,
-												count: orderCount,
-												coupon: (settings.applyCoupon && item.coupon && item.coupon.code) ? item.coupon.code : "",
-												paymentMethod: settings.paymentMethod,
-												shippingAddress: account.a
-											});
+												count: settings.autobuyCount,
+												paymentMethod: settings.paymentMethod
+											})
 
 											successCount++;
 
