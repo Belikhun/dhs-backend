@@ -445,7 +445,7 @@
 				shippingID = shippingID[0].id;
 			}
 
-			log(`🏡 Đang chọn địa chỉ ID: ${isInjectedAccount ? `[redacted]` : shippingID}`);
+			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
 			let applyAddress = await myajax({
