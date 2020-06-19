@@ -845,8 +845,12 @@
 											let timeNow = time();
 											log(`---------- LẦN ${t}/${settings.autoRebuy} ----------`);
 
-											if ((settings.limitOrder || account.h) && Math.floor((timeNow - startTime) / (settings.limitOrderTime * 60)) * settings.limitOrderCount > accountOrderCount[account.u]) {
-												log(`Tài khoản ${(account.h) ? `thứ ${orderNth + 1}` : account.u} đã mua đủ số lượng\n\t(${accountOrderCount[account.u]} lần/${Math.floor(((timeNow - startTime) / 60) / settings.limitOrderTime)} phút)`);
+											if (
+												(settings.limitOrder || account.h)
+												&& accountOrderCount[account.u]
+												&& (accountOrderCount[account.u] / (timeNow - startTime)) > (settings.limitOrderCount / (settings.limitOrderTime * 60))
+											) {
+												log(`Tài khoản ${(account.h) ? `thứ ${orderNth + 1}` : account.u} đã mua đủ số lượng\n\t(${accountOrderCount[account.u]} lần/${Math.floor((timeNow - startTime) / 60)} phút)`);
 												break;
 											}
 
@@ -927,6 +931,9 @@
 									});
 								}
 
+								// LOG OUT OF CURRENT ACCOUNT
+								await __switchAccount();
+
 								beaconNote = []
 								run();
 							}
@@ -970,10 +977,10 @@
 		//! |===============================|
 
 		const __switchAccount = async ({
-			username = "",
-			password = "",
+			username = null,
+			password = null,
 			hide = false
-		}) => {
+		} = {}) => {
 			let loginTimer = new stopClock();
 
 			heartbeat();
@@ -991,6 +998,9 @@
 			} finally {}
 
 			log("📤 Đăng xuất thành công");
+
+			if (!username || !password)
+				return;
 
 			if (hide)
 				log(`📥 Đang đăng nhập`);
@@ -1157,7 +1167,7 @@
 				shippingID = shippingID[0].id;
 			}
 
-			log(`🏡 Đang chọn địa chỉ ID: ${isInjectedAccount ? `[redacted]` : shippingID}`);
+			log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 			heartbeat();
 
 			let applyAddress = await myajax({
@@ -1381,7 +1391,7 @@
 			if (isInjectedAccount) {
 				log("⚠ Tiki trả về mã lỗi");
 				log(` + Code: 450`);
-				log(` + MSG : Invalid Token`);
+				log(` + MSG : Giỏ hàng của bạn hiện đang trống!`);
 
 				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code} [🚪]`);
 				beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);

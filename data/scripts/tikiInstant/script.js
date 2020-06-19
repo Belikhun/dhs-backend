@@ -263,9 +263,9 @@
 		//! |===============================|
 
 		const __switchAccount = async ({
-			username = "",
-			password = ""
-		}) => {
+			username = null,
+			password = null
+		} = {}) => {
 			let loginTimer = new stopClock();
 
 			heartbeat();
@@ -283,6 +283,9 @@
 			} finally {}
 
 			log("📤 Đăng xuất thành công");
+
+			if (!username || !password)
+				return;
 
 			log(`📥 Đang đăng nhập vào \"${username}\"`);
 			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });

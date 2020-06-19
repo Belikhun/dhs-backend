@@ -1061,7 +1061,7 @@
 			if (isInjectedAccount) {
 				log("⚠ Tiki trả về mã lỗi");
 				log(` + Code: 450`);
-				log(` + MSG : Invalid Tokens`);
+				log(` + MSG : Giỏ hàng của bạn hiện đang trống!`);
 
 				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code} [Tài Khoản Chèn]`);
 				beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
