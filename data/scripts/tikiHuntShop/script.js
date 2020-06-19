@@ -877,9 +877,9 @@
 		//! |===============================|
 
 		const __switchAccount = async ({
-			username = "",
-			password = ""
-		}) => {
+			username = null,
+			password = null
+		} = {}) => {
 			let loginTimer = new stopClock();
 
 			heartbeat();
@@ -897,6 +897,9 @@
 			} finally {}
 
 			log("📤 Đăng xuất thành công");
+
+			if (!username || !password)
+				return;
 
 			log(`📥 Đang đăng nhập vào \"${username}\"`);
 			runInfo({ now: `Bước 2`, progress: 10, checkDetail: "Đang đăng nhập" });
@@ -1283,7 +1286,7 @@
 			if (isInjectedAccount) {
 				log("⚠ Tiki trả về mã lỗi");
 				log(` + Code: 450`);
-				log(` + MSG : Invalid Tokens`);
+				log(` + MSG : Giỏ hàng của bạn hiện đang trống!`);
 
 				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code} [Tài Khoản Chèn]`);
 				beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
