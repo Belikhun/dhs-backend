@@ -894,9 +894,14 @@
 						"X-Access-Token": await getToken()
 					}
 				});
-			} finally {}
 
-			log("📤 Đăng xuất thành công");
+				log("📤 Đăng xuất thành công");
+			} catch(e) {
+				clog("ERRR", e);
+				log("📤 Không thể đăng xuất! Tool sẽ coi như đăng xuất thành công và tiếp tục chạy!");
+				log(` + Code: ${e.code}`);
+				log(` + MSG : ${e.description || "Không rõ"}`);
+			}
 
 			if (!username || !password)
 				return;
