@@ -20,7 +20,13 @@
 
 		info({ hide: true });
 
-		const CSRF = (await this.getCookie(HOSTADDRESS, "csrftoken")).value;
+		const CSRF = (await this.getCookie(HOSTADDRESS, "csrftoken")).value ?? null;
+
+		if (!CSRF) {
+			rejectSetup("Không tìm thấy CSRF Token. Đảm bảo bạn đã đăng nhập vào Shopee!");
+			return;
+		}
+
 		log(`CSRF: ${CSRF}`);
 
         // Wait for settings
