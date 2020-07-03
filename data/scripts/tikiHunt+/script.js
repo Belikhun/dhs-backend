@@ -149,7 +149,7 @@
 						if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
 							continue;
 
-						let link = item.querySelector("a[data-id]").href;
+						let link = HOSTADDRESS + item.querySelector("a[data-id]").getAttribute("href");;
 						let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
 	
 						let price = parseInt(item.dataset.price);
