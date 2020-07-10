@@ -4,7 +4,7 @@
 	var doCheck = true;
 	var timeUpdateInterval = null;
 
-	const HOSTADDRESS = "https://tiki.vn/";
+	const HOSTADDRESS = "https://tiki.vn";
 	var selectedPageList = []
 	const pageList = {
 		phoneTablet:	{ title: "Điện Thoại - Máy Tính Bảng", path: "dien-thoai-may-tinh-bang/c1789" },
