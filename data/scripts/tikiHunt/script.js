@@ -7,21 +7,21 @@
 	const HOSTADDRESS = "https://tiki.vn";
 	var selectedPageList = []
 	const pageList = {
-		phoneTablet:	{ title: "Điện Thoại - Máy Tính Bảng", path: "dien-thoai-may-tinh-bang/c1789" },
-		electronic:		{ title: "Điện Tử - Điện Lạnh", path: "dien-tu-dien-lanh/c4221" },
-		accessories:	{ title: "Phụ Kiện - Thiết Bị Số", path: "thiet-bi-kts-phu-kien-so/c1815" },
-		laptopIT:		{ title: "Laptop - Thiết Bị IT", path: "laptop-may-vi-tinh-linh-kien/c1846" },
-		camera:			{ title: "Máy Ảnh - Quay Phim", path: "may-anh/c1801" },
-		household:		{ title: "Điện Gia Dụng", path: "dien-gia-dung/c1882" },
-		housewares:		{ title: "Nhà Cửa - Đời Sống", path: "nha-cua-doi-song/c1883" },
-		consumerGood:	{ title: "Hàng Tiêu Dùng - Thực Phẩm", path: "bach-hoa-online/c4384" },
-		toys:			{ title: "Đồ Chơi - Mẹ & Bé", path: "do-choi-me-be/c2549" },
-		beauty:			{ title: "Làm Đẹp - Sức Khỏe", path: "lam-dep-suc-khoe/c1520" },
-		fashion:		{ title: "Thời Trang - Phụ Kiện", path: "thoi-trang/c914" },
-		sports:			{ title: "Thể Thao - Dã Ngoại", path: "the-thao-da-ngoai/c1975" },
-		cars:			{ title: "Ô Tô, Xe Máy, Xe Đạp", path: "o-to-xe-may-xe-dap/c8594" },
-		stationery:		{ title: "Sách, VPP & Quà Tặng", path: "nha-sach-tiki/c8322" },
-		international:	{ title: "Hàng Quốc Tế", path: "hang-quoc-te/c17166" },
+		phoneTablet:	{ title: "Điện Thoại - Máy Tính Bảng", path: "/dien-thoai-may-tinh-bang/c1789" },
+		electronic:		{ title: "Điện Tử - Điện Lạnh", path: "/dien-tu-dien-lanh/c4221" },
+		accessories:	{ title: "Phụ Kiện - Thiết Bị Số", path: "/thiet-bi-kts-phu-kien-so/c1815" },
+		laptopIT:		{ title: "Laptop - Thiết Bị IT", path: "/laptop-may-vi-tinh-linh-kien/c1846" },
+		camera:			{ title: "Máy Ảnh - Quay Phim", path: "/may-anh/c1801" },
+		household:		{ title: "Điện Gia Dụng", path: "/dien-gia-dung/c1882" },
+		housewares:		{ title: "Nhà Cửa - Đời Sống", path: "/nha-cua-doi-song/c1883" },
+		consumerGood:	{ title: "Hàng Tiêu Dùng - Thực Phẩm", path: "/bach-hoa-online/c4384" },
+		toys:			{ title: "Đồ Chơi - Mẹ & Bé", path: "/do-choi-me-be/c2549" },
+		beauty:			{ title: "Làm Đẹp - Sức Khỏe", path: "/lam-dep-suc-khoe/c1520" },
+		fashion:		{ title: "Thời Trang - Phụ Kiện", path: "/thoi-trang/c914" },
+		sports:			{ title: "Thể Thao - Dã Ngoại", path: "/the-thao-da-ngoai/c1975" },
+		cars:			{ title: "Ô Tô, Xe Máy, Xe Đạp", path: "/o-to-xe-may-xe-dap/c8594" },
+		stationery:		{ title: "Sách, VPP & Quà Tặng", path: "/nha-sach-tiki/c8322" },
+		international:	{ title: "Hàng Quốc Tế", path: "/hang-quoc-te/c17166" },
 	}
 
 	onCancel(() => {
@@ -119,7 +119,7 @@
 						if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
 							continue;
 
-						let link = HOSTADDRESS + item.querySelector("a[data-id]").getAttribute("href");;
+						let link = HOSTADDRESS + item.querySelector("a[data-id]").getAttribute("href");
 						let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
 	
 						let price = parseInt(item.dataset.price);
