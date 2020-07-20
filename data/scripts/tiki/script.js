@@ -401,6 +401,8 @@
 			autoReOrder: { type: "checkbox", label: "Tự động mua lại", color: "blue", value: false, save: false, depend: "orderBy:orderByPrice" },
 			autoReOrderTimes: { type: "number", label: "Số lần tự động mua lại", value: 2, depend: "autoReOrder" },
 			continueRun: { type: "checkbox", label: "Tiếp tục chạy khi chưa mua đủ số lượng", color: "pink", depend: "autoReOrder" },
+			randomIp: { type: "checkbox", label: "Áp dụng IP ngẫu nhiên", color: "blue", value: false },
+			ip: { type: "text", label: "Địa chỉ IP (tùy chọn)", depend: "randomIp", doubt: true },
 			xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 		});
 	
@@ -418,7 +420,6 @@
 		var successCount = 0;
 	
 		switch (settings.orderBy) {
-
 			//! |==========================|
 			//! |   Order By Price Check   |
 			//! |==========================|
@@ -511,11 +512,23 @@
 									}
 								}
 
+								if (settings.randomIp)
+									settings.ip = [
+										randBetween(1, 255),
+										randBetween(1, 255),
+										randBetween(1, 255),
+										randBetween(1, 255)
+									].join(".");
+
+								if (settings.ip !== "")
+									log(`🥅 Áp dụng địa chỉ IP: ${settings.ip}`);
+
 								try {
 									await __doOrder({
 										id: PID,
 										count: settings.orderCount,
-										paymentMethod: settings.paymentMethod
+										paymentMethod: settings.paymentMethod,
+										ip: settings.ip
 									});
 
 									successCount++;
@@ -528,11 +541,23 @@
 								log(`🛒 Mua thành công item thứ ${orderNth}!`);
 							}
 						else {
+							if (settings.randomIp)
+								settings.ip = [
+									randBetween(1, 255),
+									randBetween(1, 255),
+									randBetween(1, 255),
+									randBetween(1, 255)
+								].join(".");
+
+							if (settings.ip !== "")
+								log(`🥅 Áp dụng địa chỉ IP: ${settings.ip}`);
+
 							await __doOrder({
 								id: PID,
 								count: settings.orderCount,
 								coupon: settings.coupon,
-								paymentMethod: settings.paymentMethod
+								paymentMethod: settings.paymentMethod,
+								ip: settings.ip
 							});
 
 							successCount++;
@@ -668,7 +693,18 @@
 						doCheck = false;
 						order();
 
-						await __doOrder({ itemInit: false });
+						if (settings.randomIp)
+							settings.ip = [
+								randBetween(1, 255),
+								randBetween(1, 255),
+								randBetween(1, 255),
+								randBetween(1, 255)
+							].join(".");
+
+						if (settings.ip !== "")
+							log(`🥅 Áp dụng địa chỉ IP: ${settings.ip}`);
+
+						await __doOrder({ itemInit: false, ip: settings.ip });
 
 						complete();
 						runInfo({
@@ -767,7 +803,8 @@
 			itemInit = true,
 			paymentMethod = "cod",
 			shippingAddress = null,
-			isInjectedAccount = false
+			isInjectedAccount = false,
+			ip = null
 		}) => {
 			sounds.notification();
 			let orderTimer = new stopClock();
@@ -1033,12 +1070,20 @@
 			log(`🛒 Đang tiến hành đặt hàng`);
 			heartbeat();
 
+			let forwardedForHeader = (typeof ip === "string" && ip.length > 6) ? {
+				"FH_X-Forwarded-For": ip,
+				"FH_X-Originating-IP": ip,
+				"FH_X-Remote-IP": ip,
+				"FH_X-Remote-Addr": ip,
+			} : {}
+
 			let placeOrder = await myajax({
 				url: `${HOSTADDRESS}/api/v2/carts/mine/checkout`,
 				method: "POST",
 				header: {
 					"X-Access-Token": await getToken(),
-					"X-Platform": settings.xPlatform
+					"X-Platform": settings.xPlatform,
+					...forwardedForHeader
 				},
 				json: {
 					cybersource_information: {},
