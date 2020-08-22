@@ -3,7 +3,7 @@
 	var infoUpdateInterval = null;
 	var timeUpdateInterval = null;
 
-	const HOSTADDRESS = "https://tiki.vn/api/v2/events/deals/";
+	const HOSTADDRESS = "https://tiki.vn/api/v2/widget/deals/";
 
 	onCancel((stop) => {
 		if (stop)
@@ -59,6 +59,7 @@
 					method: "GET",
 					query: {
 						type: "coming",
+						platform: "desktop",
 						page: page,
 						per_page: itemCount
 					}
@@ -300,7 +301,7 @@
 				]
 			},
 			scanPage: { type: "number", label: "Số trang quét", value: 1 },
-			itemCount: { type: "number", label: "Số lượng Item", value: 200 },
+			itemCount: { type: "number", label: "Số lượng Item", value: 20 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 }
 		}, { confirm: "Tiếp" })
 
