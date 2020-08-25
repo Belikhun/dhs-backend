@@ -17,7 +17,7 @@
 		log(`|===========================|`);
 		log(`|       Tiki Auto Buy       |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 17:37:23 29/05/2020  |`);
+		log(`|  LU: 02:28:23 26/08/2020  |`);
 		log(`|===========================|`);
 	
 		// Get itemName
@@ -394,7 +394,8 @@
 				required: true,
 				list: [
 					{ name: `Thanh Toán Khi Nhận Hàng`, color: "pink", value: "cod", checked: true },
-					{ name: `Ví Momo`, color: "blue", value: "momo" }
+					{ name: `Ví Momo`, color: "blue", value: "momo" },
+					{ name: `Zalo Pay`, color: "blue", value: "zalopay" }
 				]
 			},
 			autoReOrderNote: { type: "note", level: "warning", text: "Chức năng tự động mua lại sẽ không hoạt động như mong muốn do Tiki chỉ cho phép đặt 1 đơn hàng mỗi 30s" },
@@ -947,7 +948,7 @@
 					await errored("Lỗi khi thay đổi phương thức thanh toán");
 					log(`⚠ Lỗi khi gửi yêu cầu`);
 					log(` + Code: ${e.code}`);
-					log(` + MSG : ${e.message || "Không Rõ"}`);
+					log(` + MSG : ${e.description || "Không Rõ"}`);
 					throw { code: -1, description: "Không thể đổi phương thức thanh toán", data: e }
 				}
 
@@ -1111,10 +1112,18 @@
 				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code} [Tài Khoản Chèn]`);
 				beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
 	
-				if (paymentMethod === "momo") {
-					beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
-					beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
-					beaconNote.push(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				switch (paymentMethod) {
+					case "momo":
+						beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
+						beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
+						beaconNote.push(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+						break;
+				
+					case "zalopay":
+						beaconNote.push(` + AppID             : ${placeOrder.payment.data.appid}`);
+						beaconNote.push(` + Transaction Token : ${placeOrder.payment.data.zptranstoken}`);
+						beaconNote.push(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+						break;
 				}
 			} else {
 				log("🛒 doOrder đã hoàn thành!");
@@ -1125,15 +1134,27 @@
 				beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code}`);
 				beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
 	
-				if (paymentMethod === "momo") {
-					log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
-					log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
-					
-					log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
-					log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
-	
-					beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
-					beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
+				switch (paymentMethod) {
+					case "momo":
+						log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
+						log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
+						
+						log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
+						log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+		
+						beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
+						beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
+						break;
+				
+					case "zalopay":
+						log(` + AppID             : ${placeOrder.payment.data.appid}`);
+						log(` + Transaction Token : ${placeOrder.payment.data.zptranstoken}`);
+						
+						log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+		
+						beaconNote.push(` + AppID             : ${placeOrder.payment.data.appid}`);
+						beaconNote.push(` + Transaction Token : ${placeOrder.payment.data.zptranstoken}`);
+						break;
 				}
 			}
 
