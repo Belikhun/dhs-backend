@@ -1,20 +1,12 @@
-
-const createInput = (type, id, label, value, required = false) => {}
-const createSwitch = (text, color, value, type = "checkbox") => {}
-const createBtn = (text, color = "blue") => {}
-const priceFormat = (num) => num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
-var scriptCancelHandler = async () => {};
-const onCancel = (f) => scriptCancelHandler = f;
-
 const info = async ({
-    id = null,
-    title = null,
-    price = null,
-    tags = null,
-    hide = false
+    id,
+    title,
+    price,
+    tags,
+    hide
 } = {}) => {}
 
-const setup = async (settingList, { confirm = "Bắt đầu", cancel = "Hủy" } = {}) => {}
+const setup = async (settingList, { confirm = "Bắt đầu", cancel = "Hủy", enableSave = true, saveKey = null } = {}) => new Promise();
 const heartbeat = ({ color = "green", beat = true } = {}) => {}
 const rejectSetup = async (reason) => {}
 const triggerError = async (error) => {}
@@ -30,14 +22,61 @@ const runInfo = async ({
     progWarn = true,
     now = null,
     end = null,
-    currentPrice = null,
-    targetPrice = null,
+    current = null,
+    target = null,
+    dataType = "price",
     saved = null,
     itemStatus = null,
     itemStatusColor = null,
     checkDetail = null,
-} = {}) => {}
+    background = null
+}) => {}
 
+const subBar = ({ progress = 0, color = null } = {}) => { return { set({ progress, color }) {}, remove() {} } }
 const complete = async () => {}
+const sendBeacon = async (arg) => {}
+const proxy = {
+    allowed: false,
+    scanning: false,
+    ipPrefix: `192.168.1`,
+    port: 25685,
+    list: {},
+            
+    updateStatus({
+        running = null,
+        detail = null,
+        detailSub = null,
+        progress = null,
+        color = null
+    }) {},
+
+    update(soft = false) {},
+    scan(trusted = false) {},
+    assign() {},
+
+    async request({
+        server,
+        url,
+        method = "GET",
+        query = Array(),
+        form = {},
+        type = "data",
+        header = Array(),
+        jarID,
+        force = false,
+        changeState = true,
+        reRequest = true,
+        withCredentials = false,
+        timeout = 0
+    }) {},
+
+    async cookie({
+        server,
+        jarID,
+        url,
+        name
+    }) {}
+}
 const writeLog = (text) => {}
-const command = async (command, data = {}) => {};
+const logGroup = (title) => { return { write(text) {}, setTitle(title) {}, setColor(color) {} } }
+const command = async (command, data = {}) => {}

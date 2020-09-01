@@ -9,7 +9,7 @@
 	// dont claim it for your own. its not nice
 	define("APPNAME", "Deal Hunter Suite");
 	define("AUTHOR", "Team DHS");
-	define("VERSION", "0.8.8");
+	define("VERSION", "0.9.0");
 	define("VERSION_TAG", "release");
 	define("REPO_ADDRESS", "https://github.com/belivipro9x99/dealHunterSuiteBackend");
 	define("REPORT_ERROR", REPO_ADDRESS . "/issues");
@@ -31,7 +31,7 @@
 	define("HOST_NAME", "dealhuntersuite.com");
 
 	define("EXTENSION_ID", "ooeeakiohlmkbdmdpfkhkkafgappoijd");
-	define("EXTENSION_VERSION", "5.0");
+	define("EXTENSION_VERSION", "6.0");
 	define("EXTENSION_ZIP_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.zip");
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 

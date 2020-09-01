@@ -16,7 +16,7 @@
 		define("CACHE_DEFAULT_AGE", 10);
 
 	if (!file_exists(CACHE_LOCATION))
-		mkdir(CACHE_LOCATION);
+		mkdir(CACHE_LOCATION, 0777, true);
 
 	class cache {
 		public $id;
@@ -44,9 +44,7 @@
 
 		private function fetch() {
 			$this -> stream = new fip($this -> cachepath, serialize($this -> template));
-			$data = $this -> stream -> read();
-
-			$this -> data = unserialize($data);
+			$this -> data = $this -> stream -> read("serialize");
 		}
 
 		public function setAge($age) {
@@ -66,6 +64,6 @@
 				$this -> data["data"] = $data;
 
 			$this -> data["time"] = time();
-			$this -> stream -> write(serialize($this -> data));
+			$this -> stream -> write($this -> data, "serialize");
 		}
 	}

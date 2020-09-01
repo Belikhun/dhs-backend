@@ -1,0 +1,8 @@
+{
+    "name": "Tiki Gift Hunter",
+    "description": "Tìm item có quà tặng cho Tiki",
+    "site": "tiki.vn/",
+    "match": "*",
+    "version": 1,
+    "hide": true
+}

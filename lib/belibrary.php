@@ -6,7 +6,7 @@
 	//? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 	//? |-----------------------------------------------------------------------------------------------|
 
-	include_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
 
 	setlocale(LC_TIME, "vi_VN.UTF-8");
 
@@ -51,9 +51,10 @@
 
 	/**
 	 * Kiểm tra token trong session với token được gửi trong form
+	 * @param	String	$token	Token (not required)
 	 */
 	function checkToken(String $token = null) {
-		$sauce = $token ?: getHeader("token") ?: (isset($_POST["token"]) ? $_POST["token"] : null);
+		$sauce = $token ?? getHeader("token") ?? (isset($_POST["token"]) ? $_POST["token"] : null);
 
 		if (empty($sauce))
 			stop(4, "Token please!", 400);
@@ -142,6 +143,10 @@
 	 *  + "resource (closed)"
 	 *  + "NULL"
 	 *  + "unknown type"
+	 * 
+	 * @param	Mixed	$data	Data
+	 * @param	String	$type	Type of Data
+	 * @return	Mixed
 	 */
 	function reqType($data, $type = "string") {
 		if (!settype($data, $type))
@@ -151,11 +156,11 @@
 	}
 
 	function getForm(String $key, $isNull = null) {
-		return (isset($_POST[$key]) && $_POST[$key] !== "null") ? trim($_POST[$key]) : $isNull;
+		return isset($_POST[$key]) ? trim($_POST[$key]) : $isNull;
 	}
 
 	function getQuery(String $key, $isNull = null) {
-		return (isset($_GET[$key]) && $_GET[$key] !== "null") ? trim($_GET[$key]) : $isNull;
+		return isset($_GET[$key]) ? trim($_GET[$key]) : $isNull;
 	}
 
 	function getHeader(String $key, $isNull = null) {
@@ -164,11 +169,11 @@
 	}
 
 	function getKey(Array $data, String $key, $isNull = null) {
-		return isset($data[$key])
-			? is_string($data[$key])
+		return (isset($data[$key])
+			? (is_string($data[$key])
 				? trim($data[$key])
-				: $data[$key]
-			: $isNull;
+				: $data[$key])
+			: $isNull);
 	}
 
 	/**
@@ -183,6 +188,10 @@
 	 *  + "resource (closed)"
 	 *  + "NULL"
 	 *  + "unknown type"
+	 * 
+	 * @param	Mixed	$data	Data
+	 * @param	String	$type	Type of Data
+	 * @return	Mixed
 	 */
 	function withType($data, $type = "string", $isNot = null) {
 		if ($type === "boolean")
@@ -197,8 +206,8 @@
 	}
 
 	/**
-	 * Remove the directory and its content (all files and subdirectories).
-	 * @param String path to directory
+	 * Remove the directory and its content recursively (all files and subdirectories)
+	 * @param	String	Path to directory
 	 */
 	function rmrf($dir) {
 		foreach (glob($dir) as $file)
@@ -212,8 +221,9 @@
 	/**
 	 * Thay đổi header Content-Type tương ứng với đuôi tệp
 	 * 
-	 * @param String Đuôi tên tệp
-	 * @return bool true nếu thành công.
+	 * @param	String	$ext		Đuôi tên tệp
+	 * @param	String	$charset
+	 * @return	Bool
 	 * 
 	 */
 	function contentType(String $ext, String $charset = "utf-8") {
@@ -293,12 +303,12 @@
 
 	/**
 	 * Generate Random Number
-	 * @param   min		Minimum Random Number
-	 * @param   max		Maximum Random Number
-	 * @param   toInt	Return an Integer Value
-	 * @return
+	 * @param	Number	$min	Minimum Random Number
+	 * @param	Number	$max	Maximum Random Number
+	 * @param   Bool	$toInt	To return an Integer Value
+	 * @return	Number	Generated number
 	 */
-	function randBetween($min, $max, $toInt = true) {
+	function randBetween($min, $max, Bool $toInt = true) {
 		$rand = (float)(mt_rand() / mt_getrandmax());
 
 		return $toInt
@@ -308,9 +318,9 @@
 
 	/**
 	 * Generate Random String
-	 * @param	len		Length of the randomized string
-	 * @param	charSet
-	 * @return
+	 * @param	Int			$len		Length of the randomized string
+	 * @param	String		$charSet	Charset
+	 * @return	String		Generated String
 	 */
 	function randString($len = 16, $charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") {
 		$randomString = "";
@@ -328,12 +338,12 @@
 	 * Print out response data, set some header
 	 * and stop script execution!
 	 * 
-	 * @param    code           Response code
-	 * @param    description    Response description
-	 * @param    HTTPStatus     Response HTTP status code
-	 * @param    data           Response data (additional)
-	 * @param    hashData       Hash the data
-	 * @return   null
+	 * @param	Int				$code			Response code
+	 * @param	String			$description	Response description
+	 * @param	Int				$HTTPStatus		Response HTTP status code
+	 * @param	Array			$data			Response data (optional)
+	 * @param	Bool|Mixed		$hashData		To hash the data/Data to hash
+	 * @return	Void
 	 *
 	 */
 	function stop(Int $code = 0, String $description = "", Int $HTTPStatus = 200, Array $data = Array(), $hashData = false) {
@@ -364,7 +374,7 @@
 				}
 
 				if ($HTTPStatus >= 300 || $code !== 0)
-					printErrorPage($output, headers_sent());
+					printErrorPage($output, true);
 
 				break;
 			
@@ -385,25 +395,87 @@
 		die();
 	}
 
-	function convertSize($bytes) {
+	/**
+	 * belibrary.stop() friendly Exception
+	 */
+	class BLibException extends Exception {
+		public $code;
+		public $status;
+		public $description;
+		public $user;
+		public $data;
+
+		/**
+		 *
+		 * @param	Int				$code			Response code
+		 * @param	String			$description	Response description
+		 * @param	Int				$HTTPStatus		Response HTTP status code
+		 * @param	Array			$data			Response data (optional)
+		 *
+		 */
+		public function __construct(Int $code, String $description, Int $HTTPStatus = 200, Array $data = Array(), Exception $previous = null) {
+			$this -> code = $code;
+			$this -> status = $HTTPStatus;
+			$this -> description = $description;
+			$this -> user = $_SESSION["username"];
+			$this -> data = $data;
+
+			parent::__construct($description, $code, $previous);
+
+			$this -> data["file"] = parent::getFile();
+			$this -> data["line"] = parent::getLine();
+			$this -> data["trace"] = parent::getTrace();
+		}
+		
+		public function __toString() {
+			return __CLASS__ . ": [HTTP {$this -> status}] [{$this -> code}]: {$this -> description} tại {$this -> data["file"]}:{$this -> data["line"]}";
+		}
+	}
+
+	/**
+	 *
+	 * Return Human Readable Size
+	 * 
+	 * @param	Int		$bytes		Size in byte
+	 * @return	String	Readable Size
+	 *
+	 */
+	function convertSize(Int $bytes) {
 		$sizes = array("B", "KB", "MB", "GB", "TB");
 		for ($i = 0; $bytes >= 1024 && $i < (count($sizes) -1); $bytes /= 1024, $i++);
 		
 		return (round($bytes, 2 ) . " " . $sizes[$i]);
 	}
 
-	function folderSize($dir) {
+	/**
+	 *
+	 * Return Folder Size
+	 * 
+	 * @param	String		$dir			Target Directory
+	 * @param   Bool		$recursive		Include Subdirectories Size
+	 * @return	Int			Folder Size
+	 *
+	 */
+	function folderSize(String $dir, Bool $recursive = false) {
 		$size = 0;
-		foreach (glob($dir ."/*", GLOB_NOSORT) as $i => $file) {
-			//$size += is_file($file) ? filesize($file) : folderSize($file);
-			$size += filesize($file);
-		}
+		foreach (glob($dir ."/*", GLOB_NOSORT) as $i => $file)
+			$size += is_file($file) ? filesize($file) : ($recursive ? folderSize($file) : 0);
+		
 		return $size;
 	}
 
-	function arrayRemDub($inp) {
+	/**
+	 *
+	 * Remove Dublication Item In An Array
+	 * 
+	 * @param	Array	$inp	The Array
+	 * @return	Array	Cleaned Array
+	 *
+	 */
+	function arrayRemDub(Array $inp) {
 		$out = Array();
 		$i = 0;
+
 		sort($inp, SORT_NATURAL);
 		foreach($inp as $k => $v)
 			if (!isset($out[$i-1]) || $out[$i-1] !== $v) {
@@ -413,7 +485,15 @@
 		return $out;
 	}
 
-	function arrayremBlk($inp) {
+	/**
+	 *
+	 * Remove Empty Item In An Array
+	 * 
+	 * @param	Array	$inp	The Array
+	 * @return	Array	Cleaned Array
+	 *
+	 */
+	function arrayRemBlk($inp) {
 		$out = Array();
 		foreach($inp as $i => $v)
 			if (isset($v))
@@ -440,36 +520,66 @@
 
 	function getClientIP() {
 		return getenv("HTTP_CLIENT_IP")
-			?: getenv("HTTP_X_FORWARDED_FOR")
-			?: getenv("HTTP_X_FORWARDED")
-			?: getenv("HTTP_FORWARDED_FOR")
-			?: getenv("HTTP_FORWARDED")
-			?: getenv("REMOTE_ADDR")
-			?: "UNKNOWN";
+			?? getenv("HTTP_X_FORWARDED_FOR")
+			?? getenv("HTTP_X_FORWARDED")
+			?? getenv("HTTP_FORWARDED_FOR")
+			?? getenv("HTTP_FORWARDED")
+			?? getenv("REMOTE_ADDR")
+			?? "UNKNOWN";
+	}
+
+	/**
+	 *
+	 * Recursive and Safe Array Object Merging
+	 * 
+	 * Only merge key in the object that exist in the target
+	 * 
+	 * @param	Array			$target				Target Object need to be merged
+	 * @param	Array			$object				Array Object need to merge
+	 * @param	Bool|Function	$typeSensitive		Do a type check before merging key
+	 * @param	Int				$counter			Number of merged keys
+	 * @return	Number			Number of merged keys
+	 *
+	 */
+	function mergeObjectRecursive(Array &$target, Array $object, $typeSensitive = true, Int &$counter = 0) {
+		foreach ($target as $key => &$value)
+			if (array_key_exists($key, $object)) {
+				if (is_callable($typeSensitive)) {
+					if (!$typeSensitive(gettype($value), gettype($object[$key]), $key))
+						continue;
+				} else
+					if ($typeSensitive && (gettype($value) !== gettype($object[$key])))
+						continue;
+
+				if (gettype($object[$key]) === "array" && gettype($value) === "array")
+					mergeObjectRecursive($value, $object[$key], $typeSensitive, $counter);
+				else {
+					$value = $object[$key];
+					$counter++;
+				}
+			}
+
+		return $counter;
 	}
 
 	class fip {
+		private $maxTry = 20;
 		public $stream;
 		public $path;
 
-		public function __construct(String $path, String $defaultData = "") {
+		public function __construct(String $path, String $defaultData = "", String $defaultType = "text") {
 			$this -> path = $path;
 
-			if (!file_exists($path)) {
-				$this -> fos($path, "x");
-				$this -> write($defaultData);
-			}
+			if (!file_exists($path))
+				$this -> write($defaultData, $defaultType, "x");
 		}
 
 		public function fos(String $path, String $mode) {
-			try {
-				$this -> stream = fopen($path, $mode);
-				if (!$this -> stream) {
-					$e = error_get_last();
-					stop(8, "Lỗi[". $e["type"] ."]: ". $e["message"] ." tại ". $e["file"] ." dòng ". $e["line"], 500, $e);
-				}
-			} catch (Exception $e) {
-				stop(8, $e -> getMessage() ." tại ". $e -> getFile() ." dòng ". $e -> getLine(), 500, $e);
+			$this -> stream = fopen($path, $mode);
+
+			if (!$this -> stream) {
+				$e = error_get_last();
+				throw new BLibException(8, "fip -> fos(): [". $e["type"] ."]: ". $e["message"] ." tại ". $e["file"] ." dòng ". $e["line"], 500, $e);
 			}
 		}
 
@@ -477,7 +587,31 @@
 			fclose($this -> stream);
 		}
 
-		public function read() {
+		/**
+		 *
+		 * Read file
+		 * type: text/json/serialize
+		 * 
+		 * @param	String	$type	File data type
+		 * @return	String|Array|Object
+		 *
+		 */
+		public function read($type = "text") {
+			if (file_exists($this -> path)) {
+				$tries = 0;
+				
+				while (!is_readable($this -> path)) {
+					$tries++;
+	
+					if ($tries >= $this -> maxTry)
+						throw new BLibException(46, "fip -> read(): Read Timeout: Không có quyền đọc file ". basename($this -> path) ." sau $tries lần thử", 500, Array(
+							"path" => $this -> path
+						));
+	
+					usleep(200000);
+				}
+			}
+
 			$this -> fos($this -> path, "r");
 
 			if (filesize($this -> path) > 0)
@@ -486,11 +620,57 @@
 				$data = null;
 
 			$this -> fcs();
-			return $data;
+
+			switch ($type) {
+				case "json":
+					return json_decode($data, true);
+
+				case "serialize":
+					return unserialize($data);
+				
+				default:
+					return $data;
+			}
 		}
 
-		public function write(String $data = "") {
-			$this -> fos($this -> path, "w");
+		/**
+		 *
+		 * Write data to file
+		 * type: text/json/serialize
+		 * 
+		 * @param	String|Array|Object		$data		Data to write
+		 * @param	String					$type		File data type
+		 * @return
+		 *
+		 */
+		public function write($data = "", String $type = "text", String $mode = "w") {
+			if (file_exists($this -> path)) {
+				$tries = 0;
+				
+				while (!is_writable($this -> path)) {
+					$tries++;
+	
+					if ($tries >= $this -> maxTry)
+						throw new BLibException(46, "fip -> write(): Write Timeout: Không có quyền ghi vào file ". basename($this -> path) ." sau $tries lần thử", 500, Array(
+							"path" => $this -> path
+						));
+	
+					usleep(200000);
+				}
+			}
+
+			$this -> fos($this -> path, $mode);
+
+			switch ($type) {
+				case "json":
+					$data = json_encode($data, JSON_PRETTY_PRINT);
+					break;
+
+				case "serialize":
+					$data = serialize($data);
+					break;
+			}
+
 			fwrite($this -> stream, $data);
 			$this -> fcs();
 			return true;
@@ -511,7 +691,9 @@
 
 	function printErrorPage(Array $data, Bool $useIframe = false) {
 		$_SESSION["lastError"] = $data;
-		print (($useIframe) ? "\" />" : "") . "<!-- Output Stopped here. Begin Error Page Element -->";
+		print "<!-- OUTPUT STOPPED HERE -->";
+		print "<!-- ERROR DETAILS: ". json_encode($data, JSON_PRETTY_PRINT) ." -->";
+		print "<!-- BEGIN ERROR PAGE -->";
 		
 		if ($useIframe)
 			print "<iframe src=\"/lib/error.php\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: unset; overflow: auto;\"></iframe>";
@@ -534,10 +716,18 @@
 		stop(-1, "Error Occurred: ". $text, 500, $errorData);
 	}
 
-	set_error_handler("errorHandler", E_ALL);
+	//! Exception Handler
+	function exceptionHandler(Exception $e) {
+		if ($e -> __CLASS__ === "BLibException")
+			stop($e -> code, $e, $e -> status, $e -> data);
+		else
+			stop(-1, "{$e -> __CLASS__} [{$e -> getCode()}]: {$e -> getMessage()} tại {$e -> getFile()}:{$e -> getLine()}");
+	}
 
-	//? set start time
+	set_error_handler("errorHandler", E_ALL);
+	set_exception_handler("exceptionHandler");
+
+	//? START TIME
 	if (!isset($runtime))
 		$runtime = new stopClock();
-
 ?>
