@@ -3,6 +3,7 @@
     "description": "Tự động mua hàng cho Tiki",
     "site": "tiki.vn/",
     "match": "tiki\\.vn\/.*\\-p\\d+\\.html.*",
-    "version": 20,
+    "requires": ["tikiAPI"],
+    "version": 21,
     "hide": true
 }

@@ -12,17 +12,17 @@ class splash {
 			"Bạn có thể bật chế độ ban đêm trong bảng <b>Cài Đặt</b> của Themis Web Interface",
 			"Bạn có thể nộp nhiều bài cùng một lúc lên hệ thống",
 			"Bạn có thể tắt hiệu ứng của trang web bằng cách tắt <b>Hiệu ứng</b> trong bảng cài đặt",
-			"Cài đặt <b>Hiển thị millisecond</b> sẽ làm thời gian của cuộc thi được tính chính xác đến hàng phần giây"
+			"Cài đặt <b>Hiển thị millisecond</b> giúp hiển thị thời gian của cuộc thi chính xác hơn"
 		]
 
-		return tips[randBetween(0, tips.length - 1, true)];
+		return tips[randBetween(0, tips.length - 1, true)]
 	}
 
 	constructor(container, name, subname, icon) {
 		if (!container.classList)
 			return false;
 
-		const tree=[{type:"div",class:"middle",name:"middle",list:[{type:"div",class:"logo",name:"logo"},{type:"div",class:"appname",name:"appname"},{type:"div",class:"appsubname",name:"appsubname"},{type:"div",class:"progressBar",name:"progress",list:[{type:"div",class:"bar",name:"bar"}]},{type:"t",class:"phase",name:"phase"},{type:"t",class:"status",name:"status"},{type:"t",class:"errormsg",name:"errorMsg"},{type:"t",class:"tips",name:"tips"}]},{type:"div",class:"footer",name:"footer",list:[{type:"div",class:"icon",name:"icon"},{type:"div",class:"text",name:"text"}]}];
+		const tree = [{type:"div",class:"middle",name:"middle",list:[{type:"div",class:"logo",name:"logo"},{type:"div",class:"appname",name:"appname"},{type:"div",class:"appsubname",name:"appsubname"},{type:"div",class:"progressBar",name:"progress",list:[{type:"div",class:"bar",name:"bar"}]},{type:"t",class:"phase",name:"phase"},{type:"t",class:"status",name:"status"},{type:"t",class:"errormsg",name:"errorMsg"},{type:"t",class:"tips",name:"tips"}]},{type:"div",class:"footer",name:"footer",list:[{type:"div",class:"icon",name:"icon"},{type:"div",class:"text",name:"text"}]}];
 
 		this.tree = buildElementTree("div", "splash", tree);
 		this.splash = this.tree.tree;
@@ -43,7 +43,7 @@ class splash {
 		this.tree.middle.logo.innerHTML = `
 		<div class="lazyload noBackground light inner">
 			<img onload="this.parentNode.dataset.loaded = 1" src="${icon}"/>
-			<div class="simple-spinner"></div>
+			<div class="simpleSpinner"></div>
 		</div>`
 		this.tree.middle.appname.innerText = name;
 		this.tree.middle.appsubname.innerText = subname;
@@ -52,11 +52,11 @@ class splash {
 		this.tree.footer.icon.innerHTML = `
 			<div class="lazyload chrome">
 				<img onload="this.parentNode.dataset.loaded = 1" src="/assets/img/chrome-icon.png"/>
-				<div class="simple-spinner"></div>
+				<div class="simpleSpinner"></div>
 			</div>
 			<div class="lazyload coccoc">
 				<img onload="this.parentNode.dataset.loaded = 1" src="/assets/img/coccoc-icon.png"/>
-				<div class="simple-spinner"></div>
+				<div class="simpleSpinner"></div>
 			</div>`
 		this.tree.footer.text.innerText = "Trang web hoạt động tốt nhất trên trình duyệt chrome và coccoc.";
 
