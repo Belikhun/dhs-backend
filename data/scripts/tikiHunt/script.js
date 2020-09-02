@@ -633,7 +633,7 @@
 				runNth++;
 				start = time();
 				end = start + settings.delay;
-				this.script.status.container.dataset.triColor = "dark";
+				runInfo({ background: "dark" });
 			}
 		}
 
