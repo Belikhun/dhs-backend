@@ -704,7 +704,7 @@
 			// Reset
 			runNth++;
 			start = time();
-			this.script.status.container.dataset.triColor = "dark";
+			runInfo({ background: "dark" });
 		}
 
 		timeUpdateInterval = setInterval(() => {
