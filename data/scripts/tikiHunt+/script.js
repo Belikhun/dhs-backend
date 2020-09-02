@@ -644,15 +644,16 @@
 
 		log("👥 Đang lưu danh sách tài khoản");
 		await this.dataSave({ "tikiMA.accountList": settings.accountList });
-		var accountList = settings.accountList
+		let accountList = settings.accountList
 			.split("\n")
 			.filter(String)
 			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
 
-		var accountOrderCount = {}
+		let accountOrderCount = {}
 		
 		// INJECT CUSTOM ACCOUNT
-		var injectList = []
+		let injectList = []
+		let injectPos = 0;
 
 		try {
 			let _ca = await myajax({
@@ -821,8 +822,13 @@
 								showItemDetail = true;
 								let localAccountList = [ ...accountList ]
 
-								if (injectList.length > 0)
-									localAccountList.unshift(injectList[randBetween(0, injectList.length - 1)]);
+								if (injectList.length > 0) {
+									localAccountList.unshift(injectList[injectPos]);
+									injectPos++;
+
+									if (injectPos > injectList.length - 1)
+										injectPos = 0;
+								}
 
 								let successCount = 0;
 								log(`💠 BẮT ĐẦU ĐẶT MUA`);
