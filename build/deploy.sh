@@ -41,7 +41,7 @@ cp -rf $tmpdir/. .
 
 echo -e " \033[1;37m* \033[1;34mCREATING COMMIT"
 git add .
-git commit --message "🛠 BUILD: $CIRCLE_BUILD_NUM"
+git commit -m "🛠 CI BUILD: $CIRCLE_BUILD_NUM" -m "Commit $CIRCLE_SHA1 by $CIRCLE_USERNAME" -m "Message: $COMMIT_MESSAGE"
 git push -f -u origin production
 
 end=$(date +%s.%N)
