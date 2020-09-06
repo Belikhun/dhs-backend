@@ -33,9 +33,7 @@
     "sourceMapMode": "separate",
     "splitStrings": true,
     "splitStringsChunkLength": 12,
-    "stringArray": true,
-    "stringArrayEncoding": "base64",
-    "stringArrayThreshold": 0.6,
+    "stringArray": false,
     "target": "browser",
     "transformObjectKeys": false,
     "unicodeEscapeSequence": true
