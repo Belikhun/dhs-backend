@@ -394,7 +394,7 @@
 			return;
 		}
 
-		if (Object.keys(proxy.list).length === 0) {
+		if (settings.proxy && Object.keys(proxy.list).length === 0) {
 			rejectSetup("Không tìm thấy Proxy nào cả!");
 			return;
 		}
