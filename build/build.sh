@@ -30,7 +30,16 @@ pushd ../data/scripts > /dev/null
 for dir in */ ; do
 	start=$(date +%s.%N)
     echo -e " \033[1;37m● \033[1;33m${dir: : -1}\033[1;31m"
-	javascript-obfuscator "${dir: : -1}/script.js" --compact true --string-array true --self-defending true --unicode-escape-sequence true -o "${dir: : -1}/script.min.js" > /dev/null && echo -e "   \033[1;32m✓\033[0m DONE!" || echo -e "   \033[1;31m✗\033[0m ERRORED!"
+	javascript-obfuscator "${dir: : -1}/script.js" --config "obfuscate.json" -o "${dir: : -1}/script.min.js" > /dev/null && echo -e "   \033[1;32m✓\033[0m DONE!" || echo -e "   \033[1;31m✗\033[0m ERRORED!"
+	end=$(date +%s.%N)
+
+	echo -e "   \033[1;37m→ \033[1;30m$(node -pe "$end - $start")s"
+done
+
+for file in .libs/*.js ; do
+	start=$(date +%s.%N)
+    echo -e " \033[1;37m● \033[1;33m${file}\033[1;31m"
+	javascript-obfuscator "${file}" --config "obfuscate.json" -o "${file}" > /dev/null && echo -e "   \033[1;32m✓\033[0m DONE!" || echo -e "   \033[1;31m✗\033[0m ERRORED!"
 	end=$(date +%s.%N)
 
 	echo -e "   \033[1;37m→ \033[1;30m$(node -pe "$end - $start")s"
