@@ -3,7 +3,7 @@
 	var infoUpdateInterval = null;
 	var timeUpdateInterval = null;
 
-	const HOSTADDRESS = "https://tiki.vn/api/v2/widget/deals/";
+	const HOSTADDRESS = "https://tiki.vn";
 
 	onCancel((stop) => {
 		if (stop)
@@ -19,13 +19,12 @@
 		log(`|===========================|`);
 		log(`|  Tiki Upcoming Deal List  |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 00:14:07 18/03/2020  |`);
+		log(`|  LU: 22:05:55 24/09/2020  |`);
 		log(`|===========================|`);
 
 		const scanItem = async ({
 			sortBy = "sale",
 			pageCount = 1,
-			itemCount = 120,
 			saleFilter = 0
 		} = {}) => {
 			let list = {}
@@ -35,12 +34,13 @@
 			log(` + Đang lấy danh sách item`);
 			log(`   + sortBy     = ${sortBy}`);
 			log(`   + pageCount  = ${pageCount}`);
-			log(`   + itemCount  = ${itemCount}`);
 			log(`   + saleFilter = ${saleFilter}`);
 			runInfo({
 				end: pageCount,
 				dataType: "time"
 			})
+
+			let timeID = ((new Date()).getHours() % 12);
 
 			for (let page = 1; page <= pageCount; page++) {
 				heartbeat({ color: "yellow" });
@@ -54,20 +54,30 @@
 				})
 
 				let start = time();
-				let result = await myajax({
-					url: HOSTADDRESS,
+				let current = await myajax({
+					url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
 					method: "GET",
 					query: {
-						type: "coming",
-						platform: "desktop",
-						page: page,
-						per_page: itemCount
+						categories: 1,
+						page: page
 					}
 				});
 
+				let next = await myajax({
+					url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
+					method: "GET",
+					query: {
+						categories: 1,
+						page: page,
+						time_id: timeID
+					}
+				});
+
+				let result = [...current.data, ...next.data]
+
 				heartbeat();
 
-				for (let item of result.data) {
+				for (let item of result) {
 					if (list[item.product.id])
 						continue;
 
@@ -101,8 +111,8 @@
 
 				runInfo({
 					current: sortedList.length,
-					target: result.data.length,
-					saved: - (sortedList.length / result.data.length) * 100,
+					target: result.length,
+					saved: - (sortedList.length / result.length) * 100,
 					dataType: "time"
 				})
 			}
@@ -301,7 +311,6 @@
 				]
 			},
 			scanPage: { type: "number", label: "Số trang quét", value: 1 },
-			itemCount: { type: "number", label: "Số lượng Item", value: 20 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 }
 		}, { confirm: "Tiếp" })
 
@@ -329,7 +338,6 @@
 		var itemList = await scanItem({
 			sortBy: settings.sortBy,
 			pageCount: settings.scanPage,
-			itemCount: settings.itemCount,
 			saleFilter: settings.saleFilter
 		});
 		var CURRENT_PAGE = 1;
