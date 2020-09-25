@@ -1,7 +1,7 @@
 // Script begin here
 (async () => {
-	var infoUpdateInterval = null;
-	var timeUpdateInterval = null;
+	let infoUpdateInterval = null;
+	let timeUpdateInterval = null;
 
 	const HOSTADDRESS = "https://tiki.vn";
 
@@ -259,28 +259,28 @@
 		let allListHeaderPage = document.createElement("span");
 		allListHeaderPage.classList.add("buttonBox");
 
-		var allListHeaderPageForward = document.createElement("span");
+		let allListHeaderPageForward = document.createElement("span");
 		allListHeaderPageForward.classList.add("forward");
 		allListHeaderPageForward.dataset.soundhover = "";
 		allListHeaderPageForward.dataset.soundselect = "";
 		sounds.applySound(allListHeaderPageForward);
 
-		var allListHeaderPageNext = document.createElement("span");
+		let allListHeaderPageNext = document.createElement("span");
 		allListHeaderPageNext.classList.add("next");
 		allListHeaderPageNext.dataset.soundhover = "";
 		allListHeaderPageNext.dataset.soundselect = "";
 		sounds.applySound(allListHeaderPageNext);
 
-		var allListHeaderPageCurrent = document.createElement("t");
+		let allListHeaderPageCurrent = document.createElement("t");
 		allListHeaderPageCurrent.classList.add("current");
 
-		var allListHeaderPagePrev = document.createElement("span");
+		let allListHeaderPagePrev = document.createElement("span");
 		allListHeaderPagePrev.classList.add("prev");
 		allListHeaderPagePrev.dataset.soundhover = "";
 		allListHeaderPagePrev.dataset.soundselect = "";
 		sounds.applySound(allListHeaderPagePrev);
 
-		var allListHeaderPageBackward = document.createElement("span");
+		let allListHeaderPageBackward = document.createElement("span");
 		allListHeaderPageBackward.classList.add("backward");
 		allListHeaderPageBackward.dataset.soundhover = "";
 		allListHeaderPageBackward.dataset.soundselect = "";
@@ -289,7 +289,7 @@
 		allListHeaderPage.append(allListHeaderPageBackward, allListHeaderPagePrev, allListHeaderPageCurrent, allListHeaderPageNext, allListHeaderPageForward);
 		allListHeader.append(allListHeaderInfo, allListHeaderPage);
 
-		var allListItem = document.createElement("div");
+		let allListItem = document.createElement("div");
 		allListItem.classList.add("itemList");
 
 		allList.append(allListHeader, allListItem);
@@ -297,7 +297,7 @@
 
 		this.subScreen.show(container, "dealHunt");
 
-		var settings = await setup({
+		let settings = await setup({
 			sortBy: {
 				type: "radio",
 				label: "Sắp xếp theo",
@@ -323,7 +323,7 @@
 		run();
 		
 		// Start
-		var startTime = time();
+		let startTime = time();
 
 		timeUpdateInterval = setInterval(() => {
 			runInfo({
@@ -335,12 +335,12 @@
 		log("Bắt đầu chạy");
 
 		// Start Scanning Item
-		var itemList = await scanItem({
+		let itemList = await scanItem({
 			sortBy: settings.sortBy,
 			pageCount: settings.scanPage,
 			saleFilter: settings.saleFilter
 		});
-		var CURRENT_PAGE = 1;
+		let CURRENT_PAGE = 1;
 
 		const changeAllListPage = async (page, {
 			showCount = 10
