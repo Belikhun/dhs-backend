@@ -1,7 +1,7 @@
 // Script begin here
 (async () => {
-	var infoUpdateInterval = null;
-	var doCheck = true;
+	let infoUpdateInterval = null;
+	let doCheck = true;
 
 	const HOSTADDRESS = "https://tiki.vn";
 
@@ -20,7 +20,7 @@
 		log(`|===========================|`);
 	
 		// Get itemName
-		var itemName = "";
+		let itemName = "";
 	
 		try {
 			itemName = (await command("queryText", { query: `div.header > h1.title` })).text
@@ -35,211 +35,21 @@
 	
 		log("itemName: " + itemName);
 		info({ title: itemName });
-		var itemInitPrice = null;
-		var updateItemData = true;
-		var itemData = {}
-	
-		// Get ID
-		var ID = null;
-		var PID = null;
-		var CFID = null;
-
-		const fetchItemData = async (updateInfo = true) => {
-			if (updateItemData) {
-				itemData = await myajax({
-					url: `${HOSTADDRESS}/api/v2/products/${ID}`,
-					method: "GET",
-					changeState: false
-				});
-	
-				if (ID !== itemData.id) {
-					log(`ID Change: ${ID} -> ${itemData.id}`);
-					ID = itemData.id;
-				}
-			}
-
-			let itemPrice = itemData.price;
-			let itemOldPrice = itemData.list_price;
-			let itemStatus = itemData.inventory_status;
-			let itemQTY = (itemData.stock_item) ? itemData.stock_item.qty : "?";
-			let minSale = (itemData.stock_item) ? itemData.stock_item.min_sale_qty : "?";
-			let maxSale = (itemData.stock_item) ? itemData.stock_item.max_sale_qty : "?";
-
-			if (updateInfo)
-				info({
-					id: ID,
-					price: priceFormat(itemData.price),
-					tags: [
-						`status: ${itemData.inventory_status}`,
-						`Deal: ${itemData.is_deal ? "Có" : "Không"}`,
-						`Số lượng: ${itemQTY}`,
-						`MIN Sale: ${minSale}`,
-						`MAX Sale: ${maxSale}`,
-						`freeShip: ${itemData.is_free_shipping ? "Có" : "Không"}`,
-						itemData.warranty_lifetime || "Không Bảo Hành"
-					]
-				})
-
-			if (itemData.configurable_products) {
-				if (!CFID) {
-					let configList = []
-
-					for (let item of itemData.configurable_products)
-						configList.push({
-							name: item.name,
-							color: "pink",
-							value: item.child_id
-						});
-	
-					let select = await setup({
-						customPID: { type: "number", label: "PID tùy chỉnh", save: false },
-						config: {
-							type: "radio",
-							label: "Chọn loại hàng",
-							list: configList
-						}
-					}, { confirm: "Tiếp" });
-	
-					if (select.customPID) {
-						clog("DEBG", `Custom PID: ${select.customPID}`);
-						CFID = "custom";
-						PID = select.customPID;
-					} else {
-						if (!select.config)
-							throw { code: -1, description: "Vui lòng chọn loại hàng!" }
-
-						CFID = parseInt(select.config);
-					}
-
-					log(`Config ID: ${CFID}`);
-					await delayAsync(400);
-				}
-
-				if (CFID !== "custom")
-					for (let item of itemData.configurable_products)
-						if (item.child_id === CFID) {
-							itemPrice = item.price;
-							itemStatus = item.inventory_status;
-
-							if (item.id !== PID) {
-								log(`PID Change: ${PID} -> ${item.id} (1)`);
-								PID = parseInt(item.id);
-							}
-
-							break;
-						}
-			} else {
-				let _pid = PID;
-
-				if (itemData.current_seller)
-					_pid = parseInt(itemData.current_seller.product_id);
-
-				if (_pid !== PID) {
-					log(`PID Change: ${PID} -> ${_pid} (2)`);
-					PID = _pid;
-				}
-			}
-
-			if (!PID) {
-				clog("DEBG", "No PID. Returning INIT Data");
-				itemStatus = "NO_PID";
-				itemQTY = "?";
-				minSale = "?";
-				maxSale = "?";
-			} else {
-				let data = await myajax({
-					url: `${HOSTADDRESS}/api/v2/products/${ID}`,
-					method: "GET",
-					query: {
-						spid: PID,
-						include: [
-							"tag",
-							"badges",
-							"stock_item",
-							"variants",
-							"discount_tag"
-						].join(",")
-					}
-				})
-
-				if (data.error) {
-					await errored("Lỗi khi lấy thông tin Sản Phẩm");
-					log("⚠ Tiki trả về mã lỗi");
-					log(` + Code : ${data.error.code}`);
-					log(` + MSG  : ${data.error.message}`);
-					throw { code: data.error.code, description: data.error.message, data: data.error }
-				}
-	
-				let _id = data.current_seller.id || null;
-				let _pid = parseInt(data.current_seller.product_id);
-	
-				if (!data || _pid !== PID || !_id) {
-					clog("DEBG", "No Item Data. Returning INIT Data");
-					itemStatus =
-						(!data)
-							? "NO_DATA"
-							: (_pid !== PID
-								? "ID_MISMATCH"
-								: (!_id
-									? "NO_SELLER"
-									: "UNKNOWN")
-							)
-	
-					itemQTY = "?";
-					minSale = "?";
-					maxSale = "?";
-				} else {
-					itemPrice = data.price;
-					itemStatus = data.inventory_status;
-					itemQTY = (data.stock_item) ? data.stock_item.qty : "?";
-					minSale = (data.stock_item) ? data.stock_item.min_sale_qty : "?";
-					maxSale = (data.stock_item) ? data.stock_item.max_sale_qty : "?";
-				}
-			}
-
-			if (!itemInitPrice)
-				itemInitPrice = itemPrice;
-
-			if (updateInfo)
-				info({
-					id: ID,
-					price: priceFormat(itemPrice),
-					tags: [
-						`status: ${itemStatus}`,
-						`Deal: ${itemData.is_deal ? "Có" : "Không"}`,
-						`Số lượng: ${itemQTY}`,
-						`MIN Sale: ${minSale}`,
-						`MAX Sale: ${minSale}`,
-						`freeShip: ${itemData.is_free_shipping ? "Có" : "Không"}`,
-						itemData.warranty_lifetime || "Không Bảo Hành",
-						`CFID: ${CFID || "?"}`,
-						`PID: ${PID}`
-					]
-				})
-
-			return {
-				price: parseInt(itemPrice),
-				oldPrice: parseInt(itemOldPrice),
-				thumbnail: itemData.thumbnail_url,
-				status: itemStatus,
-				qty: parseInt(itemQTY)
-			}
-		}
 		
 		//? PRICE HISTORY CONTAINER
-		var PHC = document.createElement("div");
+		let PHC = document.createElement("div");
 		PHC.classList.add("priceHistory");
 		//? PH Title
-		var PHTitle = document.createElement("t");
+		let PHTitle = document.createElement("t");
 		PHTitle.classList.add("title");
 		PHTitle.innerText = "Thông Tin Giá";
 		//? PH Chart
-		var PHChart = document.createElement("div");
+		let PHChart = document.createElement("div");
 		PHChart.classList.add("chart");
 		const PHChartBarMin = 30;
 		const PHChartBarMax = 100;
 		//? PH Info
-		var PHInfo = document.createElement("div");
+		let PHInfo = document.createElement("div");
 		PHInfo.classList.add("info");
 		PHC.append(PHTitle, PHChart, PHInfo);
 
@@ -282,7 +92,7 @@
 			emptyNode(PHChart);
 
 			//? PH deltaTime
-			var PHChartDeltaTime = document.createElement("span");
+			let PHChartDeltaTime = document.createElement("span");
 			PHChartDeltaTime.classList.add("deltaTime");
 			PHChartDeltaTime.innerHTML = `<b>Δ:</b> ${costHistoryTimeDelta.toFixed(1)} tháng`;
 			PHChart.appendChild(PHChartDeltaTime);
@@ -310,7 +120,7 @@
 			}
 
 			//? PH Line
-			var PHChartAvgLine = document.createElement("span");
+			let PHChartAvgLine = document.createElement("span");
 			PHChartAvgLine.classList.add("avgLine");
 			PHChartAvgLine.style.bottom = `${((PHChartBarMin + ((costData.max - costData.avg) / (costData.max - costData.min)) * (PHChartBarMax - PHChartBarMin)) / (100 + 0)) * 100}%`;
 			PHChart.appendChild(PHChartAvgLine);
@@ -358,7 +168,7 @@
 
 		log("👥 Đang lưu danh sách tài khoản");
 		await this.dataSave({ "tikiMA.accountList": account.list });
-		var accountList = account.list
+		let accountList = account.list
 			.split("\n")
 			.filter(String)
 			.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null } });
@@ -409,9 +219,9 @@
 		run();
 		
 		// Start
-		var checkNth = 0;
-		var start = time();
-		var successCount = 0;
+		let checkNth = 0;
+		let start = time();
+		let successCount = 0;
 	
 		runInfo({
 			end: settings.checkInterval + "ms",
@@ -445,7 +255,7 @@
 				return;
 			}
 	
-			var currentPrice = data ? data.price : null;
+			let currentPrice = data ? data.price : null;
 			let reqTime = ((time() - reqStart) * 1000);
 			let reqTimeAT = (reqTime / settings.checkInterval) * 100;
 			let orderedCount = 0;

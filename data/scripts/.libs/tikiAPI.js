@@ -3,7 +3,221 @@
 //! |===============================|
 
 const HOSTADDRESS = "https://tiki.vn";
+let updateItemData = true;
+let itemInitPrice = null;
+let itemData = {}
 let beaconNote = []
+
+let ID = null;
+let PID = null;
+let CFID = null;
+
+const getToken = async (retry = true) => {
+	let at = await this.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
+
+	if (!at || !at.value) {
+		let gt = await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN");
+
+		if (!gt || !gt.value) {
+			if (retry) {
+				writeLog("🔐 Cập nhật Cookies 🍪");
+				await myajax({
+					url: `${HOSTADDRESS}/api/v2/me`,
+					method: "GET"
+				});
+
+				return (await getToken(false));
+			} else
+				throw { code: -1, description: "Tiki Token Not Found" }
+		}
+
+		return gt.value;
+	}
+
+	return at.value;
+}
+
+const fetchItemData = async (updateInfo = true) => {
+	if (updateItemData) {
+		itemData = await myajax({
+			url: `${HOSTADDRESS}/api/v2/products/${ID}`,
+			method: "GET",
+			changeState: false
+		});
+
+		if (ID !== itemData.id) {
+			writeLog(`ID Change: ${ID} -> ${itemData.id}`);
+			ID = itemData.id;
+		}
+	}
+
+	let itemPrice = itemData.price;
+	let itemOldPrice = itemData.list_price;
+	let itemStatus = itemData.inventory_status;
+	let itemQTY = (itemData.stock_item) ? itemData.stock_item.qty : "?";
+	let minSale = (itemData.stock_item) ? itemData.stock_item.min_sale_qty : "?";
+	let maxSale = (itemData.stock_item) ? itemData.stock_item.max_sale_qty : "?";
+
+	if (updateInfo)
+		info({
+			id: ID,
+			price: priceFormat(itemData.price),
+			tags: [
+				`status: ${itemData.inventory_status}`,
+				`Deal: ${itemData.is_deal ? "Có" : "Không"}`,
+				`Số lượng: ${itemQTY}`,
+				`MIN Sale: ${minSale}`,
+				`MAX Sale: ${maxSale}`,
+				`freeShip: ${itemData.is_free_shipping ? "Có" : "Không"}`,
+				itemData.warranty_lifetime || "Không Bảo Hành"
+			]
+		})
+
+	if (itemData.configurable_products) {
+		if (!CFID) {
+			let configList = []
+
+			for (let item of itemData.configurable_products)
+				configList.push({
+					name: item.name,
+					color: "pink",
+					value: item.child_id
+				});
+
+			let select = await setup({
+				customPID: { type: "number", label: "PID tùy chỉnh", save: false },
+				config: {
+					type: "radio",
+					label: "Chọn loại hàng",
+					list: configList
+				}
+			}, { confirm: "Tiếp" });
+
+			if (select.customPID) {
+				clog("DEBG", `Custom PID: ${select.customPID}`);
+				CFID = "custom";
+				PID = select.customPID;
+			} else {
+				if (!select.config)
+					throw { code: -1, description: "Vui lòng chọn loại hàng!" }
+
+				CFID = parseInt(select.config);
+			}
+
+			writeLog(`Config ID: ${CFID}`);
+			await delayAsync(400);
+		}
+
+		if (CFID !== "custom")
+			for (let item of itemData.configurable_products)
+				if (item.child_id === CFID) {
+					itemPrice = item.price;
+					itemStatus = item.inventory_status;
+
+					if (item.id !== PID) {
+						writeLog(`PID Change: ${PID} -> ${item.id} (1)`);
+						PID = parseInt(item.id);
+					}
+
+					break;
+				}
+	} else {
+		let _pid = PID;
+
+		if (itemData.current_seller)
+			_pid = parseInt(itemData.current_seller.product_id);
+
+		if (_pid !== PID) {
+			writeLog(`PID Change: ${PID} -> ${_pid} (2)`);
+			PID = _pid;
+		}
+	}
+
+	if (!PID) {
+		clog("DEBG", "No PID. Returning INIT Data");
+		itemStatus = "NO_PID";
+		itemQTY = "?";
+		minSale = "?";
+		maxSale = "?";
+	} else {
+		let data = await myajax({
+			url: `${HOSTADDRESS}/api/v2/products/${ID}`,
+			method: "GET",
+			query: {
+				spid: PID,
+				include: [
+					"tag",
+					"badges",
+					"stock_item",
+					"variants",
+					"discount_tag"
+				].join(",")
+			}
+		})
+
+		if (data.error) {
+			await errored("Lỗi khi lấy thông tin Sản Phẩm");
+			writeLog("⚠ Tiki trả về mã lỗi");
+			writeLog(` + Code : ${data.error.code}`);
+			writeLog(` + MSG  : ${data.error.message}`);
+			throw { code: data.error.code, description: data.error.message, data: data.error }
+		}
+
+		let _id = data.current_seller.id || null;
+		let _pid = parseInt(data.current_seller.product_id);
+
+		if (!data || _pid !== PID || !_id) {
+			clog("DEBG", "No Item Data. Returning INIT Data");
+			itemStatus =
+				(!data)
+					? "NO_DATA"
+					: (_pid !== PID
+						? "ID_MISMATCH"
+						: (!_id
+							? "NO_SELLER"
+							: "UNKNOWN")
+					)
+
+			itemQTY = "?";
+			minSale = "?";
+			maxSale = "?";
+		} else {
+			itemPrice = data.price;
+			itemStatus = data.inventory_status;
+			itemQTY = (data.stock_item) ? data.stock_item.qty : "?";
+			minSale = (data.stock_item) ? data.stock_item.min_sale_qty : "?";
+			maxSale = (data.stock_item) ? data.stock_item.max_sale_qty : "?";
+		}
+	}
+
+	if (!itemInitPrice)
+		itemInitPrice = itemPrice;
+
+	if (updateInfo)
+		info({
+			id: ID,
+			price: priceFormat(itemPrice),
+			tags: [
+				`status: ${itemStatus}`,
+				`Deal: ${itemData.is_deal ? "Có" : "Không"}`,
+				`Số lượng: ${itemQTY}`,
+				`MIN Sale: ${minSale}`,
+				`MAX Sale: ${minSale}`,
+				`freeShip: ${itemData.is_free_shipping ? "Có" : "Không"}`,
+				itemData.warranty_lifetime || "Không Bảo Hành",
+				`CFID: ${CFID || "?"}`,
+				`PID: ${PID}`
+			]
+		})
+
+	return {
+		price: parseInt(itemPrice),
+		oldPrice: parseInt(itemOldPrice),
+		thumbnail: itemData.thumbnail_url,
+		status: itemStatus,
+		qty: parseInt(itemQTY)
+	}
+}
 
 const __switchAccount = async ({
 	username = null,
@@ -159,14 +373,20 @@ const __doOrder = async ({
 		if (coupon !== "") {
 			info({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 
-			log(`🎫 Đang áp dụng Coupon: ${coupon}`)
-			await myajax({
-				url: `${HOSTADDRESS}/checkout/cart/ajaxCoupon`,
-				method: "POST",
-				form: {
-					coupon_code: coupon
-				}
-			})
+			log(`🎫 Đang áp dụng Coupon: ${coupon}`);
+
+			try {
+				await myajax({
+					url: `${HOSTADDRESS}/api/v2/carts/mine/coupons/${coupon}`,
+					method: "PUT",
+					header: { token }
+				})
+			} catch(e) {
+				await panic("Lỗi khi áp dụng mã Coupon");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + MSG  : ${e.error.message}`);
+				throw { code: -1, description: e.error.message, data: e.error }
+			}
 
 			log(`🎫 Áp dụng Coupon thành công!`);
 		}
