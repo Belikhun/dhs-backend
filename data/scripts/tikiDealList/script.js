@@ -44,7 +44,7 @@
 
 			for (let page = 1; page <= pageCount; page++) {
 				heartbeat({ color: "yellow" });
-				log(`   + Đang lấy trang ${page}`);
+				log(`📃 TRANG ${page}`);
 				runInfo({
 					now: page,
 					progress: (page / pageCount) * 100,
@@ -63,15 +63,27 @@
 					}
 				});
 
-				let next = await myajax({
-					url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
-					method: "GET",
-					query: {
-						categories: 1,
-						page: page,
-						time_id: timeID
+				let next = { data: [] }
+				
+				if (current.tabs && current.tabs.length)
+					for (let item of current.tabs) {
+						if (item.active)
+							continue;
+
+						log(`🕒 ${item.display} ID: ${item.query_value}`);
+						
+						let response = await myajax({
+							url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
+							method: "GET",
+							query: {
+								categories: 1,
+								page: page,
+								time_id: item.query_value
+							}
+						});
+
+						next.data = [...next.data, ...response.data]
 					}
-				});
 
 				let result = [...current.data, ...next.data]
 
