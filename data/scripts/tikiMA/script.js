@@ -352,6 +352,7 @@
 									log("============= LỖI! =============");
 									log(message);
 									writeLog(`THREAD ${threadNum} đã xảy ra lỗi!`);
+									reject({ code: -1, description: message });
 				
 									bar.set({ color: "red" });
 								}
@@ -439,6 +440,7 @@
 
 									log(`👤 Mua thất bại cho ${account.u}! (${orderNth + 1}Nth)\nVui lòng xem Console để biết thêm thông tin lỗi!`);
 									clog("ERRR", `doOrder ${account.u} [${PID}]`, e);
+									reject(e);
 
 									if (token)
 										await __clearCart({
@@ -451,7 +453,6 @@
 											myajax
 										});
 
-									reject(e);
 									return;
 								}
 			
