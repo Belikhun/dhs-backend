@@ -23,6 +23,8 @@
 		log(`|===========================|`);
 
 		const scanItem = async ({
+			typeMix = false,
+			mixTagID = 1,
 			sortBy = "sale",
 			pageCount = 1,
 			saleFilter = 0
@@ -32,6 +34,8 @@
 
 			heartbeat();
 			log(` + Đang lấy danh sách item`);
+			log(`   + typeMix    = ${typeMix}`);
+			log(`   + mixTagID   = ${mixTagID}`);
 			log(`   + sortBy     = ${sortBy}`);
 			log(`   + pageCount  = ${pageCount}`);
 			log(`   + saleFilter = ${saleFilter}`);
@@ -39,8 +43,6 @@
 				end: pageCount,
 				dataType: "time"
 			})
-
-			let timeID = ((new Date()).getHours() % 12);
 
 			for (let page = 1; page <= pageCount; page++) {
 				heartbeat({ color: "yellow" });
@@ -51,41 +53,57 @@
 					itemStatus: `TRANG ${page}`,
 					itemStatusColor: "yellow",
 					dataType: "time"
-				})
-
-				let start = time();
-				let current = await myajax({
-					url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
-					method: "GET",
-					query: {
-						categories: 1,
-						page: page
-					}
 				});
 
-				let next = { data: [] }
-				
-				if (current.tabs && current.tabs.length)
-					for (let item of current.tabs) {
-						if (item.active)
-							continue;
+				let start = time();
+				let result = []
 
-						log(`🕒 ${item.display} ID: ${item.query_value}`);
-						
-						let response = await myajax({
-							url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
-							method: "GET",
-							query: {
-								categories: 1,
-								page: page,
-								time_id: item.query_value
-							}
-						});
+				if (typeMix) {
+					let current = await myajax({
+						url: `${HOSTADDRESS}/api/v2/widget/deals/mix`,
+						method: "GET",
+						query: {
+							categories: 1,
+							page: page,
+							tag_id: mixTagID
+						}
+					});
 
-						next.data = [...next.data, ...response.data]
-					}
-
-				let result = [...current.data, ...next.data]
+					result = current.data;
+				} else {
+					let current = await myajax({
+						url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
+						method: "GET",
+						query: {
+							categories: 1,
+							page: page
+						}
+					});
+	
+					let next = { data: [] }
+					
+					if (current.tabs && current.tabs.length)
+						for (let item of current.tabs) {
+							if (item.active)
+								continue;
+	
+							log(`🕒 ${item.display} ID: ${item.query_value}`);
+							
+							let response = await myajax({
+								url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
+								method: "GET",
+								query: {
+									categories: 1,
+									page: page,
+									time_id: item.query_value
+								}
+							});
+	
+							next.data = [...next.data, ...response.data]
+						}
+	
+					result = [...current.data, ...next.data]
+				}
 
 				heartbeat();
 
@@ -322,6 +340,21 @@
 					{ name: `Giá item (lớn đến nhỏ)`, color: "blue", value: "priceDown" }
 				]
 			},
+			typeMix: { type: "checkbox", label: "Is MIX", color: "blue", value: false },
+			mixTagID: {
+				type: "radio",
+				label: "Loại MIX",
+				required: false,
+				depend: "typeMix",
+				list: [
+					{ name: `Tiki Chọn`, color: "blue", value: 1, checked: true },
+					{ name: `Thương hiệu nổi bật`, color: "blue", value: 2 },
+					{ name: `100% freeship`, color: "blue", value: 3 },
+					{ name: `Hàng mới giá sốc`, color: "blue", value: 4 },
+					{ name: `Deal Hot ngành hàng`, color: "blue", value: 5 },
+				]
+			},
+
 			scanPage: { type: "number", label: "Số trang quét", value: 1 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 }
 		}, { confirm: "Tiếp" })
@@ -348,6 +381,8 @@
 
 		// Start Scanning Item
 		let itemList = await scanItem({
+			typeMix: settings.typeMix,
+			mixTagID: settings.mixTagID,
 			sortBy: settings.sortBy,
 			pageCount: settings.scanPage,
 			saleFilter: settings.saleFilter

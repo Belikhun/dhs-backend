@@ -3,6 +3,6 @@
     "description": "Liệt kê các deal sắp tới cho Tiki",
     "site": "tiki.vn/",
     "match": "*",
-    "version": 4,
+    "version": 5,
     "hide": true
 }
