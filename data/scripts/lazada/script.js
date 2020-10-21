@@ -219,7 +219,7 @@
 			priceHistory: { type: "customNode", node: PHC },
             preRunNote: { type: "note", level: "warning", text: `<b>Lưu Ý:</b> Lựa chọn loại hàng và số lượng trước khi chạy!` },
             orderByPrice: { type: "switch", label: "Mua theo giá sản phẩm", name: "orderBy", value: true },
-            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, depend: "orderBy:orderByPrice" },
+            orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, required: true, save: false, depend: "orderBy:orderByPrice" },
             checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true, depend: "orderBy:orderByPrice" },
             orderByTime: { type: "switch", label: "Mua theo thời gian", name: "orderBy" },
             orderDate: { type: "date", label: "Ngày mua", depend: "orderBy:orderByTime" },
@@ -432,18 +432,14 @@
                     log("Đang chọn phương thức thanh toán");
                     runInfo({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Đang chọn phương thức thanh toán" });
                     heartbeat();
-                    log(" + Chuyển phương thức thanh toán sang OTA");
+                    log(" + Chuyển phương thức thanh toán sang COD");
 
                     await waitFor(
                         async (tryNth) => {
                             heartbeat({ color: "blue" });
-                            try {
-                                await command("clickWithText", { query: "#paymentMethodList_XxX10001 > div > div.pay-method-item", text: "Thanh toán khi nhận hàng" });
-                            } catch (e) {
-                                return false;
-                            }
 
-                            return true;
+                            let _t = await command("click", { query: "#automation-payment-method-item-121" });
+                            return (_t.clicked === true);
                         },
                         async () => {
                             runInfo({ progress: 80, progWarn: false });
