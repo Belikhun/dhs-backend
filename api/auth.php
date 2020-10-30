@@ -15,7 +15,7 @@
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ezsql.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
-    stop(-1, "Server Does Not Respond", 500);
+    stop(-1, "ezsql.php: Failed to connect to SQL Database: Connection Timed Out", 500);
 
     $key = reqForm("key");
 
