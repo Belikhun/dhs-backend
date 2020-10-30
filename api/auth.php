@@ -15,6 +15,8 @@
     require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ezsql.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
+    stop(-1, "Server Does Not Respond", 500);
+
     $key = reqForm("key");
 
     $keyDB = new ezsql(DB_TABLE);
