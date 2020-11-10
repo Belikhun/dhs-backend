@@ -24,7 +24,6 @@
 
 		const scanItem = async ({
 			typeMix = false,
-			mixTagID = 1,
 			sortBy = "sale",
 			pageCount = 1,
 			saleFilter = 0
@@ -35,14 +34,13 @@
 			heartbeat();
 			log(` + Đang lấy danh sách item`);
 			log(`   + typeMix    = ${typeMix}`);
-			log(`   + mixTagID   = ${mixTagID}`);
 			log(`   + sortBy     = ${sortBy}`);
 			log(`   + pageCount  = ${pageCount}`);
 			log(`   + saleFilter = ${saleFilter}`);
 			runInfo({
 				end: pageCount,
 				dataType: "time"
-			})
+			});
 
 			for (let page = 1; page <= pageCount; page++) {
 				heartbeat({ color: "yellow" });
@@ -59,17 +57,20 @@
 				let result = []
 
 				if (typeMix) {
-					let current = await myajax({
-						url: `${HOSTADDRESS}/api/v2/widget/deals/mix`,
-						method: "GET",
-						query: {
-							categories: 1,
-							page: page,
-							tag_id: mixTagID
-						}
-					});
+					for (let tagID = 1; tagID <= 5; tagID++) {
+						let current = await myajax({
+							url: `${HOSTADDRESS}/api/v2/widget/deals/mix`,
+							method: "GET",
+							query: {
+								categories: 1,
+								page: page,
+								tag_id: tagID
+							}
+						});
 
-					result = current.data;
+						log(`🍿 MixID: ${tagID}`);
+						result = [...result, ...current.data];
+					}
 				} else {
 					let current = await myajax({
 						url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
@@ -137,7 +138,7 @@
 					sortedList.push(list[item.product.id]);
 				}
 
-				log(`     + Thời gian: ${(time() - start).toFixed(2)}s`);
+				log(`⏱ Thời gian: ${(time() - start).toFixed(2)}s`);
 
 				runInfo({
 					current: sortedList.length,
@@ -340,21 +341,8 @@
 					{ name: `Giá item (lớn đến nhỏ)`, color: "blue", value: "priceDown" }
 				]
 			},
-			typeMix: { type: "checkbox", label: "Is MIX", color: "blue", value: false },
-			mixTagID: {
-				type: "radio",
-				label: "Loại MIX",
-				required: false,
-				depend: "typeMix",
-				list: [
-					{ name: `Tiki Chọn`, color: "blue", value: 1, checked: true },
-					{ name: `Thương hiệu nổi bật`, color: "blue", value: 2 },
-					{ name: `100% freeship`, color: "blue", value: 3 },
-					{ name: `Hàng mới giá sốc`, color: "blue", value: 4 },
-					{ name: `Deal Hot ngành hàng`, color: "blue", value: 5 },
-				]
-			},
 
+			typeMix: { type: "checkbox", label: "Deal theo khung giờ", color: "blue", value: false },
 			scanPage: { type: "number", label: "Số trang quét", value: 1 },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 }
 		}, { confirm: "Tiếp" })
@@ -382,7 +370,6 @@
 		// Start Scanning Item
 		let itemList = await scanItem({
 			typeMix: settings.typeMix,
-			mixTagID: settings.mixTagID,
 			sortBy: settings.sortBy,
 			pageCount: settings.scanPage,
 			saleFilter: settings.saleFilter
