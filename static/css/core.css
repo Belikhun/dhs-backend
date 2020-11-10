@@ -150,7 +150,9 @@ body {
 /** =====================================orderLogs===================================== */
 
 #mainContainer .orderLogs {
-	background-color: transparent;
+    background-color: transparent;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 #mainContainer .orderLogs .orderLogList {
@@ -997,6 +999,14 @@ body.dark .formGroup.blue .formField {
     font-size: 13px;
     font-weight: bold;
     line-height: 18px;
+}
+
+#mainContainer > div.container.orderLogs.menu > div.group.tools {
+    position: sticky;
+    top: 0;
+
+    background-color: #dddddd;
+    z-index: 3;
 }
 
 /** =====================================account===================================== */
