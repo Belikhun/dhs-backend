@@ -238,7 +238,7 @@ const __switchAccount = async ({
 
 	try {
 		loginResponse = await myajax({
-			url: `${HOSTADDRESS}/api/v2/tokens`,
+			url: `${HOSTADDRESS}/api/v3/tokens`,
 			method: "POST",
 			json: {
 				"email": username,
