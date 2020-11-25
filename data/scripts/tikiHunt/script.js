@@ -7,21 +7,21 @@
 	const HOSTADDRESS = "https://tiki.vn";
 	var selectedPageList = []
 	const pageList = {
-		phoneTablet:	{ title: "Điện Thoại - Máy Tính Bảng", path: "/dien-thoai-may-tinh-bang/c1789" },
-		electronic:		{ title: "Điện Tử - Điện Lạnh", path: "/dien-tu-dien-lanh/c4221" },
-		accessories:	{ title: "Phụ Kiện - Thiết Bị Số", path: "/thiet-bi-kts-phu-kien-so/c1815" },
-		laptopIT:		{ title: "Laptop - Thiết Bị IT", path: "/laptop-may-vi-tinh-linh-kien/c1846" },
-		camera:			{ title: "Máy Ảnh - Quay Phim", path: "/may-anh/c1801" },
-		household:		{ title: "Điện Gia Dụng", path: "/dien-gia-dung/c1882" },
-		housewares:		{ title: "Nhà Cửa - Đời Sống", path: "/nha-cua-doi-song/c1883" },
-		consumerGood:	{ title: "Hàng Tiêu Dùng - Thực Phẩm", path: "/bach-hoa-online/c4384" },
-		toys:			{ title: "Đồ Chơi - Mẹ & Bé", path: "/do-choi-me-be/c2549" },
-		beauty:			{ title: "Làm Đẹp - Sức Khỏe", path: "/lam-dep-suc-khoe/c1520" },
-		fashion:		{ title: "Thời Trang - Phụ Kiện", path: "/thoi-trang/c914" },
-		sports:			{ title: "Thể Thao - Dã Ngoại", path: "/the-thao-da-ngoai/c1975" },
-		cars:			{ title: "Ô Tô, Xe Máy, Xe Đạp", path: "/o-to-xe-may-xe-dap/c8594" },
-		stationery:		{ title: "Sách, VPP & Quà Tặng", path: "/nha-sach-tiki/c8322" },
-		international:	{ title: "Hàng Quốc Tế", path: "/hang-quoc-te/c17166" },
+		phoneTablet:	{ title: "Điện Thoại - Máy Tính Bảng", path: "dien-thoai-may-tinh-bang", category: 1789 },
+		electronic:		{ title: "Điện Tử - Điện Lạnh", path: "dien-tu-dien-lanh", category: 4221 },
+		accessories:	{ title: "Phụ Kiện - Thiết Bị Số", path: "thiet-bi-kts-phu-kien-so", category: 1815 },
+		laptopIT:		{ title: "Laptop - Thiết Bị IT", path: "laptop-may-vi-tinh-linh-kien", category: 1846 },
+		camera:			{ title: "Máy Ảnh - Quay Phim", path: "may-anh", category: 1801 },
+		household:		{ title: "Điện Gia Dụng", path: "dien-gia-dung", category: 1882 },
+		housewares:		{ title: "Nhà Cửa - Đời Sống", path: "nha-cua-doi-song", category: 1883 },
+		consumerGood:	{ title: "Hàng Tiêu Dùng - Thực Phẩm", path: "bach-hoa-online", category: 4384 },
+		toys:			{ title: "Đồ Chơi - Mẹ & Bé", path: "do-choi-me-be", category: 2549 },
+		beauty:			{ title: "Làm Đẹp - Sức Khỏe", path: "lam-dep-suc-khoe", category: 1520 },
+		fashion:		{ title: "Thời Trang - Phụ Kiện", path: "thoi-trang", category: 914 },
+		sports:			{ title: "Thể Thao - Dã Ngoại", path: "the-thao-da-ngoai", category: 1975 },
+		cars:			{ title: "Ô Tô, Xe Máy, Xe Đạp", path: "o-to-xe-may-xe-dap", category: 8594 },
+		stationery:		{ title: "Sách, VPP & Quà Tặng", path: "nha-sach-tiki", category: 8322 },
+		international:	{ title: "Hàng Quốc Tế", path: "hang-quoc-te", category: 17166 },
 	}
 
 	onCancel(() => {
@@ -56,9 +56,13 @@
 		const scanItem = async ({
 			sortBy = "sale",
 			pageCount = 1,
+			itemPerPage = 48,
+			scanSort = "discount_percent,desc",
+			aggregations = true,
 			saleFilter = 0,
 			doSort = true,
-			itemHandler = () => {}
+			printLog = true,
+			itemHandler = async () => {}
 		} = {}, set = () => {}) => {
 			let list = {}
 			let sortedList = []
@@ -77,7 +81,7 @@
 					itemStatus: `[${runNth}] ${item.title}`,
 					itemStatusColor: "green",
 					dataType: "time"
-				})
+				});
 				
 				for (let page = 1; page <= pageCount; page++) {
 					var result = {}
@@ -85,14 +89,21 @@
 
 					try {
 						result = await myajax({
-							url: HOSTADDRESS + item.path,
+							url: `${HOSTADDRESS}/api/v2/products`,
 							method: "GET",
-							query: {
-								src: "mega-menu",
-								order: "discount_percent,desc",
-								page: page
+							header: {
+								"X-Access-Token": token
 							},
-							type: "text"
+							query: {
+								limit: itemPerPage,
+								include: "",
+								aggregations: aggregations + 0,
+								category: item.category,
+								page,
+								src: "c.1789.hamburger_menu_fly_out_banner",
+								sort: scanSort,
+								urlKey: item.path
+							}
 						});
 					} catch(e) {
 						heartbeat({ color: "red" });
@@ -116,45 +127,43 @@
 					let itemList = itemPage.querySelectorAll("div.product-item[data-id]");
 	
 					for (let item of itemList) {
-						if (list[item.dataset.id] || blackList.indexOf(item.dataset.id) !== -1)
+						if (list[item.id] || blackList.indexOf(item.id) !== -1)
 							continue;
 
-						let link = HOSTADDRESS + item.querySelector("a[data-id]").getAttribute("href");
-						let thumbnail = item.querySelector("a > div.content > span.image > img.product-image").src;
+						let link = "https://tiki.vn/" + item.url_path;
+						let thumbnail = item.thumbnail_url;
 	
-						let price = parseInt(item.dataset.price);
-						let _priceBox = item.querySelector("a > div.content > p.price-sale > span.price-regular");
-						let oldPrice = (_priceBox && _priceBox.innerText !== "") ? parseInt(_priceBox.innerText.match(/\d/g).join("")) : price;
+						let price = item.price;
+						let oldPrice = item.list_price;
 						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 	
 						if (priceSale < saleFilter)
 							continue;
 
-						let couponBox = item.querySelector("div.price-tag-wrap p.price-tag > span.tag > span.code");
 						let couponCode = null;
 						let couponPrice = null;
 						let couponSale = null;
 	
-						if (couponBox && couponBox.innerText) {
-							let couponPriceBox = item.querySelector("div.price-tag-wrap p.price-tag > span.price > span");
-
-							couponCode = couponBox.innerText;
-							couponPrice = (couponPriceBox && couponPriceBox.innerText)
-								? parseInt(couponPriceBox.innerText.match(/\d/g).join(""))
-								: price;
-								
-							couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
-						}
+						if (typeof item.badges === "object")
+							for (let badge of item.badges)
+								if (badge.code === "tag") {
+									couponCode = badge.tag_coupon_code;
+									couponPrice = badge.discount;
+									couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
+								}
 	
-						list[item.dataset.id] = {
-							id: item.dataset.id,
-							pid: item.dataset.sellerProductId,
-							title: item.dataset.title,
+						list[item.id] = {
+							id: item.id,
+							pid: item.seller_product_id,
+							sku: item.sku,
+							title: item.name,
+							brand: item.brand_name,
 							link: link,
 							price,
 							priceSale,
 							thumbnail,
 							oldPrice,
+							stock: { min: item.stock_item.min_sale_qty, max: item.stock_item.max_sale_qty, qty: item.stock_item.qty },
 							coupon: { code: couponCode, price: couponPrice, sale: couponSale },
 							sale: couponSale || priceSale
 						}
@@ -504,7 +513,10 @@
 					{ name: `Giá item (lớn đến nhỏ)`, color: "blue", value: "priceDown" }
 				]
 			},
-			scanPage: { type: "number", label: "Số Trang Quét Mỗi Loại", value: 1 },
+			scanPage: { type: "number", label: "Số trang quét", value: 1 },
+			itemPerPage: { type: "number", label: "Số item mỗi trang", value: 48 },
+			scanSort: { type: "text", label: "Sắp xếp", value: "discount_percent,desc" },
+			aggregations: { type: "checkbox", label: "Tổng hợp", value: true },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 0 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";"), save: false }
 		}, { confirm: "Tiếp", saveKey: "preSetup" })
@@ -535,7 +547,10 @@
 		var itemList = await scanItem({
 			sortBy: firstScanSetup.sortBy,
 			pageCount: firstScanSetup.scanPage,
-			saleFilter: firstScanSetup.saleFilter
+			saleFilter: firstScanSetup.saleFilter,
+			itemPerPage: firstScanSetup.itemPerPage,
+			scanSort: firstScanSetup.scanSort,
+			aggregations: firstScanSetup.aggregations
 		}, (p, now, end) => runInfo({
 			now: `${p.toFixed(0)}%`,
 			current: now,
@@ -661,6 +676,9 @@
 				sortBy: firstScanSetup.sortBy,
 				pageCount: firstScanSetup.scanPage,
 				saleFilter: firstScanSetup.saleFilter,
+				itemPerPage: firstScanSetup.itemPerPage,
+				scanSort: firstScanSetup.scanSort,
+				aggregations: firstScanSetup.aggregations,
 				doSort: false,
 				itemHandler: async (item) => {
 					if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))

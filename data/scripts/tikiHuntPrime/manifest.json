@@ -3,6 +3,7 @@
     "description": "Tìm item giá lỗi và tự động đặt mua cho Tiki",
     "site": "tiki.vn/",
     "match": "*",
+    "requires": ["tikiAPI"],
     "version": 9,
     "hide": true
 }

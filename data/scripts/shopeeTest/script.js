@@ -9,7 +9,6 @@
 	})
 
 	const HOSTADDRESS = `https://shopee.vn`;
-	const MALLADDRESS = `https://mall.shopee.vn`;
 
 	const log = (text) => writeLog(text);
 
@@ -416,8 +415,20 @@
 			couponNote: { type: "note", text: COUPON_DESC },
 			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
 			useAirPay: { type: "checkbox", label: `Thanh toán bằng AirPay`, color: "blue", value: false, required: true },
-			userAgent: { type: "text", label: "User-Agent", value: "Android app Shopee appver=25312" },
-			APISource: { type: "text", label: "X-API-Source", value: "rn" }
+			shipping: {
+				type: "radio",
+				label: "Đơn vị giao hàng",
+				required: true,
+				list: [
+					{ name: `Giao Hàng Tiết Kiệm`, value: 50012, checked: true },
+					{ name: `J&T Express`, color: "blue", value: 50018 },
+					{ name: `Ninja Van`, color: "blue", value: 50023 },
+					{ name: `Giao Hàng Nhanh`, color: "blue", value: 50011 }
+				]
+			},
+			preferredTime: { type: "checkbox", label: `Giao hàng trong giờ hành chính`, color: "blue", value: false, required: true },
+			userAgent: { type: "text", label: "User-Agent", value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36" },
+			APISource: { type: "text", label: "X-API-Source", value: "pc" }
 		});
 	
 		log("CÀI ĐẶT:");
@@ -444,6 +455,8 @@
 			modelId = null,
 			count = 1,
 			coupon = "",
+			shipping = 50012,
+			preferredTime = false,
 			APISource = "pc"
 		}) => {
 			sounds.notification();
@@ -472,7 +485,7 @@
 						quantity: count,
 						checkout: true,
 						update_checkout_only: false,
-						donot_add_quantity: false,
+						donot_add_quantity: true,
 						source: `{"refer_urls":[]}`,
 						shopid: shopId,
 						itemid: id,
@@ -511,6 +524,9 @@
 			heartbeat();
 			log("Đang lấy thông tin Item");
 			let checkoutPayload = {
+				cart_type: 0,
+				client_id: 0,
+				order_update_info: {},
 				shoporders: [{
 					shop: {
 						shopid: shopId
@@ -534,6 +550,22 @@
 					use_coins: false,
 					free_shipping_voucher_info: {}
 				},
+				shipping_orders: [{
+					sync: true,
+					logistics: {
+						recommended_channelids: null
+					},
+					buyer_address_data: {
+						address_type: 0,
+						addressid: 15777313
+					},
+					selected_logistic_channelid: shipping,
+					shipping_id: 1,
+					shoporder_indexes: [0],
+					buyer_ic_number: "",
+					selected_preferred_delivery_time_option_id: preferredTime,
+					selected_preferred_delivery_instructions: {}
+				}],
 				device_info: {
 					device_id: "",
 					device_fingerprint: "",
@@ -665,7 +697,7 @@
 
 			try {
 				placeOrder = await myajax({
-					url: `${MALLADDRESS}/api/v2/checkout/place_order`,
+					url: `${HOSTADDRESS}/api/v2/checkout/place_order`,
 					method: "POST",
 					type: "text",
 					header: {
@@ -673,10 +705,11 @@
 						"FH_User-Agent": settings.userAgent,
 						"x-api-source": APISource,
 						"x-csrftoken": CSRF,
-						"x-cv-id": 100,
+						"x-cv-id": 102,
 						"x-track-id": HASH,
-						"FH_Origin": MALLADDRESS,
-						"FH_Referer": `${MALLADDRESS}/bridge_cmd?cmd=` + craftURL("reactPath", {
+						"x-shopee-language": "vi",
+						"FH_Origin": HOSTADDRESS,
+						"FH_Referer": `${HOSTADDRESS}/bridge_cmd?cmd=` + craftURL("reactPath", {
 							tab: "buy",
 							path: craftURL("shopee/OPC_HOME", {
 								promotionData: "[object Object]",
@@ -684,11 +717,11 @@
 								source: "RN_CART"
 							})
 						}),
-						"FH_Host": "mall.shopee.vn",
+						"FH_Host": "shopee.vn",
 						"FH_Sec-Fetch-Dest": "empty",
 						"FH_Sec-Fetch-Mode": "cors",
 						"FH_Sec-Fetch-Site": "same-origin",
-						"If-None-Match-": `55b03-b077f915899b0282bd340776cace647e`,
+						"If-None-Match-": `*`,
 					},
 					raw: encrypt(JSON.stringify(CHECKOUT_GET), HASH)
 				})
@@ -715,6 +748,7 @@
 
 			try {
 				placeOrder = JSON.parse(decrypted);
+				clog("DEBG", "Decrypted Data:", placeOrder);
 			} catch(e) {
 				await errored("Lỗi Khi Tiến Hành Giải Mã Dữ Liệu");
 				log(" + Cannot Parse Decrypted Data");
@@ -769,6 +803,8 @@
 					modelId: MODEL_ID,
 					count: settings.orderCount,
 					coupon: settings.coupon,
+					shipping: settings.shipping,
+					preferredTime: settings.preferredTime,
 					APISource: settings.APISource
 				});
 
