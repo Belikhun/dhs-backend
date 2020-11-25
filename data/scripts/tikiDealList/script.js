@@ -45,31 +45,47 @@
 			for (let page = 1; page <= pageCount; page++) {
 				heartbeat({ color: "yellow" });
 				log(`📃 TRANG ${page}`);
-				runInfo({
-					now: page,
-					progress: (page / pageCount) * 100,
-					itemStatus: `TRANG ${page}`,
-					itemStatusColor: "yellow",
-					dataType: "time"
-				});
 
 				let start = time();
 				let result = []
 
 				if (typeMix) {
-					for (let tagID = 1; tagID <= 5; tagID++) {
-						let current = await myajax({
-							url: `${HOSTADDRESS}/api/v2/widget/deals/mix`,
-							method: "GET",
-							query: {
-								categories: 1,
-								page: page,
-								tag_id: tagID
-							}
-						});
+					let times = (await myajax({
+						url: `${HOSTADDRESS}/api/v2/widget/deals/mix`,
+						method: "GET",
+						query: {
+							categories: 1,
+							page: 1
+						}
+					})).filters.times.values;
 
-						log(`🍿 MixID: ${tagID}`);
-						result = [...result, ...current.data];
+					for (let timeI = 0; timeI < times.length; timeI++) {
+						let time = times[timeI];
+						log(`🍿 TimeID: ${time.query_value} >> 🕗 ${time.display}`);
+
+						for (let tag = 1; tag <= 6; tag++) {
+							log(`🍭 TagID: ${tag}`);
+							let current = await myajax({
+								url: `${HOSTADDRESS}/api/v2/widget/deals/mix`,
+								method: "GET",
+								query: {
+									categories: 1,
+									page: page,
+									tag_id: tag,
+									time_id: time.query_value
+								}
+							});
+
+							runInfo({
+								now: page,
+								progress: ((page / pageCount) + ((page + 1) / pageCount - (page / pageCount)) * (timeI / (times.length - 1)) * (tag / 6)) * 100,
+								itemStatus: `TRANG ${page}`,
+								itemStatusColor: "yellow",
+								dataType: "time"
+							});
+	
+							result = [...result, ...current.data];
+						}
 					}
 				} else {
 					let current = await myajax({

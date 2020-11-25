@@ -5,6 +5,7 @@
 const HOSTADDRESS = "https://tiki.vn";
 let updateItemData = true;
 let itemInitPrice = null;
+let apiToken = null;
 let itemData = {}
 let beaconNote = []
 
