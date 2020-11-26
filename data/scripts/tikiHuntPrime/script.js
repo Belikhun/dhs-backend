@@ -109,15 +109,6 @@
 								sort: scanSort,
 								urlKey: item.path
 							}
-						}).catch(e => {
-							heartbeat({ color: "red" });
-							log("⚠ Lỗi đã xảy ra khi lấy danh sách Item");
-							log(` + Code: ${e.code}`);
-							log(` + MSG : ${e.description || "Không Rõ"}`);
-							log(` + Bỏ qua lỗi: true`);
-
-							pageLoaded++;
-							return;
 						}).then((result) => {
 							// Calc progress
 							pageLoaded++;
@@ -181,6 +172,15 @@
 
 							if (pageLoaded >= pageCount)
 								resolve();
+						}).catch(e => {
+							heartbeat({ color: "red" });
+							log("⚠ Lỗi đã xảy ra khi lấy danh sách Item");
+							log(` + Code: ${e.code}`);
+							log(` + MSG : ${e.description || "Không Rõ"}`);
+							log(` + Bỏ qua lỗi: true`);
+
+							pageLoaded++;
+							return;
 						});
 				}});
 
