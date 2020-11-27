@@ -418,7 +418,7 @@
 									await __doOrder({
 										id: PID,
 										count: settings.orderCount,
-										token: token.access_token,
+										token: token.token,
 										paymentMethod: settings.paymentMethod,
 										shippingAddress: account.a,
 										platform: settings.xPlatform,
@@ -444,7 +444,7 @@
 
 									if (token)
 										await __clearCart({
-											token: token.access_token,
+											token: token.token,
 
 											info,
 											log,
@@ -493,7 +493,7 @@
 								await __doOrder({
 									id: PID,
 									count: settings.orderCount,
-									token: token.access_token,
+									token: token.token,
 									paymentMethod: settings.paymentMethod,
 									shippingAddress: account.a
 								});
@@ -508,7 +508,7 @@
 							clog("ERRR", `doOrder ${account.u} [${PID}]`, e);
 
 							if (token)
-								await __clearCart({ token: token.access_token });
+								await __clearCart({ token: token.token });
 
 							continue;
 						}

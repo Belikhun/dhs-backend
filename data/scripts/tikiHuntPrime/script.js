@@ -815,6 +815,7 @@
 
 								for (var orderNth = 0; orderNth < accountList.length; orderNth++) {
 									let account = accountList[orderNth];
+									let token = null;
 				
 									runInfo({
 										itemStatus: `Lần Mua ${orderNth + 1}/${accountList.length}`,
@@ -840,7 +841,7 @@
 											}
 
 											if (t === 1)
-												await __switchAccount({
+												token = await __switchAccount({
 													username: account.u,
 													password: account.p
 												});
@@ -849,6 +850,7 @@
 											await __doOrder({
 												id: item.pid,
 												count: settings.autobuyCount,
+												token: token.token,
 												paymentMethod: settings.paymentMethod
 											})
 
@@ -859,18 +861,21 @@
 
 											accountOrderCount[account.u] += settings.autobuyCount;
 										}
+
+										token = null;
 									} catch(e) {
 										heartbeat({ color: "red" });
 										log(`💠 Mua thất bại cho tài khoản ${account.u}! (lần ${orderNth + 1})`);
 										clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
 
-										try {
-											log(`🛒 Đang dọn dẹp giỏ hàng`);
-											await __clearCart();
-										} catch(e) {
-											log(`🛒 Không thể xóa Giỏ Hàng`);
-											clog("ERRR", e);
-										}
+										if (token)
+											try {
+												log(`🛒 Đang dọn dẹp giỏ hàng`);
+												await __clearCart({ token: token.token });
+											} catch(e) {
+												log(`🛒 Không thể xóa Giỏ Hàng`);
+												clog("ERRR", e);
+											}
 										
 										continue;
 									}
