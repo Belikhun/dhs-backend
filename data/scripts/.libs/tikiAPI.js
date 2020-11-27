@@ -223,6 +223,7 @@ const fetchItemData = async (updateInfo = true) => {
 const __switchAccount = async ({
 	username = null,
 	password = null,
+	censor = false,
 
 	info = runInfo,
 	log = writeLog,
@@ -230,10 +231,18 @@ const __switchAccount = async ({
 	clog = window.clog,
 	myajax = window.myajax
 } = {}) => {
+	if (!username || !password)
+		throw { code: -1, description: "Tên đăng nhập hoặc mật khẩu bị thiếu" }
+
 	let loginTimer = new stopClock();
 
 	heartbeat();
-	log(`📥 Đang đăng nhập vào \"${username}\"`);
+
+	if (censor)
+		log(`📥 Đang đăng nhập`);
+	else
+		log(`📥 Đang đăng nhập vào \"${username}\"`);
+		
 	info({ now: `Bước 1`, end: `Bước 5`, progress: 10, checkDetail: "Đang đăng nhập" });
 	let loginResponse = {}
 
@@ -284,7 +293,7 @@ const __switchAccount = async ({
 	log(` + CustomerID : ${loginResponse.customer_id}`);
 	log(` + Expires    : ${loginResponse.expires_in}`);
 
-	return loginResponse
+	return { token: loginResponse.access_token }
 }
 
 const addIntoCart = async ({

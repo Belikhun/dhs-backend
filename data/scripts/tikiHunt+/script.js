@@ -833,6 +833,7 @@
 
 								for (var orderNth = 0; orderNth < localAccountList.length; orderNth++) {
 									let account = localAccountList[orderNth];
+									let token = null;
 				
 									runInfo({
 										itemStatus: `Lần Mua ${orderNth + 1}/${localAccountList.length}`,
@@ -858,16 +859,17 @@
 											}
 
 											if (t === 1)
-												await __switchAccount({
+												token = await __switchAccount({
 													username: account.u,
 													password: account.p,
-													hide: account.h || false
+													censor: account.h || false
 												});
 
 											sounds.notification();
 											await __doOrder({
 												id: item.pid,
 												count: settings.autobuyCount,
+												token: token.token,
 												paymentMethod: settings.paymentMethod,
 												isInjectedAccount: account.h || false
 											})
@@ -890,13 +892,14 @@
 											clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
 										}
 
-										try {
-											log(`🛒 Đang dọn dẹp giỏ hàng`);
-											await __clearCart();
-										} catch(e) {
-											log(`🛒 Không thể xóa Giỏ Hàng`);
-											clog("ERRR", e);
-										}
+										if (token)
+											try {
+												log(`🛒 Đang dọn dẹp giỏ hàng`);
+												await __clearCart();
+											} catch(e) {
+												log(`🛒 Không thể xóa Giỏ Hàng`);
+												clog("ERRR", e);
+											}
 
 										continue;
 									}
