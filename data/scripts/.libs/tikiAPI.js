@@ -6,6 +6,7 @@ const HOSTADDRESS = "https://tiki.vn";
 let updateItemData = true;
 let itemInitPrice = null;
 let apiToken = null;
+let guestToken = null;
 let itemData = {}
 let beaconNote = []
 
@@ -13,29 +14,46 @@ let ID = null;
 let PID = null;
 let CFID = null;
 
-const getToken = async (retry = true) => {
+const getToken = async (retry = true, guestTokenAsFallback = false) => {
 	let at = await this.getCookie("https://tiki.vn", "TIKI_ACCESS_TOKEN");
+	if (at && at.value) {
+		apiToken = at.value;
+		return at.value;
+	} else if (apiToken)
+		return apiToken;
 
-	if (!at || !at.value) {
-		let gt = await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN");
+	let gt = await this.getCookie("https://tiki.vn", "TIKI_GUEST_TOKEN");
+	if (gt && gt.value) {
+		guestToken = gt.value;
+		return gt.value;
+	} else if (guestToken)
+		return guestToken;
 
-		if (!gt || !gt.value) {
-			if (retry) {
-				writeLog("🔐 Cập nhật Cookies 🍪");
-				await myajax({
-					url: `${HOSTADDRESS}/api/v2/me`,
-					method: "GET"
-				});
+	if (retry) {
+		if (guestTokenAsFallback) {
+			writeLog("🔐 Đang lấy Token Khách 👤");
+			let tokens = await myajax({
+				url: `${HOSTADDRESS}/api/v2/tokens`,
+				method: "POST",
+				json: {
+					grant_type: "guest"
+				}
+			});
 
-				return (await getToken(false));
-			} else
-				throw { code: -1, description: "Tiki Token Not Found" }
+			apiToken = null;
+			guestToken = tokens.guest_token;
+			return guestToken;
 		}
 
-		return gt.value;
-	}
+		writeLog("🔐 Cập nhật Cookies 🍪");
+		await myajax({
+			url: `${HOSTADDRESS}/api/v2/me`,
+			method: "GET"
+		});
 
-	return at.value;
+		return (await getToken(false));
+	} else
+		throw { code: -1, description: "Tiki Token Not Found" }
 }
 
 const fetchItemData = async (updateInfo = true) => {

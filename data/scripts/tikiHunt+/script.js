@@ -67,6 +67,7 @@
 			let list = {}
 			let sortedList = []
 			let blackList = await getBlackList();
+			let token = await getToken(true, true);
 
 			heartbeat();
 			if (printLog) {
@@ -80,7 +81,6 @@
 				let pageLoaded = 0;
 				let pageList = [];
 				let start = time();
-				let token = await getToken();
 
 				runInfo({
 					itemStatus: `[${runNth}] ${item.title}`,
