@@ -87,7 +87,7 @@
 		"time"		=>	$timestamp
 	);
 
-	$orderFragment = new fip(ORDERLOG_ROOT ."/fragment.". $result[0]["id"] .".". $timestamp * 10000, "a:0:{}");
+	$orderFragment = new fip(ORDERLOG_ROOT ."/fragment.". $result[0]["id"] .".". $timestamp * 10000 .".". randBetween(1, 99), "a:0:{}");
 	$orderFragment -> write(serialize($data));
 
 	stop(0, "Success!", 200, $data);
