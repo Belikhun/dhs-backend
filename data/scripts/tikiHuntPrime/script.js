@@ -2,7 +2,6 @@
 (async () => {
 	var runNth = 1;
 	var doCheck = true;
-	var beaconNote = []
 	var timeUpdateInterval = null;
 
 	var selectedPageList = []
