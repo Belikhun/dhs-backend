@@ -310,6 +310,7 @@ const __switchAccount = async ({
 	log(`📥 Đăng nhập thành công (${loginTimer.stop}s)`);
 	log(` + CustomerID : ${loginResponse.customer_id}`);
 	log(` + Expires    : ${loginResponse.expires_in}`);
+	apiToken = loginResponse.access_token;
 
 	return { token: loginResponse.access_token }
 }
