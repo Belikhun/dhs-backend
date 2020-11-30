@@ -182,7 +182,7 @@
 
 							if (pageLoaded >= pageCount)
 								resolve();
-								
+
 							return;
 						})
 				}});
@@ -940,8 +940,15 @@
 									});
 								}
 
-								// LOG OUT OF CURRENT ACCOUNT
-								await __switchAccount();
+								try {
+									// LOG OUT OF CURRENT ACCOUNT
+									await __switchAccount({ logOut: true });
+								} catch(e) {
+									log("⚠ Lỗi đã xảy ra khi đăng xuất khỏi tài khoản hiện tại");
+									log(` + Code: ${e.code}`);
+									log(` + MSG : ${e.description || "Không Rõ"}`);
+									log(` + Bỏ qua lỗi: true`);
+								}
 
 								beaconNote = []
 								run();

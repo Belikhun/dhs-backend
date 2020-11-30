@@ -241,6 +241,7 @@ const fetchItemData = async (updateInfo = true) => {
 const __switchAccount = async ({
 	username = null,
 	password = null,
+	logOut = false,
 	censor = false,
 
 	info = runInfo,
@@ -249,7 +250,28 @@ const __switchAccount = async ({
 	clog = window.clog,
 	myajax = window.myajax
 } = {}) => {
-	if (!username || !password)
+	if (logOut) {
+		log(`📤 Đang đăng xuất`);
+
+		try {
+			await myajax({
+				url: `${HOSTADDRESS}/api/v2/account/logout`,
+				method: "GET",
+				header: {
+					"X-Access-Token": await getToken()
+				}
+			});
+
+			log("📤 Đăng xuất thành công");
+		} catch(e) {
+			clog("ERRR", e);
+			log("📤 Không thể đăng xuất! Tool sẽ coi như đăng xuất thành công và tiếp tục chạy!");
+			log(` + Code: ${e.code}`);
+			log(` + MSG : ${e.description || "Không rõ"}`);
+		}
+	}
+
+	if ((!username || !password) && !logOut)
 		throw { code: -1, description: "Tên đăng nhập hoặc mật khẩu bị thiếu" }
 
 	let loginTimer = new stopClock();
@@ -311,6 +333,7 @@ const __switchAccount = async ({
 	log(` + CustomerID : ${loginResponse.customer_id}`);
 	log(` + Expires    : ${loginResponse.expires_in}`);
 	apiToken = loginResponse.access_token;
+	guestToken = null;
 
 	return { token: loginResponse.access_token }
 }

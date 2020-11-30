@@ -182,7 +182,7 @@
 
 							if (pageLoaded >= pageCount)
 								resolve();
-								
+
 							return;
 						});
 				}});
@@ -871,7 +871,7 @@
 										log(`💠 Mua thất bại cho tài khoản ${account.u}! (lần ${orderNth + 1})`);
 										clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
 
-										if (token)
+										if (token && token.token)
 											try {
 												log(`🛒 Đang dọn dẹp giỏ hàng`);
 												await __clearCart({ token: token.token });
@@ -912,8 +912,15 @@
 									});
 								}
 
-								// LOG OUT OF CURRENT ACCOUNT
-								await __switchAccount();
+								try {
+									// LOG OUT OF CURRENT ACCOUNT
+									await __switchAccount({ logOut: true });
+								} catch(e) {
+									log("⚠ Lỗi đã xảy ra khi đăng xuất khỏi tài khoản hiện tại");
+									log(` + Code: ${e.code}`);
+									log(` + MSG : ${e.description || "Không Rõ"}`);
+									log(` + Bỏ qua lỗi: true`);
+								}
 
 								beaconNote = []
 								run();
