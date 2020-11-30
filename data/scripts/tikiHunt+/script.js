@@ -179,6 +179,10 @@
 							log(` + Bỏ qua lỗi: true`);
 
 							pageLoaded++;
+
+							if (pageLoaded >= pageCount)
+								resolve();
+								
 							return;
 						})
 				}});
