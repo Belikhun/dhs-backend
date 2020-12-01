@@ -36,22 +36,8 @@
 		log(`|===========================|`);
 		log(`|   Tiki Deal Hunter Prime  |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 19:40:30 19/05/2020  |`);
+		log(`|  LU: 10:04:43 01/12/2020  |`);
 		log(`|===========================|`);
-
-		const getBlackList = async () => {
-			let data = await this.dataLoad("tikiHuntBlackList");
-			return Object.keys(data.tikiHuntBlackList || {});
-		}
-
-		const saveBlackList = async (list) => {
-			let listObj = {}
-			for (let i of list)
-				if (!isNaN(i) && i !== "")
-					listObj[i] = true;
-
-			await this.dataSave({ tikiHuntBlackList: listObj });
-		}
 
 		const scanItem = async ({
 			sortBy = "sale",
@@ -710,7 +696,7 @@
 					runInfo({
 						checkDetail: `Item ID ${item.id}`,
 						dataType: "time"
-					})
+					});
 
 					let blackList = await getBlackList();
 					if (blackList.indexOf(item.id) !== -1) {

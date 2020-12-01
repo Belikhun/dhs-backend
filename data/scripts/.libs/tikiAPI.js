@@ -56,6 +56,20 @@ const getToken = async (retry = true, guestTokenAsFallback = false) => {
 		throw { code: -1, description: "Tiki Token Not Found" }
 }
 
+const getBlackList = async () => {
+	let data = await this.dataLoad("tikiHuntBlackList");
+	return Object.keys(data.tikiHuntBlackList || {}).map(i => parseInt(i));
+}
+
+const saveBlackList = async (list) => {
+	let listObj = {}
+	for (let i of list)
+		if (!isNaN(i) && i !== "")
+			listObj[i] = true;
+
+	await this.dataSave({ tikiHuntBlackList: listObj });
+}
+
 const fetchItemData = async (updateInfo = true) => {
 	if (updateItemData) {
 		itemData = await myajax({

@@ -20,7 +20,14 @@
         "__switchAccount",
         "addIntoCart",
         "__doOrder",
-        "__clearCart"
+        "__clearCart",
+        "getBlackList",
+        "getToken",
+        "fetchItemData",
+        "ID",
+        "PID",
+        "CFID",
+        "saveBlackList"
     ],
     "reservedStrings": [],
     "rotateStringArray": true,
