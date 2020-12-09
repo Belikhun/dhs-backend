@@ -36,22 +36,8 @@
 		log(`|===========================|`);
 		log(`|    Tiki Deal Hunter Pro   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 19:40:30 19/05/2020  |`);
+		log(`|  LU: 10:04:43 01/12/2020  |`);
 		log(`|===========================|`);
-
-		const getBlackList = async () => {
-			let data = await this.dataLoad("tikiHuntBlackList");
-			return Object.keys(data.tikiHuntBlackList || {});
-		}
-
-		const saveBlackList = async (list) => {
-			let listObj = {}
-			for (let i of list)
-				if (!isNaN(i) && i !== "")
-					listObj[i] = true;
-
-			await this.dataSave({ tikiHuntBlackList: listObj });
-		}
 
 		const scanItem = async ({
 			sortBy = "sale",
@@ -895,15 +881,18 @@
 											clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
 										}
 
-										if (token)
+										if (token && token.token)
 											try {
 												log(`🛒 Đang dọn dẹp giỏ hàng`);
-												await __clearCart();
+												await __clearCart({ token: token.token });
 											} catch(e) {
 												log(`🛒 Không thể xóa Giỏ Hàng`);
 												clog("ERRR", e);
+												let ex = parseException(e);
+												log(` + Code       : ${ex.code}`);
+												log(` + Description: ${ex.description}`);
 											}
-
+										
 										continue;
 									}
 
