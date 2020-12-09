@@ -881,15 +881,18 @@
 											clog("ERRR", `doOrder ${account.u} [${item.pid}]`, e);
 										}
 
-										if (token)
+										if (token && token.token)
 											try {
 												log(`🛒 Đang dọn dẹp giỏ hàng`);
-												await __clearCart();
+												await __clearCart({ token: token.token });
 											} catch(e) {
 												log(`🛒 Không thể xóa Giỏ Hàng`);
 												clog("ERRR", e);
+												let ex = parseException(e);
+												log(` + Code       : ${ex.code}`);
+												log(` + Description: ${ex.description}`);
 											}
-
+										
 										continue;
 									}
 
