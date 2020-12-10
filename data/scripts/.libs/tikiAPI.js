@@ -277,15 +277,16 @@ const __switchAccount = async ({
 			});
 
 			log("📤 Đăng xuất thành công");
+			return;
 		} catch(e) {
-			clog("ERRR", e);
+			clog("ERRR", `logout(${censor ? "" : username}): `, e);
 			log("📤 Không thể đăng xuất! Tool sẽ coi như đăng xuất thành công và tiếp tục chạy!");
 			log(` + Code: ${e.code}`);
 			log(` + MSG : ${e.description || "Không rõ"}`);
 		}
 	}
 
-	if ((!username || !password) && !logOut)
+	if (!username || !password)
 		throw { code: -1, description: "Tên đăng nhập hoặc mật khẩu bị thiếu" }
 
 	let loginTimer = new stopClock();
@@ -408,6 +409,7 @@ const __doOrder = async ({
 	shippingAddress = null,
 	isInjectedAccount = false,
 	platform = "frontend-desktop",
+	accountDisabledHandler = async () => {},
 
 	info = runInfo,
 	log = writeLog,
@@ -499,7 +501,8 @@ const __doOrder = async ({
 		}
 
 		shippingID = shippingID[0].id;
-	}
+	} else
+		log(`🏡 Địa chỉ được định sẵn! Bỏ qua lấy thông tin địa chỉ`);
 
 	log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
 	heartbeat();
@@ -552,6 +555,24 @@ const __doOrder = async ({
 		log(` + MSG : ${cartInfo.error.message || "Không Rõ"}`);
 		throw { code: -1, description: "Không thể lấy Giỏ Hàng", data: cartInfo.error }
 	}
+
+	if (typeof cartInfo.messages === "object")
+		for (let item of cartInfo.messages) {
+			if (item.type !== "error")
+				continue;
+
+			await panic("Lỗi khi lấy Giỏ Hàng");
+			log("⚠ Tiki trả về mã lỗi");
+			log(` + Code: ${item.error_code}`);
+			log(` + MSG : ${item.message || "Không Rõ"}`);
+
+			if (item.message.includes(`Tài khoản của bạn không thể tiếp tục thanh toán`)) {
+				log(`⛔ Tài khoản đã bị khóa!`);
+				await accountDisabledHandler();
+			}
+
+			throw { code: -1, description: "Lấy Giỏ Hàng có lỗi", data: item }
+		}
 	
 	if (!cartInfo.last_payment_method || cartInfo.last_payment_method.method !== paymentMethod) {
 		log(`🛒 Đang chuyển sang: ${paymentMethod}`);
