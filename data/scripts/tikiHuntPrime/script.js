@@ -623,6 +623,7 @@
 				]
 			},
 			accountList: { type: "textarea", label: "Danh Sách Tài Khoản", height: "180px", value: prevAccountList, required: true, depend: "autobuy", save: false },
+			removeDisabled: { type: "checkbox", label: "Tự động loại bỏ tài khoản bị khóa", color: "pink", value: false, depend: "autobuy" },
 			limitOrder: { type: "checkbox", label: "Giới hạn số lượng mua cho mỗi tài khoản", color: "blue", value: false, depend: "autobuy" },
 			limitOrderTime: { type: "number", label: "Thời gian giới hạn (phút)", value: 30, depend: "limitOrder" },
 			limitOrderCount: { type: "number", label: "Số lượng mua tối đa trong thời gian giới hạn", value: 5, depend: "limitOrder" },
@@ -650,14 +651,24 @@
 			let startCheck = time();
 			log("");
 			log(`🛫 Bắt đầu kiểm tra (lần ${runNth})`);
-			await __doUpdate();
+
+			try {
+				await __doUpdate();
+			} catch(e) {
+				log(`🛫 Lỗi đã xảy ra tại lần kiểm tra vừa rồi`);
+				clog("ERRR", `__doUpdate(${runNth}): `, e);
+				let ex = parseException(e);
+				log(` + Code       : ${ex.code}`);
+				log(` + Description: ${ex.description}`);
+			}
+
 			log(`🛫 KIỂM TRA HOÀN THÀNH`);
 			log(` + Thời gian: ${(time() - startCheck).toFixed(2)}s`);
 
 			// Reset
 			runNth++;
 			start = time();
-			runInfo({ background: "dark" });
+			runInfo({ background: "dark", dataType: "time" });
 		}
 
 		timeUpdateInterval = setInterval(() => {
@@ -798,6 +809,11 @@
 										log(`🤝 🛑 Không có thông tin Sale`);
 								}
 
+								if (accountList.length === 0) {
+									await triggerError({ code: -1, description: `👥 Không còn tài khoản nào để đặt hàng! Dừng chạy...` });
+									return;
+								}
+
 								let successCount = 0;
 								log(`💠 BẮT ĐẦU ĐẶT MUA`);
 								order();
@@ -840,7 +856,24 @@
 												id: item.pid,
 												count: settings.autobuyCount,
 												token: token.token,
-												paymentMethod: settings.paymentMethod
+												paymentMethod: settings.paymentMethod,
+												shippingAddress: account.a || null,
+												accountDisabledHandler: async () => {
+													if (!settings.removeDisabled)
+														return;
+
+													log(`⛔ Đang loại bỏ tài khoản ${account.u}`);
+													accountList = accountList.filter((i) => i.u !== account.u);
+
+													log("👥 Đang lưu danh sách tài khoản");
+													await this.dataSave({
+														"tikiMA.accountList": accountList
+															.map((i) => `${i.u}:${i.p}${i.a ? `@${i.a}` : ""}`)
+															.join("\n")
+													});
+												},
+
+												panic: (t) => log(t)
 											});
 
 											successCount++;
@@ -899,6 +932,11 @@
 											...beaconNote
 										].join("\n")
 									});
+								}
+
+								if (accountList.length === 0) {
+									await triggerError({ code: -1, description: `👥 Không còn tài khoản nào để đặt hàng! Dừng chạy...` });
+									return;
 								}
 
 								try {
