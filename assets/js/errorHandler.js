@@ -53,9 +53,5 @@ const errorHandler = async (error, returnable = true) => {
 		}
     })
     
-    gtag("event", "errored", {
-        event_category: "error",
-        event_label: "exception",
-        value: `${e.code} >>> ${e.description}`
-    });
+    _gaq.push(["_trackEvent", core.session.keyData.name, "errored", `${e} >>> ${d}`]);
 }

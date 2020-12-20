@@ -318,6 +318,43 @@ body {
     margin-top: 10px;
 }
 
+#mainContainer .orderLogs .orderLogList > .group > .item > .textView > .showMore {
+    position: relative;
+    display: block;
+    
+    font-family: Nunito;
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: uppercase;
+    text-align: center;
+
+    cursor: pointer;
+    border-radius: 4px;
+    background-color: rgba(128, 128, 128, 0.1);
+
+    transition: background-color 0.2s ease-out;
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .textView > .showMore:hover {
+    background-color: rgba(128, 128, 128, 0.3);
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .textView > .showMore::before {
+    content: "Hiện Chi Tiết";
+    display: inline-block;
+    margin: 2px 0;
+    color: rgb(94, 94, 94);
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .textView > .showMore.active::before {
+    content: "Ẩn Chi Tiết";
+    color: rgb(65, 65, 65);
+}
+
+#mainContainer .orderLogs .orderLogList > .group > .item > .textView > .showMore:not(.active) ~ li {
+    display: none;
+}
+
 @media only screen and (max-width: 650px) {
     #mainContainer .orderLogs .orderLogList > .group > .item > .detail {
         flex-direction: column;
