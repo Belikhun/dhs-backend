@@ -27,34 +27,54 @@
 			stop(31, "Access Denied!", 403);
 
 		checkToken();
-		
-		// READ CHUNKS
-		$orderChunk = Array();
-		$orderChunks = glob(ORDERLOG_ROOT ."/chunk.*", GLOB_NOSORT);
+		$showCount = (int) getForm("show", 40);
+		$pageNth = (int) getForm("page", 1);
+		$orderList = Array();
 
-		foreach ($orderChunks as $file)
-			$orderChunk = array_merge($orderChunk, unserialize((new fip($file)) -> read()));
-
-		// MERGE FILES
-		$orderFragment = Array();
+		// READ FRAGMENTS
 		$orderFragments = glob(ORDERLOG_ROOT ."/fragment.*", GLOB_NOSORT);
 
 		foreach ($orderFragments as $file)
-			array_push($orderFragment, unserialize((new fip($file)) -> read()));
+			array_push($orderList, unserialize((new fip($file)) -> read()));
 
-		if (count($orderFragment) > 200) {
-			(new fip(ORDERLOG_ROOT ."/chunk.". $orderFragment[0]["time"] * 10000 .".". $orderFragment[count($orderFragment) - 1]["time"] * 10000, "a:0:{}")) -> write(serialize($orderFragment));
+		if (count($orderList) > 200) {
+			(new fip(ORDERLOG_ROOT ."/chunk.". $orderList[0]["time"] * 10000 .".". $orderList[count($orderList) - 1]["time"] * 10000, "a:0:{}")) -> write(serialize($orderList));
 
 			// CLEAN
 			foreach ($orderFragments as $file)
 				unlink($file);
 		}
 
+		// READ CHUNKS
+		$orderChunks = glob(ORDERLOG_ROOT ."/chunk.*", GLOB_NOSORT);
+		foreach ($orderChunks as $chunk)
+			$orderList = array_merge($orderList, unserialize((new fip($chunk)) -> read()));
+
 		// DATA PROCESS
-		$orderList = array_merge($orderFragment, $orderChunk);
-		usort($orderList, function($a, $b) { return $a["time"] > $b["time"]; });
-		
-		stop(0, "Success", 200, array_reverse($orderList), true);
+		usort($orderList, function($a, $b) { return $a["time"] < $b["time"]; });
+
+		$ordersTotal = max(count($orderList), 1);
+		$maxPage = (int) floor($ordersTotal / $showCount) + (($ordersTotal % $showCount === 0) ? 0 : 1);
+		$from = ($pageNth - 1) * $showCount;
+		$to = min($pageNth * $showCount - 1, $ordersTotal - 1);
+
+		if ($pageNth < 1 || $pageNth > $maxPage)
+			stop(6, "Trang bạn yêu cầu không nằm trong khoảng thỏa mãn", 400, Array(
+				"total" => $ordersTotal,
+				"maxPage" => $maxPage
+			));
+
+		$slicedOrders = array_slice($orderList, $from, $to - $from + 1);
+
+		stop(0, "Success", 200, Array(
+			"total" => $ordersTotal,
+			"perPage" => $showCount,
+			"maxPage" => $maxPage,
+			"pageNth" => $pageNth,
+			"from" => $from + 1,
+			"to" => $to + 1,
+			"lists" => $slicedOrders
+		), true);
 	}
 
     if (!isset($_SESSION["authKey"]))

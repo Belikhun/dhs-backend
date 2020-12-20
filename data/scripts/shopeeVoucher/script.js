@@ -20,7 +20,7 @@
 
 		info({ hide: true });
 
-		const CSRF = (await this.getCookie(HOSTADDRESS, "csrftoken")).value ?? null;
+		const CSRF = (await this.getCookie(HOSTADDRESS, "csrftoken")).value || null;
 
 		if (!CSRF) {
 			rejectSetup("Không tìm thấy CSRF Token. Đảm bảo bạn đã đăng nhập vào Shopee!");
@@ -98,10 +98,7 @@
 			return;
 		}
 
-		let voucherSetupData = {
-			note: { type: "note", level: "info", text: `<b style="font-size: 14px">LỰA CHỌN DANH SÁCH VOUCHER (${voucherList.length})</b>` }
-		}
-
+		let voucherSetupData = {}
 		for (let item of voucherList)
 			voucherSetupData[item.name] = {
 				type: "checkbox",
@@ -110,7 +107,12 @@
 				value: false
 			}
 
-		const voucherSetup = await setup(voucherSetupData, { confirm: "Tiếp", saveKey: "vouchers" });
+		const voucherSetup = await setup({
+				note: { type: "note", level: "info", text: `<b style="font-size: 14px">LỰA CHỌN DANH SÁCH VOUCHER (${voucherList.length})</b>` },
+				...voucherSetupData
+			},
+			{ confirm: "Tiếp", saveKey: "vouchers" }
+		);
 
 		log("DANH SÁCH VOUCHER:");
 

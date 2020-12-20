@@ -23,6 +23,6 @@
     if (getUserData($_SESSION["username"])["id"] !== "admin")
         stop(31, "Access Denied!", 403);
 
-    $username = getForm("u");
+    $username = getForm("username");
 
     stop(0, "Thành công!", 200, $username ? $accountData[$username] : $accountData);

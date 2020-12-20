@@ -11,7 +11,6 @@ const core = {
 	async init(set) {
         clog("info", "Initializing...");
 		var initTime = new stopClock();
-		cookie.set("__s_m", true);
 
         set(0, "Initializing: popup");
         popup.init();
@@ -31,10 +30,10 @@ const core = {
 		set(50, "Initializing: syslogs");
 		await this.syslogs.init();
 		
-		set(50, "Initializing: sounds");
-        await sounds.init((p, t) => {
-            set(50 + p*0.5, `Initializing: sounds (${t})`);
-        });
+		//set(50, "Initializing: sounds");
+        //await sounds.init((p, t) => {
+        //    set(50 + p*0.5, `Initializing: sounds (${t})`);
+        //});
         
 		clog("debg", "Initialisation took:", {
             color: flatc("blue"),
@@ -124,6 +123,7 @@ const core = {
 		reloadBtn: $("#orderLogReloadBtn"),
 		searchBox: $("#orderLogSearchBox"),
 
+		/** @type Pager */
 		pager: null,
 		pageControl: {
 			first: $("#orderLogPageFirst"),
@@ -134,9 +134,13 @@ const core = {
 		},
 
 		async init() {
-			this.reloadBtn.addEventListener("mouseup", () => this.reload());
+			this.reloadBtn.addEventListener("mouseup", () => this.pager.render());
 
-			this.pager = new pager(this.container, 20);
+			this.pager = new Pager(this.container, 40);
+			this.pager.api = {
+				url: "/api/analytics/order",
+				token: API_TOKEN
+			}
 
 			this.pager.renderItem((item, container) => {
 				container.appendChild(htmlToElement(`
@@ -184,6 +188,7 @@ const core = {
 							(item.note && typeof item.note === "object")
 								? `
 									<ul class="textView">
+										<span class="showMore" onclick="this.classList.toggle('active');"></span>
 										${item.note.map(i => `<li>${i}</li>`).join("")}
 									</ul>
 								`
@@ -215,27 +220,13 @@ const core = {
 			this.pageControl.back.addEventListener("mouseup", () => this.pager.back());
 			this.pageControl.next.addEventListener("mouseup", () => this.pager.next());
 			this.pageControl.last.addEventListener("mouseup", () => this.pager.setPage("last"));
-			await this.reload();
+			await this.pager.render();
 
-			clog("okay", "Initialised:", {
+			clog("OKAY", "Initialised:", {
                 color: flatc("red"),
                 text: "core.orderLogs"
             });
-		},
-
-		async reload() {
-			let response = await myajax({
-				url: "/api/analytics/order",
-				method: "POST",
-				form: {
-					action: "getData",
-					token: API_TOKEN
-				}
-			})
-	
-			this.pager.list = response.data;
-			sounds.scan();
-		},
+		}
 	},
 
 	keysManager: {
@@ -339,7 +330,7 @@ const core = {
 				this.reload();
 			});
 	
-			this.pager = new pager(this.container, 10);
+			this.pager = new Pager(this.container, 20);
 			
 			this.pager.renderItem((item, container) => {
 				let tagsString = "";
