@@ -2,9 +2,6 @@
 (async () => {
 	let infoUpdateInterval = null;
 	let doCheck = true;
-	let beaconNote = []
-
-	const HOSTADDRESS = "https://tiki.vn";
 
 	onCancel(() => {
 		clearInterval(infoUpdateInterval);
@@ -399,7 +396,7 @@
 							url: `${HOSTADDRESS}/api/v2/carts/mine/coupons/${settings.coupon}`,
 							method: "PUT",
 							header: {
-								token: await getToken()
+								"X-Access-Token": await getToken()
 							}
 						});
 
@@ -409,7 +406,7 @@
 								include: `price_summary`
 							},
 							header: {
-								token: await getToken()
+								"X-Access-Token": await getToken()
 							}
 						})
 	

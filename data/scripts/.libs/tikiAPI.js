@@ -436,8 +436,8 @@ const __doOrder = async ({
 			clog,
 			myajax
 		});
-		heartbeat();
-
+		
+		heartbeat(); 
 		if (coupon !== "") {
 			info({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 
@@ -447,7 +447,9 @@ const __doOrder = async ({
 				await myajax({
 					url: `${HOSTADDRESS}/api/v2/carts/mine/coupons/${coupon}`,
 					method: "PUT",
-					header: { token }
+					header: {
+						"X-Access-Token": token
+					}
 				})
 			} catch(e) {
 				await panic("Lỗi khi áp dụng mã Coupon");
