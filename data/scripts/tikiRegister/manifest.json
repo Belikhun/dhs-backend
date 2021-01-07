@@ -1,0 +1,9 @@
+{
+    "name": "Tiki Account Register",
+    "description": "Tự động đăng kí tài khoản Tiki",
+    "site": "tiki.vn/",
+    "match": "*",
+    "requires": ["tikiAPI"],
+    "version": 1,
+    "hide": true
+}

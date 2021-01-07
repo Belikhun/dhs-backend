@@ -48,10 +48,7 @@
 		log(`|  LU: 00:32:22 24/03/2020  |`);
 		log(`|===========================|`);
 
-		const getBlackList = async () => {
-			let data = await this.dataLoad("lazadaHuntBlackList");
-			return Object.keys(data.lazadaHuntBlackList || {});
-		}
+		const getBlackList = async () => Object.keys(await this.dataLoad("lazadaHuntBlackList") || {}).map(i => parseInt(i));
 
 		const saveBlackList = async (list) => {
 			let listObj = {}

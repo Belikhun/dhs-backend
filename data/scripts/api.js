@@ -15,7 +15,7 @@ const preRunInit = async () => {}
 const run = () => {}
 const order = () => {}
 
-const runInfo = async ({
+const runInfo = ({
     status = null,
     time = null,
     progress = null,
@@ -75,7 +75,12 @@ const proxy = {
         jarID,
         url,
         name
-    }) {}
+    }) {},
+
+    /**
+     * @return {Array}
+     */
+    readyList() {}
 }
 const writeLog = (text) => {}
 const logGroup = (title) => { return { write(text) {}, setTitle(title) {}, setColor(color) {} } }

@@ -56,10 +56,7 @@ const getToken = async (retry = true, guestTokenAsFallback = false) => {
 		throw { code: -1, description: "Tiki Token Not Found" }
 }
 
-const getBlackList = async () => {
-	let data = await this.dataLoad("tikiHuntBlackList");
-	return Object.keys(data.tikiHuntBlackList || {}).map(i => parseInt(i));
-}
+const getBlackList = async () => Object.keys(await this.dataLoad("tikiHuntBlackList") || {}).map(i => parseInt(i));
 
 const saveBlackList = async (list) => {
 	let listObj = {}

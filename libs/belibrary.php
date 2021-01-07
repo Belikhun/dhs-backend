@@ -1,12 +1,12 @@
 <?php
 	//? |-----------------------------------------------------------------------------------------------|
-	//? |  /lib/belibrary.php                                                                           |
+	//? |  /libs/belibrary.php                                                                           |
 	//? |                                                                                               |
 	//? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
 	//? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 	//? |-----------------------------------------------------------------------------------------------|
 
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/logs.php";
 
 	setlocale(LC_TIME, "vi_VN.UTF-8");
 
@@ -696,9 +696,9 @@
 		print "<!-- BEGIN ERROR PAGE -->";
 		
 		if ($useIframe)
-			print "<iframe src=\"/lib/error.php\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: unset; overflow: auto;\"></iframe>";
+			print "<iframe src=\"/libs/error.php\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: unset; overflow: auto;\"></iframe>";
 		else
-			require $_SERVER["DOCUMENT_ROOT"]. "/lib/error.php";
+			require $_SERVER["DOCUMENT_ROOT"]. "/libs/error.php";
 	}
 
 	//! Error Handler

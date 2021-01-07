@@ -7,12 +7,13 @@
 
 const parseException = (error) => {
 	return {
-		code: (error.code && error.data && error.data.code)
+		code: (typeof error.code === "number" && error.data && error.data.code)
 			?	`[${error.code} ${error.data.code}]`
-			:	error.code
-			||	error.name
-			||	error.data.name
-			||	`${error.data.data.file}:${error.data.data.line}`,
+			:	(typeof error.code === "number")
+				?	error.code
+				:	error.name
+				||	error.data.name
+				||	`${error.data.data.file}:${error.data.data.line}`,
 	
 		description: (error.description && error.data && error.data.description)
 			?	`${error.description} (${error.data.description}) ${(error.data.data && error.data.data.file) ? `${error.data.data.file}:${error.data.data.line}` : ""}`
@@ -53,5 +54,9 @@ const errorHandler = async (error, returnable = true) => {
 		}
     })
     
-    _gaq.push(["_trackEvent", core.session.keyData.name, "errored", `${e} >>> ${d}`]);
+    gtag("event", "errored", {
+        event_category: "error",
+        event_label: "exception",
+        value: `${e.code} >>> ${e.description}`
+    });
 }

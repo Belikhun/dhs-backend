@@ -9,9 +9,9 @@
     // SET PAGE TYPE
     define("PAGE_TYPE", "API");
     
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ratelimit.php";
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/ratelimit.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/belibrary.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/logs.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
     if (!isLoggedIn())
@@ -24,7 +24,7 @@
     $password = password_hash(reqForm("password"), PASSWORD_DEFAULT);
     $name = htmlspecialchars(strip_tags(reqForm("name")));
 
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/account.php";
     if (getUserData($_SESSION["username"])["id"] !== "admin")
         stop(31, "Access Denied!", 403);
 

@@ -52,10 +52,7 @@
 		log(`|  LU: 20:01:48 03/11/2019  |`);
 		log(`|===========================|`);
 
-		const getBlackList = async () => {
-			let data = await this.dataLoad("sendoHuntBlackList");
-			return Object.keys(data.sendoHuntBlackList || {});
-		}
+		const getBlackList = async () => Object.keys(await this.dataLoad("sendoHuntBlackList") || {}).map(i => parseInt(i));
 
 		const saveBlackList = async (list) => {
 			let listObj = {}

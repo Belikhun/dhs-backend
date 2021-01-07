@@ -9,9 +9,9 @@
     // SET PAGE TYPE
     define("PAGE_TYPE", "API");
     
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ratelimit.php";
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/ratelimit.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/belibrary.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/logs.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
     if (!isLoggedIn())
@@ -31,7 +31,7 @@
             stop(16, "Tên người dùng không được vượt quá 34 kí tự", 400);
     }
 
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/account.php";
     $userdata = getUserData($username);
 
     if (isset($_POST["password"])) {

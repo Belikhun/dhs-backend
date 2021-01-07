@@ -25,10 +25,7 @@
 		log(`|  LU: 17:37:23 29/05/2020  |`);
 		log(`|===========================|`);
 
-		const getBlackList = async () => {
-			let data = await this.dataLoad("tikiHuntBlackList");
-			return Object.keys(data.tikiHuntBlackList || {});
-		}
+		const getBlackList = async () => Object.keys(await this.dataLoad("tikiHuntBlackList") || {}).map(i => parseInt(i));
 
 		const saveBlackList = async (list) => {
 			let listObj = {}
@@ -581,7 +578,7 @@
 		
 		changeAllListPage(CURRENT_PAGE);
 
-		let prevAccountList = (await this.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
+		let prevAccountList = (await this.dataLoad("tikiMA.accountList")) || "";
 
 		const settings = await setup({
 			delay: { type: "number", label: "TGN", value: 10 },

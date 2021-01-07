@@ -41,10 +41,7 @@
 		log(`|  LU: 19:40:30 19/05/2020  |`);
 		log(`|===========================|`);
 
-		const getBlackList = async () => {
-			let data = await this.dataLoad("tikiHuntBlackList");
-			return Object.keys(data.tikiHuntBlackList || {});
-		}
+		const getBlackList = async () => Object.keys(await this.dataLoad("tikiHuntBlackList") || {}).map(i => parseInt(i));
 
 		const saveBlackList = async (list) => {
 			let listObj = {}
@@ -624,7 +621,7 @@
 		
 		changeAllListPage(CURRENT_PAGE);
 
-		let prevAccountList = (await this.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
+		let prevAccountList = (await this.dataLoad("tikiMA.accountList")) || "";
 
 		const settings = await setup({
 			checkPriceHistory: { type: "checkbox", label: "Kiểm tra lịch sử giá", color: "blue", value: false },

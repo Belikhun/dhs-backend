@@ -6,9 +6,9 @@
     //? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
     //? |-----------------------------------------------------------------------------------------------|
     
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ratelimit.php";
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ezsql.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/ratelimit.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/belibrary.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/ezsql.php";
 	require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
 
 	define("ORDERLOG_ROOT", $_SERVER["DOCUMENT_ROOT"] ."/data/order");

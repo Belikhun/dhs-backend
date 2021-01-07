@@ -158,7 +158,7 @@
 		log("Đã lấy thông tin Item");
 	
 		log("Đang chờ cài đặt từ người dùng");
-		let prevAccountList = (await this.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
+		let prevAccountList = (await this.dataLoad("tikiMA.accountList")) || "";
 
 		// Wait for Account List
 		const account = await setup({
@@ -290,7 +290,6 @@
 
 						if (account.c <= 0) {
 							log(`🏳 Đã mua đủ số lượng cho tài khoản ${account.u}`);
-							logs.setColor(oscColor("gray"));
 
 							return;
 						}
@@ -325,7 +324,7 @@
 								let __clog = window.clog;
 								let clog = (level, ...args) => {
 									args = [{
-										text: id,
+										text: SCRIPT.id,
 										color: flatc("green"),
 										padding: 6,
 										seperate: true
@@ -362,25 +361,21 @@
 									method = "GET",
 									query = {},
 									form = {},
-									json = {},
+									json,
 									header = {},
-									formType = "json",
-									type = "json",
 									force = false,
 									changeState = true,
 									reRequest = true,
 									withCredentials = false,
 									timeout = 0
 								}) => {
-									let formData = (type === "json") ? json : form;
-
 									let response = await proxy.request({
 										server,
 										url,
 										method,
 										query,
-										form: formData,
-										formType,
+										form: json || form,
+										formType: (json) ? "json" : "data",
 										header,
 										jarID,
 										force,

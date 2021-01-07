@@ -53,10 +53,7 @@
 		log(`|  LU: 19:58:03 11/01/2020  |`);
 		log(`|===========================|`);
 
-		const getBlackList = async () => {
-			let data = await this.dataLoad("shopeeHuntBlackList");
-			return Object.keys(data.shopeeHuntBlackList || {});
-		}
+		const getBlackList = async () => Object.keys(await this.dataLoad("shopeeHuntBlackList") || {}).map(i => parseInt(i));
 
 		const saveBlackList = async (list) => {
 			let listObj = {}

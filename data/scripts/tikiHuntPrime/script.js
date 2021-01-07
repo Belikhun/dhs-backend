@@ -600,7 +600,7 @@
 		
 		changeAllListPage(CURRENT_PAGE);
 
-		let prevAccountList = (await this.dataLoad("tikiMA.accountList"))["tikiMA.accountList"] || "";
+		let prevAccountList = (await this.dataLoad("tikiMA.accountList")) || "";
 
 		const settings = await setup({
 			checkPriceHistory: { type: "checkbox", label: "Kiểm tra lịch sử giá", color: "blue", value: false },
