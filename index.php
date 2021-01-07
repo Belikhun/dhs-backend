@@ -9,7 +9,7 @@
     // SET PAGE TYPE
     define("PAGE_TYPE", "NORMAL");
     
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/belibrary.php";
     require_once $_SERVER["DOCUMENT_ROOT"] ."/data/config.php";
     header("Cache-Control: max-age=0, must-revalidate", true);
     
@@ -22,7 +22,7 @@
     $id = null;
 
     if (isLoggedIn()) {
-        require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
+        require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/account.php";
         $loggedIn = true;
         $username = $_SESSION["username"];
         $userdata = getUserData($username);

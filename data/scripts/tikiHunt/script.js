@@ -39,10 +39,7 @@
 		log(`|  LU: 18:24:27 14/05/2020  |`);
 		log(`|===========================|`);
 
-		const getBlackList = async () => {
-			let data = await this.dataLoad("tikiHuntBlackList");
-			return Object.keys(data.tikiHuntBlackList || {});
-		}
+		const getBlackList = async () => Object.keys(await this.dataLoad("tikiHuntBlackList") || {}).map(i => parseInt(i));
 
 		const saveBlackList = async (list) => {
 			let listObj = {}

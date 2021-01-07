@@ -9,9 +9,9 @@
 	// SET PAGE TYPE
 	define("PAGE_TYPE", "API");
 	
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ratelimit.php";
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/ratelimit.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/belibrary.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/logs.php";
 
 	if (isLoggedIn())
 		stop(12, "Đã đăng nhập bằng tài khoản: ". $_SESSION["username"], 400);
@@ -26,7 +26,7 @@
 	if (!isset($_SESSION["captcha"]) || $captcha !== $_SESSION["captcha"])
 		stop(8, "Sai Captcha", 403);
 
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/account.php";
 	$res = addUser(sprintf("r%04d", randBetween(0, 9999)), $username, password_hash($password, PASSWORD_DEFAULT), $username);
 	
 	if ($res === USER_ADD_SUCCESS) {

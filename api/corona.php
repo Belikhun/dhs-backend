@@ -1,7 +1,7 @@
 <?php
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ratelimit.php";
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/cache.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/ratelimit.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/belibrary.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/cache.php";
 
 	define("PAGE_TYPE", "API");
 

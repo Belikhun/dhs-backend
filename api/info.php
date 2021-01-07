@@ -9,12 +9,12 @@
     // SET PAGE TYPE
     define("PAGE_TYPE", "API");
     
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/ratelimit.php";
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/belibrary.php";
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/logs.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/ratelimit.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/belibrary.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/logs.php";
 
     $username = reqQuery("u");
-    require_once $_SERVER["DOCUMENT_ROOT"] ."/lib/account.php";
+    require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/account.php";
 
     if (!$data = getUserData($username))
         stop(13, "Không tìm thấy tên người dùng \"$username\"!", 404, Array( "username" => $username ));

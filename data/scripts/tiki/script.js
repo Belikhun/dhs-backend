@@ -183,7 +183,7 @@
 			xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 		});
 	
-		log("CÀI ĐẶT:");
+		log("⚙ CÀI ĐẶT:");
 
 		for (let key of Object.keys(settings))
 			log(` + ` + pleft(key, 18, true) + ` = ${settings[key]}`);
