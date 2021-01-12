@@ -111,14 +111,19 @@
         <script src="/assets/js/errorHandler.js?v=<?php print VERSION; ?>" type="text/javascript"></script>
         <script type="text/javascript" src="/assets/js/splash.js?v=<?php print VERSION; ?>"></script>
         <script type="text/javascript">
-            var mainSplash = new splash(document.body, `<?php print $config["app"]["title"]; ?>`, `<?php print $stripedContestDescription; ?>`, "/api/images/icon");
+            const mainSplash = new splash({
+				container: document.body,
+				name: `<?php print $config["app"]["title"]; ?>`
+            });
 
-            mainSplash.init = async set => {
+            mainSplash.onInit(async (set) => {
                 set(0, "Initializing core.js?v=<?php print VERSION; ?>");
-                await core.init(set);
-            }
+                await core.init((p, d) => set({ p, m: "core", d }));
+            });
 
-            mainSplash.postInit = async set => {
+            mainSplash.onPostInit(async (s) => {
+                let set = (p, d) => s({ p, m: "core", d });
+
                 set(60, "Setting up statusBar");
                 sbar.additem(SERVER.SERVER_SOFTWARE, "server");
                 sbar.additem(SERVER.SERVER_ADDR, "globe");
@@ -141,9 +146,9 @@
                     send_to: "default",
                     event_callback: () => clog("INFO", "Analytics data sent!")
                 });
-            }
+            });
 
-            mainSplash.onErrored = async (error, e, d) => {
+            mainSplash.onError(async (error, e, d) => {
                 if (cookie.get("splashInitSuccess", true) === "false")
                     if (popup.initialized) {
                         let errorDetail = document.createElement("ul");
@@ -187,7 +192,7 @@
                         
                     } else
                         alert(error);
-            }
+            });
         </script>
 
         <!-- Main Content -->
