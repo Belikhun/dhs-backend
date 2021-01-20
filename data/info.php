@@ -31,7 +31,7 @@
 	define("HOST_NAME", "dealhuntersuite.com");
 
 	define("EXTENSION_ID", "ooeeakiohlmkbdmdpfkhkkafgappoijd");
-	define("EXTENSION_VERSION", "7.1");
+	define("EXTENSION_VERSION", "7.2");
 	define("EXTENSION_ZIP_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.zip");
 	define("EXTENSION_CRX_PATH", $_SERVER["DOCUMENT_ROOT"] ."/data/extension.crx");
 

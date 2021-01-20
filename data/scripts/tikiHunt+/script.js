@@ -48,9 +48,12 @@
 			saleFilter = 0,
 			doSort = true,
 			printLog = true,
+			useProxy = false,
+			threadCount = 3,
 			itemHandler = async () => {}
 		} = {}, set = () => {}) => {
 			let list = {}
+			let pageList = []
 			let sortedList = []
 			let blackList = await getBlackList();
 			let token = await getToken(true, true);
@@ -60,126 +63,288 @@
 				log(`📃 Đang lấy danh sách item`);
 				log(` + sortBy    = ${sortBy}`);
 				log(` + pageCount = ${pageCount}`);
+				log(` + useProxy  = ${useProxy}`);
 			}
 
-			for (let itemNth = 0; itemNth < selectedPageList.length; itemNth++) {
-				let item = selectedPageList[itemNth];
-				let pageLoaded = 0;
-				let pageList = [];
-				let start = time();
+			const productsHandler = async (result) => {
+				for (let item of result.data) {
+					if (list[item.id] || blackList.indexOf(item.id) !== -1)
+						continue;
 
-				runInfo({
-					itemStatus: `[${runNth}] ${item.title}`,
-					itemStatusColor: "green",
-					dataType: "time"
-				});
-				
-				await new Promise((resolve, reject) => {
-					for (let page = 1; page <= pageCount; page++) {
-						heartbeat({ color: "yellow" });
+					let link = "https://tiki.vn/" + item.url_path;
+					let thumbnail = item.thumbnail_url;
 
-						myajax({
-							url: `${HOSTADDRESS}/api/v2/products`,
-							method: "GET",
-							header: {
-								"X-Access-Token": token
-							},
-							query: {
-								limit: itemPerPage,
-								include: "",
-								aggregations: aggregations + 0,
-								category: item.category,
-								page,
-								src: "c.1789.hamburger_menu_fly_out_banner",
-								sort: scanSort,
-								urlKey: item.path
+					let price = item.price;
+					let oldPrice = item.list_price;
+					let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
+
+					if (priceSale < saleFilter)
+						continue;
+
+					let couponCode = null;
+					let couponPrice = null;
+					let couponSale = null;
+
+					if (typeof item.badges === "object")
+						for (let badge of item.badges)
+							if (badge.code === "tag") {
+								couponCode = badge.tag_coupon_code;
+								couponPrice = badge.discount;
+								couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
 							}
-						}).then((result) => {
-							// Calc progress
-							pageLoaded++;
 
-							let now = (itemNth * pageCount + pageLoaded);
-							let end = pageCount * selectedPageList.length;
-							set((now / end) * 100, now, end);
-							delete now;
-							delete end;
-							heartbeat();
-							
-							for (let item of result.data) {
-								if (list[item.id] || blackList.indexOf(item.id) !== -1)
-									continue;
+					list[item.id] = {
+						id: item.id,
+						pid: item.seller_product_id,
+						sku: item.sku,
+						title: item.name,
+						brand: item.brand_name,
+						link: link,
+						price,
+						priceSale,
+						thumbnail,
+						oldPrice,
+						stock: { min: item.stock_item.min_sale_qty, max: item.stock_item.max_sale_qty, qty: item.stock_item.qty },
+						coupon: { code: couponCode, price: couponPrice, sale: couponSale },
+						sale: couponSale || priceSale
+					}
 
-								let link = "https://tiki.vn/" + item.url_path;
-								let thumbnail = item.thumbnail_url;
-			
-								let price = item.price;
-								let oldPrice = item.list_price;
-								let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
-			
-								if (priceSale < saleFilter)
-									continue;
+					if (doSort)
+						sortedList.push(list[item.id]);
 
-								let couponCode = null;
-								let couponPrice = null;
-								let couponSale = null;
-			
-								if (typeof item.badges === "object")
-									for (let badge of item.badges)
-										if (badge.code === "tag") {
-											couponCode = badge.tag_coupon_code;
-											couponPrice = badge.discount;
-											couponSale = ((oldPrice - couponPrice) / oldPrice) * 100;
-										}
-			
-								list[item.id] = {
-									id: item.id,
-									pid: item.seller_product_id,
-									sku: item.sku,
-									title: item.name,
-									brand: item.brand_name,
-									link: link,
-									price,
-									priceSale,
-									thumbnail,
-									oldPrice,
-									stock: { min: item.stock_item.min_sale_qty, max: item.stock_item.max_sale_qty, qty: item.stock_item.qty },
-									coupon: { code: couponCode, price: couponPrice, sale: couponSale },
-									sale: couponSale || priceSale
+					pageList.push(list[item.id]);
+					await itemHandler(list[item.id]);
+				}
+			}
+
+			if (useProxy) {
+				let successCount = 0;
+
+				let promises = []
+				let pageQueue = new Queue(selectedPageList);
+				pageQueue.isLooping = false;
+				pageQueue.start();
+
+				for (let threadNum = 0; threadNum < threadCount; threadNum++) {
+					promises.push(new Promise(async (resolve) => {
+						let fails = 0;
+
+						let server = proxy.assign();
+						let jarID = randString(16);
+						let bar = subBar({ progress: 0 });
+						let logs = logGroup(`[THREAD ${threadNum}]: Using ${server}`);
+						logs.setColor(oscColor("blue"));
+
+						// Overwrite Global Function
+						let progress = (progress) => {
+							if (progress) {
+								bar.set({ progress });
+
+								logs.setTitle(`[THREAD ${threadNum}]: Using ${server} (${fails} fails)`);
+								logs.setColor(oscColor(fails > 0 ? "red" : "blue"));
+
+								runInfo({
+									progress: (successCount / (selectedPageList.length * pageCount)) * 100,
+									progWarn: false,
+									now: successCount,
+									end: selectedPageList.length * pageCount,
+									current: pageQueue.queuePos,
+									target: selectedPageList.length,
+									dataType: "time"
+								});
+							}
+						}
+						
+						let __clog = window.clog;
+						let clog = (level, ...args) => {
+							args = [{
+								text: SCRIPT.id,
+								color: flatc("green"),
+								padding: 6,
+								seperate: true
+							}, {
+								color: flatc("pink"),
+								text: server,
+								padding: 14,
+								seperate: true
+							}, ...args]
+
+							__clog(level, ...args);
+						}
+
+						let log = (text) => {
+							clog("INFO", text);
+							logs.write(text);
+						}
+
+						let myajax = async ({
+							url = "/",
+							method = "GET",
+							query = {},
+							form = {},
+							json,
+							header = {},
+							force = false,
+							changeState = true,
+							reRequest = true,
+							withCredentials = false,
+							timeout = 0
+						}) => {
+							try {
+								let response = await proxy.request({
+									server,
+									url,
+									method,
+									query,
+									form: json || form,
+									formType: (json) ? "json" : "data",
+									header,
+									jarID,
+									force,
+									changeState,
+									reRequest,
+									withCredentials,
+									timeout
+								});
+
+								return response.data;
+							} catch(e) {
+								throw e.data || e;
+							}
+						}
+
+						//* =============== MAIN LOGIC ================
+						log(`🛰 ${server}`);
+						log(`🛢 ${jarID}`);
+
+						pageQueue.addHandler((item) => new Promise((resolve) => {
+							let pageLoaded = 0;
+
+							for (let page = 1; page <= pageCount; page++) {
+								heartbeat({ color: "blue" });
+
+								myajax({
+									url: `${HOSTADDRESS}/api/v2/products`,
+									method: "GET",
+									header: {
+										"X-Access-Token": token
+									},
+									query: {
+										limit: itemPerPage,
+										include: "",
+										aggregations: aggregations + 0,
+										category: item.category,
+										page,
+										src: "c.1789.hamburger_menu_fly_out_banner",
+										sort: scanSort,
+										urlKey: item.path
+									}
+								}).then((response) => {
+									// Calc progress
+									pageLoaded++;
+									successCount++;
+
+									progress((pageLoaded / pageCount) * 100);
+									heartbeat();
+
+									productsHandler(response);
+
+									if (pageLoaded >= pageCount)
+										resolve();
+								}).catch((e) => {
+									heartbeat({ color: "red" });
+									log("⚠ Lỗi đã xảy ra khi lấy danh sách Item");
+									log(` + Code: ${e.code}`);
+									log(` + MSG : ${e.description || "Không Rõ"}`);
+									log(` + Bỏ qua lỗi: true`);
+				
+									pageLoaded++;
+									fails++;
+
+									progress((pageLoaded / pageCount) * 100);
+									heartbeat({ color: "yellow" });
+				
+									if (pageLoaded >= pageCount)
+										resolve();
+								});
+							}
+						}));
+
+						pageQueue.onComplete(() => {
+							bar.remove();
+							resolve();
+						});
+					}));
+				}
+
+				await Promise.all(promises);
+			} else {
+				for (let itemNth = 0; itemNth < selectedPageList.length; itemNth++) {
+					let item = selectedPageList[itemNth];
+					let pageLoaded = 0;
+					let start = time();
+	
+					runInfo({
+						itemStatus: `[${runNth}] ${item.title}`,
+						itemStatusColor: "green",
+						dataType: "time"
+					});
+					
+					await new Promise(async (resolve) => {
+						for (let page = 1; page <= pageCount; page++) {
+							heartbeat({ color: "yellow" });
+	
+							myajax({
+								url: `${HOSTADDRESS}/api/v2/products`,
+								method: "GET",
+								header: {
+									"X-Access-Token": token
+								},
+								query: {
+									limit: itemPerPage,
+									include: "",
+									aggregations: aggregations + 0,
+									category: item.category,
+									page,
+									src: "c.1789.hamburger_menu_fly_out_banner",
+									sort: scanSort,
+									urlKey: item.path
 								}
+							}).then(async (response) => {
+								// Calc progress
+								pageLoaded++;
+
+								let now = (itemNth * pageCount + pageLoaded);
+								let end = pageCount * selectedPageList.length;
+								set((now / end) * 100, now, end);
+								delete now;
+								delete end;
+								heartbeat();
+
+								await productsHandler(response);
+
+								if (pageLoaded >= pageCount)
+									resolve();
+							}).catch(e => {
+								heartbeat({ color: "red" });
+								log("⚠ Lỗi đã xảy ra khi lấy danh sách Item");
+								log(` + Code: ${e.code}`);
+								log(` + MSG : ${e.description || "Không Rõ"}`);
+								log(` + Bỏ qua lỗi: true`);
 			
-								if (doSort)
-									sortedList.push(list[item.id]);
+								pageLoaded++;
+			
+								if (pageLoaded >= pageCount)
+									resolve();
+							});
+						}
+					});
 
-								pageList.push(list[item.id]);
-							}
-
-							delete result;
-
-							if (pageLoaded >= pageCount)
-								resolve();
-						}).catch(e => {
-							heartbeat({ color: "red" });
-							log("⚠ Lỗi đã xảy ra khi lấy danh sách Item");
-							log(` + Code: ${e.code}`);
-							log(` + MSG : ${e.description || "Không Rõ"}`);
-							log(` + Bỏ qua lỗi: true`);
-
-							pageLoaded++;
-
-							if (pageLoaded >= pageCount)
-								resolve();
-
-							return;
-						})
-				}});
-
-				for (let item of pageList)
-					await itemHandler(item);
-				
-				runInfo({
-					checkDetail: `Lần quét vừa rồi dài ${(time() - start).toFixed(2)}s`,
-					dataType: "time"
-				});
+					runInfo({
+						checkDetail: `Lần quét vừa rồi dài ${(time() - start).toFixed(2)}s`,
+						dataType: "time"
+					});
+				}
 			}
 
 			if (doSort) {
@@ -514,7 +679,9 @@
 			scanSort: { type: "text", label: "Sắp xếp", value: "discount_percent,desc" },
 			aggregations: { type: "checkbox", label: "Tổng hợp", value: true },
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 0 },
-			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";"), save: false }
+			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";"), save: false },
+			proxyScan: { type: "checkbox", label: "Quét bằng Proxy", color: "pink", value: false },
+			threadCount: { type: "number", label: "Số Thread", value: 3, depend: "proxyScan" }
 		}, { confirm: "Tiếp", saveKey: "preSetup" });
 
 		log("PRE SETUP:");
@@ -546,7 +713,9 @@
 			saleFilter: firstScanSetup.saleFilter,
 			itemPerPage: firstScanSetup.itemPerPage,
 			scanSort: firstScanSetup.scanSort,
-			aggregations: firstScanSetup.aggregations
+			aggregations: firstScanSetup.aggregations,
+			useProxy: firstScanSetup.proxyScan,
+			threadCount: firstScanSetup.threadCount
 		}, (p, now, end) => runInfo({
 			now: `${p.toFixed(0)}%`,
 			current: now,
@@ -729,6 +898,8 @@
 				itemPerPage: firstScanSetup.itemPerPage,
 				scanSort: firstScanSetup.scanSort,
 				aggregations: firstScanSetup.aggregations,
+				useProxy: firstScanSetup.proxyScan,
+				threadCount: firstScanSetup.threadCount,
 				doSort: false,
 				printLog: false,
 				itemHandler: async (item) => {
