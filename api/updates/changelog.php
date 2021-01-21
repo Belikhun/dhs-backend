@@ -1,4 +1,4 @@
-<h2>Thay đổi trong v7.2 (20/01/2021 14:10:00 GMT+7)</h2>
+<h2>Thay đổi trong v7.3 (20/01/2021 14:10:00 GMT+7)</h2>
 
 <ul>
 	<li>Thêm bảng cài đặt người dùng</li>
