@@ -43,12 +43,17 @@
 			// CLEAN
 			foreach ($orderFragments as $file)
 				unlink($file);
+
+			$orderList = Array();
 		}
 
 		// READ CHUNKS
 		$orderChunks = glob(ORDERLOG_ROOT ."/chunk.*", GLOB_NOSORT);
-		foreach ($orderChunks as $chunk)
-			$orderList = array_merge($orderList, unserialize((new fip($chunk)) -> read()));
+
+		while (count($orderList) < $showCount * $pageNth) {
+			foreach ($orderChunks as $chunk)
+				$orderList = array_merge($orderList, unserialize((new fip($chunk)) -> read()));
+		}
 
 		// DATA PROCESS
 		usort($orderList, function($a, $b) { return $a["time"] < $b["time"]; });
