@@ -831,7 +831,7 @@
 
 			await Promise.all(promises);
 		} else {
-			for (let i = 0; i < settings.count; i++)
+			for (let i = 0; i < settings.count; i++) {
 				runInfo({
 					now: i + 1,
 					end: settings.count,
@@ -861,6 +861,7 @@
 				})) {
 					successCount++;
 				}
+			}
 		}
 
 		complete();
