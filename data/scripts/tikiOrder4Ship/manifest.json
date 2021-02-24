@@ -1,0 +1,9 @@
+{
+    "name": "Tiki Order4Shipper",
+    "description": "😶",
+    "site": "tiki.vn/",
+    "match": "*",
+    "requires": ["tikiAPI"],
+    "version": 1,
+    "hide": true
+}

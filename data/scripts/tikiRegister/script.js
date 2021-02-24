@@ -722,7 +722,7 @@
 					logs.setColor(oscColor("blue"));
 
 					// Overwrite Global Function
-					let info = ({ progress = null }) => {
+					let info = ({ progress } = {}) => {
 						if (progress) {
 							bar.set({ progress });
 
