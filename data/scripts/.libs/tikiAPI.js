@@ -313,16 +313,16 @@ const __switchAccount = async ({
 			throw e;
 
 		log("📥 Tiki trả về mã lỗi");
-		log(` + Code: ${e.data.data.error.code}`);
-		log(` + MSG : ${e.data.data.error.message || "Không rõ"}`);
+		log(` + Code: ${e.data.error.code}`);
+		log(` + MSG : ${e.data.error.message || "Không rõ"}`);
 		
-		if (e.data.data.error.errors)
-			for (let item of e.data.data.error.errors) {
+		if (e.data.error.errors)
+			for (let item of e.data.error.errors) {
 				log(`  + FIELD   : ${item.field}`);
 				log(`  + MESSAGE : ${item.message || "Không rõ"}`);
 			}
 
-		throw { code: -1, description: "Thất bại khi đăng nhập vào tài khoản", data: e.data.data }
+		throw { code: -1, description: "Thất bại khi đăng nhập vào tài khoản", data: e.data }
 	}
 
 	if (loginResponse.error) {
