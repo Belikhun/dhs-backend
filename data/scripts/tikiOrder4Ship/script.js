@@ -13,7 +13,7 @@
 	log(`|===========================|`);
 	log(`|      Tiki Order4Ship      |`);
 	log(`|          Belikhun         |`);
-	log(`|  LU: 23:06:11 24/02/2021  |`);
+	log(`|  LU: 21:52:03 25/02/2021  |`);
 	log(`|===========================|`);
 
 	let itemList = []
@@ -46,7 +46,7 @@
 				{ name: `Ngẫu Nhiên`, color: "blue", value: "random" }
 			]
 		},
-		proxy: { type: "checkbox", label: "Sử dụng Proxy", value: true, disabled: true },
+		proxy: { type: "checkbox", label: "Sử dụng Proxy", value: true },
 		xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 	});
 
@@ -156,41 +156,44 @@
 				logs.write(text);
 			}
 
-			let myajax = async ({
-				url = "/",
-				method = "GET",
-				query = {},
-				form = {},
-				json,
-				header = {},
-				force = false,
-				changeState = true,
-				reRequest = true,
-				withCredentials = false,
-				timeout = 0
-			}) => {
-				try {
-					let response = await proxy.request({
-						server,
-						url,
-						method,
-						query,
-						form: json || form,
-						formType: (json) ? "json" : "data",
-						header,
-						jarID,
-						force,
-						changeState,
-						reRequest,
-						withCredentials,
-						timeout
-					});
+			let myajax = settings.proxy
+				? async ({
+					url = "/",
+					method = "GET",
+					query = {},
+					form = {},
+					json,
+					header = {},
+					force = false,
+					changeState = true,
+					reRequest = true,
+					withCredentials = false,
+					timeout = 0
+				}) => {
+					try {
+						let response = await proxy.request({
+							server,
+							url,
+							method,
+							query,
+							form: json || form,
+							formType: (json) ? "json" : "data",
+							header,
+							jarID,
+							force,
+							changeState,
+							reRequest,
+							withCredentials,
+							timeout
+						});
 
-					return response.data;
-				} catch(e) {
-					throw e.data || e;
+						return response.data;
+					} catch(e) {
+						throw e.data || e;
+					}
 				}
-			}
+
+				: window.myajax;
 
 			while (isRunning) {
 				try {
