@@ -140,12 +140,12 @@
 					text: SCRIPT.id,
 					color: flatc("green"),
 					padding: 6,
-					seperate: true
+					separate: true
 				}, {
 					color: flatc("pink"),
 					text: server,
 					padding: 14,
-					seperate: true
+					separate: true
 				}, ...args]
 
 				__clog(level, ...args);
@@ -271,7 +271,7 @@
 						});
 	
 						await __doOrder({
-							id: selectedItem.pid,
+							id: selectedItem.id,
 							count: settings.orderCount,
 							token: token.token,
 							paymentMethod: settings.paymentMethod,
