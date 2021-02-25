@@ -197,8 +197,13 @@
 
 			while (isRunning) {
 				try {
-					server = proxy.assign();
-					jarID = randString(16);
+					if (settings.proxy) {
+						server = proxy.assign();
+						jarID = randString(16);
+					} else {
+						server = "INTERNAL";
+						jarID = "NOT AVAILABLE";
+					}
 		
 					//* =============== MAIN LOGIC ================
 					log(`🛰 ${server}`);
