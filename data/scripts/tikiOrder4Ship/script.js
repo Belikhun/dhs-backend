@@ -135,8 +135,8 @@
 			}
 			
 			let __clog = window.clog;
-			let clog = (level, ...args) => {
-				args = [{
+			let clog = (level, ...args) =>
+				__clog(level, {
 					text: SCRIPT.id,
 					color: flatc("green"),
 					padding: 6,
@@ -146,10 +146,7 @@
 					text: server,
 					padding: 14,
 					separate: true
-				}, ...args]
-
-				__clog(level, ...args);
-			}
+				}, ...args);
 
 			let log = (text) => {
 				clog("INFO", text);
@@ -271,7 +268,7 @@
 						});
 	
 						await __doOrder({
-							id: selectedItem.id,
+							id: selectedItem.sid,
 							count: settings.orderCount,
 							token: token.token,
 							paymentMethod: settings.paymentMethod,

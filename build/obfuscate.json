@@ -24,10 +24,12 @@
         "getBlackList",
         "getToken",
         "fetchItemData",
+        "proxy",
         "ID",
         "PID",
         "CFID",
-        "saveBlackList"
+        "saveBlackList",
+        "__clog"
     ],
     "reservedStrings": [],
     "rotateStringArray": true,
