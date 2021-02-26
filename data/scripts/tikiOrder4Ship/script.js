@@ -13,7 +13,7 @@
 	log(`|===========================|`);
 	log(`|      Tiki Order4Ship      |`);
 	log(`|          Belikhun         |`);
-	log(`|  LU: 21:52:03 25/02/2021  |`);
+	log(`|  LU: 11:32:12 26/02/2021  |`);
 	log(`|===========================|`);
 
 	let itemList = []
@@ -46,6 +46,7 @@
 				{ name: `Ngẫu Nhiên`, color: "blue", value: "random" }
 			]
 		},
+		stopIfHaveShippingFee: { type: "checkbox", label: "Dừng mua nếu có phí vận chuyển", value: true },
 		proxy: { type: "checkbox", label: "Sử dụng Proxy", value: true },
 		xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 	});
@@ -275,7 +276,7 @@
 							paymentMethod: settings.paymentMethod,
 							shippingAddress: account.a,
 							platform: settings.xPlatform,
-							stopIfHaveShippingFee: true,
+							stopIfHaveShippingFee: settings.stopIfHaveShippingFee,
 	
 							info,
 							log,
