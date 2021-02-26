@@ -253,10 +253,11 @@
 					});
 
 					log(`🛒 Bắt đầu đặt mua`);
+					let token = null;
 					ordering++;
 
 					try {
-						let token = await __switchAccount({
+						token = await __switchAccount({
 							username: account.u,
 							password: account.p,
 	
@@ -274,6 +275,7 @@
 							paymentMethod: settings.paymentMethod,
 							shippingAddress: account.a,
 							platform: settings.xPlatform,
+							stopIfHaveShippingFee: true,
 	
 							info,
 							log,
@@ -282,6 +284,17 @@
 							myajax
 						});
 					} catch(e) {
+						if (token)
+							await __clearCart({
+								token: token.token,
+
+								info,
+								log,
+								clog,
+								panic,
+								myajax
+							});
+
 						ordering--;
 						throw e;
 					}

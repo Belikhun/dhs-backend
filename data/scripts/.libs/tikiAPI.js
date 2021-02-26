@@ -405,6 +405,7 @@ const __doOrder = async ({
 	paymentMethod = "cod",
 	shippingAddress = null,
 	isInjectedAccount = false,
+	stopIfHaveShippingFee = false,
 	platform = "frontend-desktop",
 	accountDisabledHandler = async () => {},
 
@@ -708,6 +709,14 @@ const __doOrder = async ({
 	log(`💵 Tạm tính   : <a class="price">${priceFormat(cartInfo.subtotal)}</a>`);
 	log(`💵 Vận chuyển : <a class="price">${priceFormat(cartInfo.shipping_amount)}</a>`);
 	log(`💵 THÀNH TIỀN : <a class="price" style="font-size: 26px;">${priceFormat(cartInfo.grand_total)}</a>`);
+
+	if (stopIfHaveShippingFee && cartInfo.shipping_amount > 0) {
+		await panic("Không thể tiến hành thanh toán");
+		log(`⚠ Đơn hàng bị tính phí vận chuyển`);
+		log(` + Current : ${cartInfo.shipping_amount}`);
+		log(` + Expected: 0`);
+		throw { code: -1, description: "Đơn hàng bị tính phí vận chuyển", data: { current: cartInfo.shipping_amount } }
+	}
 
 	info({ now: `Bước 4`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
 	log(`🛒 Đang tiến hành đặt hàng`);
