@@ -38,7 +38,7 @@
 				url: `${HOSTADDRESS}/api/v2/microsite/campaign_site_page`,
 				method: "GET",
 				header: {
-					"X-API-SOURCE": APISource,
+					"X-API-SOURCE": platform,
 					"X-Requested-With": "XMLHttpRequest",
 				},
 				query: {
@@ -90,11 +90,11 @@
 				url: `${HOSTADDRESS}/api/v2/voucher_wallet/batch_get_vouchers_by_promotion_ids`,
 				method: "POST",
 				header: {
-					"X-API-SOURCE": APISource,
+					"X-API-SOURCE": platform,
 					"X-CSRFToken": CSRF,
 					"X-Requested-With": "XMLHttpRequest",
 					"FH_Origin": HOSTADDRESS,
-					"FH_Referer": `https://shopee.vn/m/${preSetup.campaign}`,
+					"FH_Referer": `https://shopee.vn/m/${campaign}`,
 					"FH_Sec-Fetch-Dest": "empty",
 					"FH_Sec-Fetch-Mode": "cors",
 					"FH_Sec-Fetch-Site": "same-origin",
@@ -169,7 +169,6 @@
 			platform: { type: "text", label: "platform", value: "pc" }
         }, { saveKey: "preSetup" });
 
-		let APISource = preSetup.platform;
 		let customVoucherList = preSetup.customList.split("\n")
 			.map((i) => !isNaN(i)
 				? {
@@ -192,7 +191,7 @@
 			...customVoucherList,
 			... await getVoucherList({
 				campaign: preSetup.campaign,
-				platform: APISource
+				platform: preSetup.platform
 			})
 		]
 		
@@ -388,7 +387,7 @@
 						log(`🎫 Cập nhật danh sách Voucher`);
 						updatedVoucherList = await getVoucherList({
 							campaign: preSetup.campaign,
-							platform: APISource
+							platform: preSetup.platform
 						});
 					}
 
@@ -431,7 +430,7 @@
 						url: `${HOSTADDRESS}/api/v2/voucher_wallet/save_voucher`,
 						method: "POST",
 						header: {
-							"X-API-SOURCE": APISource,
+							"X-API-SOURCE": preSetup.platform,
 							"X-CSRFToken": CSRF,
 							"X-Requested-With": "XMLHttpRequest",
 							"FH_Origin": HOSTADDRESS,
@@ -494,7 +493,7 @@
 				order();
 				successCount++;
 				heartbeat({ color: "green" });
-				log(` ✅ Thêm Thành Công (${successCount}/${total})`);
+				log(`✅ Thêm Thành Công (${successCount}/${total})`);
 				selectedVoucherList[i].added = true;
 
 				if (successCount === total) {
