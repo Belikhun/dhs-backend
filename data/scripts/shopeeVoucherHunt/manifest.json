@@ -1,0 +1,8 @@
+{
+    "name": "Shopee Voucher Hunter",
+    "description": "Tự động thêm voucher mới phát hiện vào ví cho Shopee",
+    "site": "shopee.vn/",
+    "match": "*",
+    "version": 1,
+    "hide": true
+}
