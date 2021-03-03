@@ -3,6 +3,6 @@
     "description": "Tự động thêm voucher vào ví cho Shopee",
     "site": "shopee.vn/",
     "match": "*",
-    "version": 2,
+    "version": 3,
     "hide": true
 }

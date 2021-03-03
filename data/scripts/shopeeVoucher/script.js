@@ -1,7 +1,7 @@
 // Script begin here
 (async () => {
-    var infoUpdateInterval = null;
-    var doCheck = true;
+    let infoUpdateInterval = null;
+    let doCheck = true;
 
     onCancel(() => {
         clearInterval(infoUpdateInterval);
@@ -9,88 +9,197 @@
 	})
 	
 	const HOSTADDRESS = "https://shopee.vn";
-    const log = (text) => writeLog(text);
+    const log = (text = "") => writeLog(text);
 
     try {
         log(`|===========================|`);
         log(`|       Shopee Voucher      |`);
         log(`|          Belikhun         |`);
-        log(`|  LU: 00:36:34 14/04/2020  |`);
+        log(`|  LU: 00:52:06 04/03/2021  |`);
         log(`|===========================|`);
 
 		info({ hide: true });
 
-		const CSRF = (await this.getCookie(HOSTADDRESS, "csrftoken")).value || null;
+		let CSRF = (await this.getCookie(HOSTADDRESS, "csrftoken"));
 
 		if (!CSRF) {
 			rejectSetup("Không tìm thấy CSRF Token. Đảm bảo bạn đã đăng nhập vào Shopee!");
 			return;
 		}
 
+		CSRF = CSRF.value;
 		log(`CSRF: ${CSRF}`);
+
+		const getVoucherList = async ({
+			campaign,
+			platform = "pc"
+		} = {}) => {
+			let campaignData = await myajax({
+				url: `${HOSTADDRESS}/api/v2/microsite/campaign_site_page`,
+				method: "GET",
+				header: {
+					"X-API-SOURCE": APISource,
+					"X-Requested-With": "XMLHttpRequest",
+				},
+				query: {
+					url: campaign,
+					platform,
+					_mod: "microsite"
+				}
+			});
+
+			if (campaignData.error && campaignData.error !== 0) {
+				await errored(`Lỗi Khi Lấy Danh Sách Voucher`);
+				log(" + Không thể lấy danh sách voucher");
+				log(`    + Code: ${campaignData.error}`);
+				log(`    + BEE : ${campaignData.be_error}`);
+				log(`    + MSG : ${campaignData.error_msg || "Không rõ"}`);
+				throw { code: campaignData.error, description: `Lỗi Khi Lấy Danh Sách Voucher`, data: campaignData };
+			}
+
+			let voucherList = []
+			let promotionList = []
+
+			for (let item of campaignData.data.data.content.children) {
+				if (typeof item.children[0].data.promotion_id === "number") {
+					voucherList.push({
+						type: "simple",
+						id: item.children[0].data.promotion_id,
+						name: item.meta.name,
+						signature: item.children[0].data.promotion_signature,
+						image: item.children[0].data.get_voucher_image,
+						disabled: !item.children[0].data.microsite_claimable
+					});
+
+					continue;
+				}
+
+				if (item.children[0].data.vouchers) {
+					for (let voucher of item.children[0].data.vouchers)
+						promotionList.push({
+							"promotionid": voucher.promotion_id,
+							"signature": voucher.promotion_signature
+						});
+
+					continue;
+				}
+			}
+
+			// Process Promotion List
+			let promotionResponse = await myajax({
+				url: `${HOSTADDRESS}/api/v2/voucher_wallet/batch_get_vouchers_by_promotion_ids`,
+				method: "POST",
+				header: {
+					"X-API-SOURCE": APISource,
+					"X-CSRFToken": CSRF,
+					"X-Requested-With": "XMLHttpRequest",
+					"FH_Origin": HOSTADDRESS,
+					"FH_Referer": `https://shopee.vn/m/${preSetup.campaign}`,
+					"FH_Sec-Fetch-Dest": "empty",
+					"FH_Sec-Fetch-Mode": "cors",
+					"FH_Sec-Fetch-Site": "same-origin",
+					"If-None-Match-": "55b03-2631999c3258f845f93e63e284bd3a2a"
+				},
+				json: {
+					promotion_info: promotionList
+				}
+			});
+
+			for (let id of Object.keys(promotionResponse.data.id_voucher_mappings)) {
+				let voucher = promotionResponse.data.id_voucher_mappings[id];
+
+				if (typeof voucher.coin_cap === "number")
+					voucherList.push({
+						type: "coinback",
+						id: voucher.promotionid,
+						code: voucher.voucher_code,
+						signature: voucher.signature,
+						value: voucher.coin_percentage,
+						max: voucher.coin_cap,
+						from: voucher.min_spend / 100000,
+						cat: voucher.icon_text,
+						start: voucher.start_time,
+						end: voucher.end_time,
+						image: voucher.icon_hash,
+						disabled: voucher.fully_redeemed || voucher.has_expired
+					});
+				else if (typeof voucher.discount_value === "number" && voucher.discount_value > 0)
+					voucherList.push({
+						type: "discountMoney",
+						id: voucher.promotionid,
+						code: voucher.voucher_code,
+						signature: voucher.signature,
+						value: voucher.discount_value / 100000,
+						from: voucher.min_spend / 100000,
+						terms: voucher.usage_terms,
+						cat: voucher.icon_text,
+						start: voucher.start_time,
+						end: voucher.end_time,
+						image: voucher.icon_hash,
+						disabled: voucher.fully_redeemed || voucher.has_expired
+					});
+				else if (typeof voucher.discount_value === "number")
+					voucherList.push({
+						type: "discountPercent",
+						id: voucher.promotionid,
+						code: voucher.voucher_code,
+						signature: voucher.signature,
+						value: voucher.discount_percentage,
+						max: voucher.max_value / 100000,
+						from: voucher.min_spend / 100000,
+						terms: voucher.usage_terms,
+						cat: voucher.icon_text,
+						start: voucher.start_time,
+						end: voucher.end_time,
+						image: voucher.icon_hash,
+						disabled: voucher.fully_redeemed || voucher.has_expired
+					});
+				else
+					clog("DEBG", voucher);
+			}
+
+			return voucherList;
+		}
 
         // Wait for settings
         const preSetup = await setup({
 			campaign: { type: "text", label: "Microsite ID" },
+			customNote: { type: "note", level: "info", text: `Mỗi voucher một dòng. Danh sách voucher tùy chọn chấp nhận:<t>Mã Voucher (VD: <b>INCU0403</b>)</t><t>ID Voucher (VD: <b>71623643</b>)</t>` },
+			customList: { type: "textarea", label: "Danh sách voucher tùy chọn", height: "300px", save: false },
 			platform: { type: "text", label: "platform", value: "pc" }
         }, { saveKey: "preSetup" });
 
 		let APISource = preSetup.platform;
-		let selectedVoucherList = []
+		let customVoucherList = preSetup.customList.split("\n")
+			.map((i) => !isNaN(i)
+				? {
+					type: "customID",
+					id: i,
+					code: null,
+					signature: null,
+					name: "CUSTOM_ID:" + i
+				}
+				: {
+					type: "customCode",
+					id: null,
+					code: i,
+					signature: null,
+					name: "CUSTOM_CODE:" + i
+				}
+			)
+
+		let voucherList = [
+			...customVoucherList,
+			... await getVoucherList({
+				campaign: preSetup.campaign,
+				platform: APISource
+			})
+		]
 		
-		let campaignData = await myajax({
-			url: `${HOSTADDRESS}/api/v2/microsite/campaign_site_page`,
-			method: "GET",
-			header: {
-				"X-API-SOURCE": APISource,
-				"X-Requested-With": "XMLHttpRequest",
-			},
-			query: {
-				url: preSetup.campaign,
-				platform: APISource,
-				_mod: "microsite"
-			}
-		});
-
-		if (campaignData.error && campaignData.error !== 0) {
-			await errored(`Lỗi Khi Lấy Danh Sách Voucher`);
-			log(" + Không thể lấy danh sách voucher");
-			log(`    + Code: ${campaignData.error}`);
-			log(`    + BEE : ${campaignData.be_error}`);
-			log(`    + MSG : ${campaignData.error_msg || "Không rõ"}`);
-			throw { code: campaignData.error, description: `Lỗi Khi Lấy Danh Sách Voucher`, data: campaignData };
-		}
-
-		voucherList = []
-
-		for (let item of campaignData.data.data.content.children) {
-			if (typeof item.children[0].data.promotion_id === "number") {
-				voucherList.push({
-					id: item.children[0].data.promotion_id,
-					name: item.meta.name,
-					signature: item.children[0].data.promotion_signature,
-					image: item.children[0].data.get_voucher_image
-				});
-
-				continue;
-			}
-
-			if (item.children[0].data.vouchers) {
-				for (let voucher of item.children[0].data.vouchers)
-					voucherList.push({
-						id: voucher.promotion_id,
-						name: voucher.display_shop_name,
-						signature: voucher.promotion_signature,
-						image: null
-					});
-
-				continue;
-			}
-		}
-
-		voucherData = voucherList
-			.reduce((o, i) => { o[i.name] = i; return o }, {});
-
+		let selectedVoucherList = []
+		let voucherData = voucherList
+			.reduce((o, i) => { o["vc:" + (i.id || i.code)] = i; return o }, {});
+		
 		await delayAsync(500);
 		
 		if (voucherList.length === 0) {
@@ -100,15 +209,124 @@
 
 		let voucherSetupData = {}
 		for (let item of voucherList)
-			voucherSetupData[item.name] = {
-				type: "checkbox",
-				label: `<b style="font-size: 15px">${item.name}</b>${item.image ? `<br><img style="width: 320px; margin-top: 10px; border-radius: 8px;" src="https://cf.shopee.vn/file/${item.image}">` : ""}`,
-				color: "blue",
-				value: false
+			switch (item.type) {
+				case "simple":
+					voucherSetupData["vc:" + item.id] = {
+						type: "checkbox",
+						label: `
+							<b style="font-size: 15px">${item.name}</b>
+							${item.image ? `<br><img style="width: 320px; border-radius: 8px;" src="https://cf.shopee.vn/file/${item.image}">` : ""}`,
+						color: item.disabled ? "pink" : "blue",
+						value: false,
+						save: false
+					}
+					break;
+
+				case "coinback":
+					voucherSetupData["vc:" + item.id] = {
+						type: "checkbox",
+						label: `
+							<t>${item.cat || "Không Rõ"} [${item.id}] (hoàn xu)</t>
+							<t style="font-size: 13px;">${(new Date(item.start * 1000)).toLocaleString()} <b>-></b> ${(new Date(item.end * 1000)).toLocaleString()}</t>
+							<div style="display: flex; flex-direction: row; margin-top: 5px;">
+								<img style="width: 64px; height: 64px; border-radius: 8px;" src="https://cf.shopee.vn/file/${item.image}">
+								<span style="padding-left: 5px;">
+									<b style="font-size: 15px">${item.code}</b>
+									<t>Giảm <b>${item.value}%</b> (tối đa <b class="price">${priceFormat(item.max)}</b> xu)</t>
+									<t>Từ <b class="price">${priceFormat(item.from)}</b></t>
+								</span>
+							</div>
+						`,
+						color: item.disabled ? "pink" : "blue",
+						value: false,
+						save: false
+					}
+					break;
+
+				case "discountMoney":
+					voucherSetupData["vc:" + item.id] = {
+						type: "checkbox",
+						label: `
+							<t>${item.cat || "Không Rõ"} [${item.id}] (giảm tiền)</t>
+							<t style="font-size: 13px;">${(new Date(item.start * 1000)).toLocaleString()} <b>-></b> ${(new Date(item.end * 1000)).toLocaleString()}</t>
+							<div style="display: flex; flex-direction: row; margin-top: 5px;" title="${item.terms}">
+								<img style="width: 64px; height: 64px; border-radius: 8px;" src="https://cf.shopee.vn/file/${item.image}">
+								<span style="padding-left: 5px;">
+									<b style="font-size: 15px">${item.code}</b>
+									<t>Giảm tối đa <b class="price">${priceFormat(item.value)}</b></t>
+									<t>Từ <b class="price">${priceFormat(item.from)}</b></t>
+								</span>
+							</div>
+						`,
+						color: item.disabled ? "pink" : "blue",
+						value: false,
+						save: false
+					}
+					break;
+
+				case "discountPercent":
+					voucherSetupData["vc:" + item.id] = {
+						type: "checkbox",
+						label: `
+							<t>${item.cat || "Không Rõ"} [${item.id}] (giảm tiền theo %)</t>
+							<t style="font-size: 13px;">${(new Date(item.start * 1000)).toLocaleString()} <b>-></b> ${(new Date(item.end * 1000)).toLocaleString()}</t>
+							<div style="display: flex; flex-direction: row; margin-top: 5px;" title="${item.terms}">
+								<img style="width: 64px; height: 64px; border-radius: 8px;" src="https://cf.shopee.vn/file/${item.image}">
+								<span style="padding-left: 5px;">
+									<b style="font-size: 15px">${item.code}</b>
+									<t>Giảm <b>${item.value}%</b> (tối đa <b class="price">${priceFormat(item.max)}</b>)</t>
+									<t>Từ <b class="price">${priceFormat(item.from)}</b></t>
+								</span>
+							</div>
+						`,
+						color: item.disabled ? "pink" : "blue",
+						value: false,
+						save: false
+					}
+					break;
+
+				case "customID":
+					voucherSetupData["vc:" + item.id] = {
+						type: "checkbox",
+						label: `<t>ID Tùy Chỉnh: <b>${item.id}</b></t>`,
+						color: "blue",
+						value: true,
+						save: false
+					}
+					break;
+
+				case "customCode":
+					voucherSetupData["vc:" + item.code] = {
+						type: "checkbox",
+						label: `<t>Mã Tùy Chỉnh: <b>${item.code}</b></t>`,
+						color: "blue",
+						value: true,
+						save: false
+					}
+					break;
+			
+				default:
+					clog("WARN", "Unknown item type", item);
+					break;
 			}
 
+		let selectAllSwitch = createCheckbox({
+			label: "Chọn Tất Cả",
+			color: "blue",
+			value: false
+		});
+
+		selectAllSwitch.input.addEventListener("change", (e) => {
+			document.querySelectorAll("#scriptSettingsFormList > .checkboxContainer > label > input")
+				.forEach(i => i.checked = e.target.checked);
+		});
+
+		selectAllSwitch.group.style.width = "100%";
+		selectAllSwitch.group.style.marginTop = "10px";
+
 		const voucherSetup = await setup({
-				note: { type: "note", level: "info", text: `<b style="font-size: 14px">LỰA CHỌN DANH SÁCH VOUCHER (${voucherList.length})</b>` },
+				note: { type: "note", level: "info", text: `<b style="font-size: 14px">LỰA CHỌN DANH SÁCH VOUCHER (${voucherList.length})</b><t>Ô chọn màu hồng biểu thị voucher đã hết hàng hoặc đã hết hạn` },
+				selectAllSwitch: { type: "customNode", node: selectAllSwitch.group },
 				...voucherSetupData
 			},
 			{ confirm: "Tiếp", saveKey: "vouchers" }
@@ -140,18 +358,20 @@
 		run();
 		
         // Start
-        var checkNth = 0;
-		var successCount = 0;
-		var start = time();
-		var total = selectedVoucherList.length;
-		var checkPer = settings.timeCheckInterval;
+        let checkNth = 0;
+		let successCount = 0;
+		let start = time();
+		let total = selectedVoucherList.length;
+		let checkPer = settings.timeCheckInterval;
 		
 		runInfo({
 			end: checkPer + "ms",
 			target: total
 		});
 
-		var checker = async () => {
+		let checker = async () => {
+			let updatedVoucherList = null;
+
 			for (let i = 0; i < selectedVoucherList.length; i++) {
 				if (selectedVoucherList[i].added)
 					continue;
@@ -159,7 +379,50 @@
 				let item = selectedVoucherList[i];
 				checkNth++;
 
-				log(`🎫 ${item.name} (ID ${item.id})`);
+				log();
+				log(`🎫 ${item.name || item.code || "VC:" + item.id} (ID ${item.id})`);
+
+				if (!item.id || !item.signature) {
+					if (!updatedVoucherList) {
+						heartbeat({ color: "blue" });
+						log(`🎫 Cập nhật danh sách Voucher`);
+						updatedVoucherList = await getVoucherList({
+							campaign: preSetup.campaign,
+							platform: APISource
+						});
+					}
+
+					let found = false;
+					for (let voucher of updatedVoucherList)
+						if (voucher.id && voucher.id == item.id) {
+							heartbeat({ color: "green" });
+							selectedVoucherList[i].code = voucher.code;
+							selectedVoucherList[i].signature = voucher.signature;
+
+							item = selectedVoucherList[i];
+							log(`🎫 ĐÃ TÌM THẤY!`);
+							log(` + Code     : ${item.code}`);
+							log(` + Signature: ${item.signature}`);
+							found = true;
+						} else if (voucher.code && voucher.code == item.code) {
+							heartbeat({ color: "green" });
+							selectedVoucherList[i].id = voucher.id;
+							selectedVoucherList[i].signature = voucher.signature;
+
+							item = selectedVoucherList[i];
+							log(`🎫 ĐÃ TÌM THẤY!`);
+							log(` + ID       : ${item.id}`);
+							log(` + Signature: ${item.signature}`);
+							found = true;
+						}
+
+					if (!found) {
+						heartbeat({ color: "red" });
+						log(`🎫 Không tìm thấy ID hoặc chữ kí của Voucher này`);
+						continue;
+					}
+				}
+
 				let reqStart = time();
 				let data = {}
 				
@@ -185,10 +448,10 @@
 					})
 				} catch(e) {
 					heartbeat({ color: "red" });
-					log(" + Lỗi đã xảy ra khi lấy thông tin Item");
-					log(`    + Code: ${e.code}`);
-					log(`    + MSG : ${e.description || "Không Rõ"}`);
-					log(`    + Bỏ qua lỗi: true`);
+					log("⚠ Lỗi đã xảy ra khi thêm voucher vào ví");
+					log(` + Code: ${e.code}`);
+					log(` + MSG : ${e.description || "Không Rõ"}`);
+					log(` + Bỏ qua lỗi: true`);
 	
 					let reqTime = ((time() - reqStart) * 1000);
 					let reqTimeAT = (reqTime / checkPer) * 100;
@@ -198,7 +461,7 @@
 						now: reqTime.toFixed(2) + "ms",
 						itemStatus: "LỖI ĐÃ XẢY RA",
 						itemStatusColor: "red",
-						checkDetail: "Một lỗi đã xảy ra trong quá trình kiểm tra giá Item"
+						checkDetail: "Một lỗi đã xảy ra trong quá trình thêm voucher"
 					});
 	
 					return;
@@ -213,7 +476,7 @@
 					now: reqTime.toFixed(2) + "ms",
 					current: successCount,
 					saved: (successCount / total) * 100,
-					itemStatus: item.name,
+					itemStatus: item.name || item.code || "VC:" + item.id,
 					itemStatusColor: "yellow",
 					checkDetail: `Check ${checkNth}`
 				})
@@ -223,11 +486,14 @@
 				if (data.error && data.error !== 0) {
 					log(` + Code: ${data.error}`);
 					log(` + MSG : ${data.error_msg || "Không rõ"}`);
-					continue;
+
+					if (data.error !== 5)
+						continue;
 				}
 
 				order();
 				successCount++;
+				heartbeat({ color: "green" });
 				log(` ✅ Thêm Thành Công (${successCount}/${total})`);
 				selectedVoucherList[i].added = true;
 
@@ -250,7 +516,7 @@
 			}
 		}
 	
-		var __checkHandler = async () => {
+		let __checkHandler = async () => {
 			if (!doCheck)
 				return;
 	
