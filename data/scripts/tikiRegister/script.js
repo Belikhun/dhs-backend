@@ -11,14 +11,14 @@
 		executeJob = false;
 	});
 
-	const RENTCODE = "https://api.rentcode.net";
+	const NANOSIM = "https://access.nanosim.vn";
 	const log = (text, overwrite = false) => writeLog(text, overwrite);
 
 	try {
 		log(`|===========================|`);
 		log(`|   Tiki Account Register   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 10:04:43 31/12/2020  |`);
+		log(`|  LU: 23:05:12 04/03/2021  |`);
 		log(`|===========================|`);
 
 		await info({ hide: true });
@@ -183,9 +183,9 @@
 				]
 			},
 			phoneNumber: { type: "textarea", label: "SĐT nhận hàng (Bỏ trống dùng số mặc định)", height: "140px", value: `0123456789\n0762238661` },
-			rentCodeNote: { type: "note", level: "info", text: `<b>RENTCODE</b>` },
+			simProviderNote: { type: "note", level: "info", text: `<b>NANOSIM</b>` },
 			apiKey: { type: "text", label: "API KEY", required: true },
-			serviceID: { type: "number", label: "Service ID", value: 31, required: true },
+			serviceID: { type: "number", label: "Service ID", value: 1, save: false, required: true },
 			proxy: { type: "checkbox", label: "Sử dụng Proxy", value: false },
 			xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 		});
@@ -365,19 +365,19 @@
 		const randomStreet = () => randItem(settings.street).replaceAll("%random%", randBetween(1, 999, true));
 
 		const getStatus = async (id) => {
-			let rentCodeOrder = await myajax({
-				url: `${RENTCODE}/api/v2/order/${id}/check`,
+			let nanoSimOrder = await myajax({
+				url: `${NANOSIM}/api/ig/code`,
 				method: "GET",
 				query: {
-					apiKey: settings.apiKey,
-					serviceProviderId: settings.serviceID
+					api_token: settings.apiKey,
+					sessionId: id
 				}
 			});
 
-			if (!rentCodeOrder.success)
-				throw { code: -1, description: `getStatus(${id}): ${rentCodeOrder.message}`, data: { message: rentCodeOrder.message } }
+			if (!nanoSimOrder.success)
+				throw { code: -1, description: `getStatus(${id}): ${nanoSimOrder.message}`, data: { message: nanoSimOrder.message } }
 
-			return rentCodeOrder;
+			return nanoSimOrder;
 		}
 
 		const doRegister = async ({
@@ -440,22 +440,22 @@
 				logg.set({ status: 1 });
 				log(`🔑 ${TOKEN}`);
 
-				// ================== CREATE RENTCODE ORDER ==================
-				set(20, "Tiến hành tạo Order Rentcode");
-				logg = logState("Tiến hành tạo Order Rentcode");
-				let rentCodeOrder = await myajax({
-					url: `${RENTCODE}/api/v2/order/request`,
+				// ================== CREATE NANOSIM ORDER ==================
+				set(20, "Tiến hành tạo Order Nanosim");
+				logg = logState("Tiến hành tạo Order Nanosim");
+				let nanoSimOrder = await myajax({
+					url: `${NANOSIM}/api/ig/request`,
 					method: "GET",
 					query: {
-						apiKey: settings.apiKey,
-						serviceProviderId: settings.serviceID
+						api_token: settings.apiKey,
+						serviceId: settings.serviceID
 					}
 				});
 
-				if (!rentCodeOrder.success)
-					throw { code: -1, description: rentCodeOrder.message }
+				if (!nanoSimOrder.success)
+					throw { code: -1, description: nanoSimOrder.message }
 
-				let orderID = rentCodeOrder.id;
+				let orderID = nanoSimOrder.data.session_id;
 				logg.set({ status: 1 });
 				log(` → ID: ${orderID}`);
 
@@ -469,14 +469,14 @@
 					await delayAsync(1000);
 					phoneTries++;
 
-					let rentCodeOrder = await getStatus(orderID);
+					let nanoSimOrder = await getStatus(orderID);
 
-					if (!rentCodeOrder.success || !rentCodeOrder.phoneNumber) {
+					if (!nanoSimOrder.success || !nanoSimOrder.data.phone) {
 						logg.set({ text: `Lấy số điện thoại [${phoneTries}]\n (Chưa thấy SĐT)` });
 						continue;
 					}
 
-					phoneNumber = rentCodeOrder.phoneNumber;
+					phoneNumber = nanoSimOrder.data.phone;
 				}
 
 				logg.set({ text: `Lấy số điện thoại [${phoneTries}]`, status: 1 });
@@ -534,8 +534,8 @@
 					try {
 						let orderStatus = await getStatus(orderID);
 
-						if (orderStatus.message) {
-							let messageRe = /(\d{6})/gm.exec(orderStatus.message);
+						if (orderStatus.data.sms) {
+							let messageRe = /(\d{6})/gm.exec(orderStatus.data.sms);
 
 							if (!messageRe) {
 								logg.set({ text: `Lấy mã OTP [${OPTTries}]\n (Regex Not Match)` });
