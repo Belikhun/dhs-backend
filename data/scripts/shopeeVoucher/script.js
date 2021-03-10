@@ -170,7 +170,7 @@
         }, { saveKey: "preSetup" });
 
 		let customVoucherList = preSetup.customList.split("\n")
-			.filter((i) => i == "")
+			.filter(String)
 			.map((i) => !isNaN(i)
 				? {
 					type: "customID",
