@@ -277,6 +277,7 @@
 				doCheck = false;
 				order();
 
+				let couponApplied = false;
 				let totalOrderTimes = (settings.autoReOrder)
 					? accountList.length * settings.autoReOrderTimes
 					: accountList.length;
@@ -417,6 +418,9 @@
 										paymentMethod: settings.paymentMethod,
 										shippingAddress: account.a,
 										platform: settings.xPlatform,
+										coupon: couponApplied
+											? settings.coupon
+											: null,
 
 										info,
 										log,
@@ -490,7 +494,10 @@
 									count: settings.orderCount,
 									token: token.token,
 									paymentMethod: settings.paymentMethod,
-									shippingAddress: account.a
+									shippingAddress: account.a,
+									coupon: couponApplied
+										? settings.coupon
+										: null,
 								});
 	
 								successCount++;
