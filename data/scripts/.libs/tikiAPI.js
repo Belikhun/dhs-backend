@@ -436,7 +436,7 @@ const __doOrder = async ({
 		});
 		
 		heartbeat(); 
-		if (!coupon || coupon !== "") {
+		if (typeof coupon === "string" && coupon !== "") {
 			info({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 
 			log(`🎫 Đang áp dụng Coupon: ${coupon}`);
