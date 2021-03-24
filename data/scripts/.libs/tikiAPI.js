@@ -435,28 +435,39 @@ const __doOrder = async ({
 			myajax
 		});
 		
-		heartbeat(); 
-		if (typeof coupon === "string" && coupon !== "") {
+		heartbeat();
+
+		if (typeof coupon === "string" && coupon !== "")
+			coupon = coupon.split("\n");
+
+		if (typeof coupon === "object" && coupon.length > 0) {
 			info({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 
-			log(`🎫 Đang áp dụng Coupon: ${coupon}`);
-
-			try {
-				await myajax({
-					url: `${HOSTADDRESS}/api/v2/carts/mine/coupons/${coupon}`,
-					method: "PUT",
-					header: {
-						"X-Access-Token": token
-					}
-				})
-			} catch(e) {
-				await panic("Lỗi khi áp dụng mã Coupon");
-				log("⚠ Tiki trả về mã lỗi");
-				log(` + MSG  : ${e.error.message}`);
-				throw { code: -1, description: e.error.message, data: e.error }
+			for (let item of coupon) {
+				log(`🎫 Đang áp dụng Coupon: ${item}`);
+	
+				try {
+					await myajax({
+						url: `${HOSTADDRESS}/api/v2/carts/mine/coupons/${item}`,
+						method: "PUT",
+						header: {
+							"FH_User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Mobile Safari/537.36",
+							"X-Access-Token": token
+						},
+						query: {
+							replace: 0,
+							from: "eligible"
+						}
+					})
+				} catch(e) {
+					await panic("Lỗi khi áp dụng mã Coupon");
+					log("⚠ Tiki trả về mã lỗi");
+					log(` + MSG: ${e.data.error.message}`);
+					throw { code: -1, description: e.data.error.messag, data: e.data.error }
+				}
+	
+				log(`🎫 Áp dụng Coupon thành công!`);
 			}
-
-			log(`🎫 Áp dụng Coupon thành công!`);
 		}
 	}
 	
@@ -747,6 +758,7 @@ const __doOrder = async ({
 	info({ progress: 100, progWarn: false, checkDetail: "Đặt hàng thành công" });
 	heartbeat();
 
+	let QRImage = null;
 	if (isInjectedAccount) {
 		log("⚠ Tiki trả về mã lỗi");
 		log(` + Code: 450`);
@@ -771,19 +783,20 @@ const __doOrder = async ({
 	} else {
 		log("🛒 doOrder đã hoàn thành!");
 		log("============ KẾT QUẢ ============");
-		log(` + Order Code    : ${placeOrder.redirect_data.order_code}`);
-		log(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
+		log(` + Order Code        : ${placeOrder.redirect_data.order_code}`);
+		log(` + Thành Tiền        : ${placeOrder.redirect_data.amount}`);
 
+		QRImage = `https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200`;
 		beaconNote.push(`🛒 ID ${placeOrder.redirect_data.order_code}`);
 		beaconNote.push(` + Thành Tiền    : ${placeOrder.redirect_data.amount}`);
 
 		switch (paymentMethod) {
 			case "momo":
-				log(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
-				log(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
+				log(` + Merchant Code     : ${placeOrder.payment.data.merchant_code}`);
+				log(` + TransactionID     : ${placeOrder.payment.data.transaction_id}`);
 				
 				log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
-				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				log(`<img src="${QRImage}" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
 
 				beaconNote.push(` + Merchant Code : ${placeOrder.payment.data.merchant_code}`);
 				beaconNote.push(` + TransactionID : ${placeOrder.payment.data.transaction_id}`);
@@ -793,7 +806,8 @@ const __doOrder = async ({
 				log(` + AppID             : ${placeOrder.payment.data.appid}`);
 				log(` + Transaction Token : ${placeOrder.payment.data.zptranstoken}`);
 				
-				log(`<img src="https://ops-api.tiki.vn/barcode?barcode=${placeOrder.qr_code}&type=qrcode&width=200&height=200" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
+				log(` + payURL        : <a href="${placeOrder.qr_code}" target="_blank">LINK</a>`);
+				log(`<img src="${QRImage}" style="display: block; margin: auto; padding: 10px 28px 10px 0;" >`);
 
 				beaconNote.push(` + AppID             : ${placeOrder.payment.data.appid}`);
 				beaconNote.push(` + Transaction Token : ${placeOrder.payment.data.zptranstoken}`);
@@ -802,6 +816,18 @@ const __doOrder = async ({
 	}
 
 	log(`⌚ Thời gian     : ${orderTimer.stop}s`);
+
+	return {
+		id: cartInfo.id,
+		cid: cartInfo.customer_id,
+		coupon: cartInfo.coupon_code,
+		method: cartInfo.last_payment_method.method_name,
+		shipping: cartInfo.shipping_method.name,
+		subTotal: cartInfo.subtotal,
+		shippingFee: cartInfo.shipping_amount,
+		grandTotal: cartInfo.grand_total,
+		QRCode: QRImage
+	}
 }
 
 const __clearCart = async ({

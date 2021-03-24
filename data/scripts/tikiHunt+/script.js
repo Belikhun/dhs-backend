@@ -23,8 +23,10 @@
 		international:	{ title: "Hàng Quốc Tế", path: "hang-quoc-te", category: 17166 },
 	}
 
-	onCancel(() => {
-		this.subScreen.hide();
+	onCancel((stop) => {
+		if (stop)
+			this.subScreen.hide();
+
 		clearInterval(timeUpdateInterval);
 		doCheck = false;
 	});

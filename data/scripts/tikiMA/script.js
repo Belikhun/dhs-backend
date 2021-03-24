@@ -5,7 +5,10 @@
 
 	const HOSTADDRESS = "https://tiki.vn";
 
-	onCancel(() => {
+	onCancel((stop) => {
+		if (stop)
+			this.subScreen.hide();
+
 		clearInterval(infoUpdateInterval);
 		doCheck = false;
 	})
@@ -181,7 +184,8 @@
 			orderPrice: { type: "number", label: "Đặt khi giá nhỏ hơn", value: itemInitPrice, save: false, required: true },
 			orderCount: { type: "number", label: "Số lượng", value: 1, required: true },
 			checkInterval: { type: "number", label: "Khoảng kiểm tra", value: 1000, required: true },
-			coupon: { type: "text", label: "Mã giảm giá (tùy chọn)" },
+			coupon: { type: "textarea", height: "100px", label: "Mã giảm giá (tùy chọn)" },
+			couponApplyAll: { type: "checkbox", label: "Áp dụng mã giảm giá cho toàn bộ đơn hàng", color: "blue", value: false },
 			paymentMethod: {
 				type: "radio",
 				label: "Phương Thức Thanh Toán",
@@ -208,9 +212,43 @@
 			rejectSetup("Không tìm thấy Proxy nào cả!");
 			return;
 		}
+
+		settings.coupon = settings.coupon.split("\n");
+
+		let container = null;
+		if (["zalopay", "momo"].includes(settings.paymentMethod)) {
+			container = buildElementTree("div", [], [
+				{ type: "div", class: "header", name: "header", list: [
+					{ type: "t", class: "left", name: "left", text: `Danh Sách QR Code Cho ${{ momo: "Ví Momo", zalopay: "Ví ZaloPay" }[settings.paymentMethod]}` }
+				]},
+				{ type: "div", class: "list", name: "list" }
+			]).obj;
+			
+			this.subScreen.show(container, "QRCodeList");
+		}
+
+		const addQR = ({
+			name,
+			price,
+			qr
+		} = {}) => {
+			if (!container)
+				return;
+
+			let item = buildElementTree("span", "item", [
+				{ name: "qr", node: new lazyload({ source: qr, classes: "qr" }) },
+				{ type: "div", class: "detail", name: "detail", list: [
+					{ type: "t", class: "title", name: "titleNode", text: name },
+					{ type: "t", class: "price", name: "price", text: priceFormat(price) },
+					{ type: "span", class: "complete", name: "complete" }
+				]}
+			]);
+
+			item.obj.detail.complete.addEventListener("click", () => container.list.removeChild(item.tree));
+			container.list.appendChild(item.tree);
+		}
 	
 		log("CÀI ĐẶT:");
-
 		for (let key of Object.keys(settings))
 			log(` + ` + pleft(key, 18, true) + ` = ${settings[key]}`);
 
@@ -222,6 +260,7 @@
 		let checkNth = 0;
 		let start = time();
 		let successCount = 0;
+		let couponApplied = false;
 	
 		runInfo({
 			end: settings.checkInterval + "ms",
@@ -277,7 +316,6 @@
 				doCheck = false;
 				order();
 
-				let couponApplied = false;
 				let totalOrderTimes = (settings.autoReOrder)
 					? accountList.length * settings.autoReOrderTimes
 					: accountList.length;
@@ -411,14 +449,14 @@
 									
 									sounds.notification();
 
-									await __doOrder({
+									let orderData = await __doOrder({
 										id: PID,
 										count: settings.orderCount,
 										token: token.token,
 										paymentMethod: settings.paymentMethod,
 										shippingAddress: account.a,
 										platform: settings.xPlatform,
-										coupon: couponApplied
+										coupon: (!couponApplied || settings.couponApplyAll)
 											? settings.coupon
 											: null,
 
@@ -427,6 +465,12 @@
 										clog,
 										panic,
 										myajax
+									});
+
+									addQR({
+										name: `ID:${orderData.id} C:${orderData.coupon || "NONE"} M:${orderData.method} S:${orderData.shipping}`,
+										price: orderData.grandTotal,
+										qr: orderData.QRCode
 									});
 		
 									successCount++;
@@ -489,15 +533,21 @@
 							for (let time = 1; time <= account.c; time++) {
 								log(`---------- LẦN ${time}/${account.c} ----------`);
 								sounds.notification();
-								await __doOrder({
+								let orderData = await __doOrder({
 									id: PID,
 									count: settings.orderCount,
 									token: token.token,
 									paymentMethod: settings.paymentMethod,
 									shippingAddress: account.a,
-									coupon: couponApplied
+									coupon: (!couponApplied || settings.couponApplyAll)
 										? settings.coupon
 										: null,
+								});
+
+								addQR({
+									name: `ID:${orderData.id} C:${orderData.coupon || "NONE"} M:${orderData.method} S:${orderData.shipping}`,
+									price: orderData.grandTotal,
+									qr: orderData.QRCode
 								});
 	
 								successCount++;
