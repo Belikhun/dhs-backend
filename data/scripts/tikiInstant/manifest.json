@@ -4,6 +4,6 @@
     "site": "tiki.vn/",
     "match": "tiki\\.vn\/.*\\-p\\d+\\.html.*",
     "autorun": true,
-    "version": 6,
+    "version": 7,
     "hide": true
 }

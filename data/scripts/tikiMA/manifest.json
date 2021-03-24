@@ -4,6 +4,6 @@
     "site": "tiki.vn/",
     "match": "tiki\\.vn\/.*\\-p\\d+\\.html.*",
     "requires": ["tikiAPI"],
-    "version": 10,
+    "version": 11,
     "hide": true
 }

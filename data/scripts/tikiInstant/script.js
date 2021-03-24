@@ -25,7 +25,7 @@
 		log(`|===========================|`);
 		log(`|      Tiki Instant Buy     |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 17:37:23 29/05/2020  |`);
+		log(`|  LU: 14:46:25 24/03/2021  |`);
 		log(`|===========================|`);
 	
 		const getToken = async (retry = true) => {
@@ -244,11 +244,11 @@
 		runInfo({ info: "Đang tạo nút",  progress: 80 });
 		log("Creating Button");
 		let btn = await command("createButton", {
-			container: `div.body > div.summary > div.left > div:nth-child(7)`,
+			container: `.add-to-cart`,
 			color: "blue",
 			text: `<h3 style="margin: unset; font-size: 22px;">MUA NGAY</h3><br>ID: ${ID} PID: ${PID}`,
 			style: {
-				width: "calc(100% - 30px)",
+				display: "block",
 				marginTop: "10px"
 			}
 		})
