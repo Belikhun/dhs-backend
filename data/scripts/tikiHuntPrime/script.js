@@ -26,7 +26,7 @@
 	onCancel((stop) => {
 		if (stop)
 			this.subScreen.hide();
-			
+
 		clearInterval(timeUpdateInterval);
 		doCheck = false;
 	});
@@ -540,7 +540,7 @@
 			itemStatusColor: "green",
 			dataType: "time",
 			checkDetail: "INITIALIZING"
-		})
+		});
 
 		// Start Scanning Item
 		var itemList = await scanItem({
