@@ -1,14 +1,7 @@
-<h2>Thay đổi trong v7.5 (09/02/2021 18:50:00 GMT+7)</h2>
+<h2>Thay đổi trong v7.6 (24/03/2021 18:40:00 GMT+7)</h2>
 
 <ul>
-	<li>Sửa lỗi chọn địa chỉ trong <pre>tikiRegister</pre></li>
-	<li>Tự động xóa nhật kí khi cửa sổ không hoạt động</li>
-	<li>Thêm cài đặt giới hạn số lượng dòng hiển thị trong nhật kí</li>
-	<li>Sửa lỗi quét bằng proxy trong <pre>tikiHunt+</pre></li>
-	<li>Thêm bảng cài đặt người dùng</li>
-	<li>Thêm script <pre>tikiRegister</pre></li>
-	<li>Hỗ trợ quét bằng proxy cho <pre>tikiHunt+</pre></li>
-	<li>Hiển thị icon cho mỗi script</li>
-	<li>Sửa lỗi proxy không kiểm tra quyền trước khi chạy</li>
-	<li>Cập nhật Library</li>
+	<li>Thêm tính năng tìm kiếm</li>
+	<li>Thêm layout <pre>QRCodeList</pre></li>
+	<li>Sửa một số lỗi nhỏ khác</li>
 </ul>
