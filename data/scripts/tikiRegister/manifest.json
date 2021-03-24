@@ -4,6 +4,6 @@
     "site": "tiki.vn/",
     "match": "*",
     "requires": ["tikiAPI"],
-    "version": 3,
+    "version": 4,
     "hide": true
 }
