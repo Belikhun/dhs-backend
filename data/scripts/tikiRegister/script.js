@@ -11,14 +11,13 @@
 		executeJob = false;
 	});
 
-	const NANOSIM = "https://access.nanosim.vn";
 	const log = (text, overwrite = false) => writeLog(text, overwrite);
 
 	try {
 		log(`|===========================|`);
 		log(`|   Tiki Account Register   |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 23:05:12 04/03/2021  |`);
+		log(`|  LU: 14:22:39 24/03/2021  |`);
 		log(`|===========================|`);
 
 		await info({ hide: true });
@@ -147,9 +146,185 @@
 		addressPicker.ward.onChange((v) => (v != "") ? this.dataSave({ "settings.tikiRegister.ward": v }) : false);
 		addressPicker.style.width = "100%";
 
+		//? ================ DEFINE SERVICES ================
+
+		const OTPServices = {
+			nanosim: {
+				default: true,
+				host: "https://access.nanosim.vn",
+				name: "NanoSIM",
+
+				async checkBalance({
+					apiKey,
+					myajax = window.myajax
+				} = {}) {
+					let balance = await myajax({
+						url: `${this.host}/api/ig/balance`,
+						method: "GET",
+						query: {
+							api_token: apiKey
+						}
+					});
+
+					return {
+						success: balance.success,
+						balance: (balance.data && typeof balance.data.balance === "number")
+							? balance.data.balance
+							: null
+					}
+				},
+
+				async createOrder({
+					apiKey,
+					serviceID = 1,
+
+					myajax = window.myajax
+				} = {}) {
+					let order = await myajax({
+						url: `${this.host}/api/ig/request`,
+						method: "GET",
+						query: {
+							api_token: apiKey,
+							serviceId: serviceID
+						}
+					});
+
+					if (!order.success)
+						throw { code: -1, description: order.message, data: order }
+
+					return {
+						success: order.success,
+						orderID: order.data.session_id
+					}
+				},
+
+				async getStatus({
+					apiKey,
+					orderID,
+
+					myajax = window.myajax
+				} = {}) {
+					let status = await myajax({
+						url: `${this.host}/api/ig/code`,
+						method: "GET",
+						query: {
+							api_token: apiKey,
+							sessionId: orderID
+						}
+					});
+		
+					if (!status.success)
+						throw { code: -1, description: `getStatus(${orderID}): ${status.message}`, data: status }
+		
+					return {
+						success: status.success,
+						phone: status.data.phone,
+						sms: status.data.sms
+					}
+				}
+			},
+
+			thuesms: {
+				host: "https://thuesms.com",
+				name: "ThueSMS",
+
+				async checkBalance({
+					apiKey,
+					myajax = window.myajax
+				} = {}) {
+					let balance = await myajax({
+						url: `${this.host}/api-v2/`,
+						method: "GET",
+						query: {
+							show: "balance",
+							api: apiKey
+						}
+					});
+
+					return {
+						success: balance.success,
+						balance: (typeof balance.money === "number")
+							? balance.money
+							: null
+					}
+				},
+
+				async createOrder({
+					apiKey,
+					serviceID = "30Khac",
+
+					myajax = window.myajax
+				} = {}) {
+					let order = await myajax({
+						url: `${this.host}/api-v2/`,
+						method: "GET",
+						query: {
+							show: "phone",
+							api: apiKey,
+							service: serviceID
+						}
+					});
+
+					if (!order.success)
+						throw { code: order.code, description: order.message, data: order }
+
+					return {
+						success: order.success,
+						orderID: order.data.session
+					}
+				},
+
+				async getStatus({
+					apiKey,
+					orderID,
+
+					myajax = window.myajax
+				} = {}) {
+					let status = await myajax({
+						url: `${this.host}/api-v2/`,
+						method: "GET",
+						query: {
+							show: "sessions",
+							api: apiKey,
+							sessions: orderID
+						}
+					});
+		
+					if (!status.success)
+						throw { code: status.status_code, description: `getStatus(${orderID}): ${status.message}`, data: status }
+		
+					return {
+						success: status.success,
+						phone: "0" + status.data.phone_number,
+						sms: (status.data.messages[0] && typeof status.data.messages[0].sms_content === "string" && status.data.messages[0].sms_content.length > 1)
+							? status.data.messages[0].sms_content
+							: null
+					}
+				}
+			}
+		}
+				
 		//? ================ MAIN SETTINGS ================
 
 		this.subScreen.show(container, "accountsRegister");
+
+		let OTPSelect = []
+		let apiKeyInput = {}
+		for (let key of Object.keys(OTPServices)) {
+			let item = OTPServices[key];
+
+			OTPSelect.push({
+				name: item.name,
+				color: item.default ? "blue" : "pink",
+				value: key,
+				checked: item.default || false
+			});
+
+			apiKeyInput[`${key}APIKey`] = {
+				type: "text",
+				label: `${item.name} API KEY`
+			}
+		}
 
 		const settings = await setup({
 			count: { type: "number", label: "Số lượng đăng kí", value: 1 },
@@ -183,10 +358,16 @@
 				]
 			},
 			phoneNumber: { type: "textarea", label: "SĐT nhận hàng (Bỏ trống dùng số mặc định)", height: "140px", value: `0123456789\n0762238661` },
-			simProviderNote: { type: "note", level: "info", text: `<b>NANOSIM</b>` },
-			apiKey: { type: "text", label: "API KEY", required: true },
-			serviceID: { type: "number", label: "Service ID", value: 1, save: false, required: true },
+			cooldown: { type: "number", label: "Thời Gian Nghỉ", value: 1000 },
 			proxy: { type: "checkbox", label: "Sử dụng Proxy", value: false },
+			simProviderNote: { type: "note", level: "info", text: `<b>SIM OTP SERVICES</b>` },
+			simOTPSelect: {
+				type: "radio",
+				label: "Chọn Dịch Vụ",
+				required: true,
+				list: OTPSelect
+			},
+			...apiKeyInput,
 			xPlatform: { type: "text", label: "X-Platform", value: "frontend-desktop" }
 		});
 
@@ -200,6 +381,14 @@
 			return;
 		}
 
+		const selectedServices = OTPServices[settings.simOTPSelect]
+
+		if (settings[`${settings.simOTPSelect}APIKey`].length < 2) {
+			rejectSetup(`API KEY Của ${OTPServices[settings.simOTPSelect].name} không được để trống!`);
+			return;
+		}
+
+		settings.apiKey = settings[`${settings.simOTPSelect}APIKey`];
 		settings.firstName = settings.firstName.split("\n");
 		settings.middleName = settings.middleName.split("\n");
 		settings.lastName = settings.lastName.split("\n");
@@ -364,22 +553,6 @@
 
 		const randomStreet = () => randItem(settings.street).replaceAll("%random%", randBetween(1, 999, true));
 
-		const getStatus = async (id) => {
-			let nanoSimOrder = await myajax({
-				url: `${NANOSIM}/api/ig/code`,
-				method: "GET",
-				query: {
-					api_token: settings.apiKey,
-					sessionId: id
-				}
-			});
-
-			if (!nanoSimOrder.success)
-				throw { code: -1, description: `getStatus(${id}): ${nanoSimOrder.message}`, data: { message: nanoSimOrder.message } }
-
-			return nanoSimOrder;
-		}
-
 		const doRegister = async ({
 			i,
 			set = () => {},
@@ -402,14 +575,14 @@
 			let street = randomStreet();
 			let receiveNumber = randItem(settings.phoneNumber);
 
-			log(`Tên:         	${fullName}`);
-			log(`Email:       	${email}`);
-			log(`Password:    	${password}`);
-			log(`Gender:      	${gender}`);
-			log(`Birthday:    	${birthday}`);
-			log(`News Letter: 	${newsletter}`);
-			log(`Street:      	${street}`);
-			log(`Address Phone: ${receiveNumber || "N/A"}`);
+			log(`Tên           : ${fullName}`);
+			log(`Email         : ${email}`);
+			log(`Password      : ${password}`);
+			log(`Gender        : ${gender}`);
+			log(`Birthday      : ${birthday}`);
+			log(`News Letter   : ${newsletter}`);
+			log(`Street        : ${street}`);
+			log(`Address Phone : ${receiveNumber || "N/A"}`);
 
 			let logg;
 			let row = createTableRow({
@@ -422,8 +595,31 @@
 			});
 
 			try {
+				set(0, `Nghỉ ${settings.cooldown / 1000}s`);
+				logg = logState(`🕒 Nghỉ ${settings.cooldown / 1000}s`);
+				await delayAsync(settings.cooldown);
+				logg.set({ status: 1 });
+
+				// ================== CHECK BALANCE ==================
+				set(0, "Kiểm Tra Số Dư");
+				logg = logState("Kiểm Tra Số Dư");
+				try {
+					let balance = await selectedServices.checkBalance({
+						apiKey: settings.apiKey,
+						myajax
+					});
+	
+					if (balance.balance) {
+						logg.set({ status: 1 });
+						log(`💵 Số Tiền Còn Lại: <a class="price" style="font-size: 26px;">${priceFormat(balance.balance)}</a>`);
+					} else
+						logg.set({ status: -1 });
+				} catch(e) {
+					logg.set({ status: -1 });
+				}
+
 				// ================== GET TIKI GUEST TOKEN ==================
-				set(0, "Lấy Tiki Guest Token");
+				set(10, "Lấy Tiki Guest Token");
 				logg = logState("Lấy Tiki Guest Token");
 				let tikiTokens = await myajax({
 					url: `${HOSTADDRESS}/api/v2/tokens`,
@@ -441,21 +637,15 @@
 				log(`🔑 ${TOKEN}`);
 
 				// ================== CREATE NANOSIM ORDER ==================
-				set(20, "Tiến hành tạo Order Nanosim");
-				logg = logState("Tiến hành tạo Order Nanosim");
-				let nanoSimOrder = await myajax({
-					url: `${NANOSIM}/api/ig/request`,
-					method: "GET",
-					query: {
-						api_token: settings.apiKey,
-						serviceId: settings.serviceID
-					}
+				set(20, `Tiến hành tạo Order ${selectedServices.name}`);
+				logg = logState(`Tiến hành tạo Order ${selectedServices.name}`);
+
+				let OTPOrder = await selectedServices.createOrder({
+					apiKey: settings.apiKey,
+					myajax
 				});
 
-				if (!nanoSimOrder.success)
-					throw { code: -1, description: nanoSimOrder.message }
-
-				let orderID = nanoSimOrder.data.session_id;
+				let orderID = OTPOrder.orderID;
 				logg.set({ status: 1 });
 				log(` → ID: ${orderID}`);
 
@@ -469,14 +659,19 @@
 					await delayAsync(1000);
 					phoneTries++;
 
-					let nanoSimOrder = await getStatus(orderID);
+					let OTPStatus = await selectedServices.getStatus({
+						apiKey: settings.apiKey,
+						orderID,
 
-					if (!nanoSimOrder.success || !nanoSimOrder.data.phone) {
+						myajax
+					});
+
+					if (!OTPStatus.success || typeof OTPStatus.phone !== "string" || OTPStatus.phone.length < 4) {
 						logg.set({ text: `Lấy số điện thoại [${phoneTries}]\n (Chưa thấy SĐT)` });
 						continue;
 					}
 
-					phoneNumber = nanoSimOrder.data.phone;
+					phoneNumber = OTPStatus.phone;
 				}
 
 				logg.set({ text: `Lấy số điện thoại [${phoneTries}]`, status: 1 });
@@ -490,29 +685,35 @@
 				// ================== SEND OTP ==================
 				set(60, "Gửi mã OTP");
 				logg = logState("Gửi mã OTP");
-				await myajax({
-					url: `${HOSTADDRESS}/api/v2/customers/otp_codes`,
-					method: "POST",
-					type: "text",
-					header: {
-						"Accept": "application/json, text/plain, */*",
-						"FH_Origin": HOSTADDRESS,
-						"FH_Referer": `${HOSTADDRESS}/`,
-						"FH_Sec-Fetch-Dest": "empty",
-						"FH_Sec-Fetch-Mode": "cors",
-						"FH_Sec-Fetch-Site": "same-origin",
-						"X-Guest-Token": TOKEN
-					},
-					json: {
-						"phone_number": phoneNumber
-					}
-				});
+
+				try {
+					await myajax({
+						url: `${HOSTADDRESS}/api/v2/customers/otp_codes`,
+						method: "POST",
+						type: "text",
+						header: {
+							"Accept": "application/json, text/plain, */*",
+							"FH_Origin": HOSTADDRESS,
+							"FH_Referer": `${HOSTADDRESS}/`,
+							"FH_Sec-Fetch-Dest": "empty",
+							"FH_Sec-Fetch-Mode": "cors",
+							"FH_Sec-Fetch-Site": "same-origin",
+							"X-Guest-Token": TOKEN
+						},
+						json: {
+							"phone_number": phoneNumber
+						}
+					});
+				} catch(e) {
+					let data = JSON.parse(e.data);
+					throw { code: data.error.code, description: data.error.message, data: data.error.errors }
+				}
 
 				logg.set({ status: 1 });
 
 				// ================== GET OTP ==================
 				set(70, "Lấy mã OTP");
-				logg = logState("Lấy mã OTP");
+				logg = logState("Lấy mã OTP (Đang Lấy Mã)");
 
 				let OTP;
 				let OPTTries = 0;
@@ -524,7 +725,7 @@
 					await delayAsync(1000);
 					OPTTries++;
 
-					logg.set({ text: `Lấy mã OTP [${OPTTries}]` });
+					logg.set({ text: `Lấy mã OTP [${OPTTries}] (Đang Lấy Mã)` });
 
 					if (OPTTries > 200) {
 						logg.set({ text: `Lấy mã OTP [${OPTTries}]\n (Quá Thời Gian Chờ)` });
@@ -532,10 +733,15 @@
 					}
 
 					try {
-						let orderStatus = await getStatus(orderID);
+						let OTPStatus = await selectedServices.getStatus({
+							apiKey: settings.apiKey,
+							orderID,
 
-						if (orderStatus.data.sms) {
-							let messageRe = /(\d{6})/gm.exec(orderStatus.data.sms);
+							myajax
+						});
+
+						if (typeof OTPStatus.sms === "string") {
+							let messageRe = /(\d{6})/gm.exec(OTPStatus.sms);
 
 							if (!messageRe) {
 								logg.set({ text: `Lấy mã OTP [${OPTTries}]\n (Regex Not Match)` });
