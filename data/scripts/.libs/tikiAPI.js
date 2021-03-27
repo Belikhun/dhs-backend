@@ -444,6 +444,11 @@ const __doOrder = async ({
 			info({ progress: 20, checkDetail: "Đang Áp Dụng Mã Giảm Giá" });
 
 			for (let item of coupon) {
+				if (item.length < 1) {
+					clog("WARN", `Protential Blank Coupon: (${item}). Please check your code and filter out unwanted data`);
+					return;
+				}
+
 				log(`🎫 Đang áp dụng Coupon: ${item}`);
 	
 				try {
