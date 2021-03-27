@@ -213,7 +213,7 @@
 			return;
 		}
 
-		settings.coupon = settings.coupon.split("\n");
+		settings.coupon = settings.coupon.split("\n").filter(String);
 
 		let container = null;
 		if (["zalopay", "momo"].includes(settings.paymentMethod)) {
