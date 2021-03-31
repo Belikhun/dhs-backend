@@ -66,6 +66,7 @@
 			pageCount = 1,
 			listLimit = 48,
 			saleFilter = 0,
+			priceFilter = 0,
 			doSort = true,
 			itemHandler = () => {}
 		} = {}, set = () => {}) => {
@@ -75,9 +76,11 @@
 
 			heartbeat();
 			log(` + Đang lấy danh sách item`);
-			log(`   + sortBy    = ${sortBy}`);
-			log(`   + pageCount = ${pageCount}`);
-			log(`   + listLimit = ${listLimit}`);
+			log(`   + sortBy      = ${sortBy}`);
+			log(`   + pageCount   = ${pageCount}`);
+			log(`   + listLimit   = ${listLimit}`);
+			log(`   + saleFilter  = ${saleFilter}`);
+			log(`   + priceFilter = ${priceFilter}`);
 
 			for (let itemNth = 0; itemNth < shopList.length; itemNth++) {
 				let item = shopList[itemNth];
@@ -128,7 +131,7 @@
 						let oldPrice = item.list_price;
 						let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
 	
-						if (priceSale < saleFilter)
+						if (priceSale < saleFilter || price < priceFilter)
 							continue;
 
 						let couponCode = null;
@@ -479,23 +482,24 @@
 		// Cool Down
 		await delayAsync(1000);
 
-		var firstScanSetup = await setup({
+		let firstScanSetup = await setup({
 			sortBy: {
 				type: "radio",
 				label: "Sắp xếp theo",
 				required: false,
 				list: [
-					{ name: `T`, color: "blue", value: "name" },
-					{ name: `MGG`, color: "pink", value: "sale", checked: true },
-					{ name: `CMGG`, color: "blue", value: "haveCoupon" },
-					{ name: `G (<)`, color: "blue", value: "priceUp" },
-					{ name: `G (>)`, color: "blue", value: "priceDown" }
+					{ name: `Tên`, color: "blue", value: "name" },
+					{ name: `Mã Giảm Giá`, color: "pink", value: "sale", checked: true },
+					{ name: `Có Mã Giảm Giá`, color: "blue", value: "haveCoupon" },
+					{ name: `Giá (tăng dần)`, color: "blue", value: "priceUp" },
+					{ name: `Giá (giảm dần)`, color: "blue", value: "priceDown" }
 				]
 			},
-			scanPage: { type: "number", label: "ST", value: 1 },
-			fetchCount: { type: "number", label: "SIMT", value: 48 },
-			saleFilter: { type: "number", label: "FIL", value: 0 },
-			blackList: { type: "textarea", label: "BL", height: "180px", value: blackList.join(";"), save: false }
+			scanPage: { type: "number", label: "Số Trang Quét", value: 1 },
+			fetchCount: { type: "number", label: "Số Item Mỗi Trang", value: 48 },
+			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn (%)", value: 0 },
+			priceFilter: { type: "number", label: "Lọc Item Có Giá Nhỏ Hơn (đ)", value: 0 },
+			blackList: { type: "textarea", label: "Blacklist", height: "180px", value: blackList.join(";"), save: false }
 		}, { confirm: "Tiếp", saveKey: "preSetup" })
 
 		log("PRE SETUP:");
@@ -521,11 +525,12 @@
 		})
 
 		// Start Scanning Item
-		var itemList = await scanItem({
+		let itemList = await scanItem({
 			sortBy: firstScanSetup.sortBy,
 			pageCount: firstScanSetup.scanPage,
 			listLimit: firstScanSetup.fetchCount,
-			saleFilter: firstScanSetup.saleFilter
+			saleFilter: firstScanSetup.saleFilter,
+			priceFilter: firstScanSetup.priceFilter
 		}, (p, now, end) => runInfo({
 			now: `${p.toFixed(0)}%`,
 			current: now,
@@ -535,7 +540,7 @@
 			dataType: "time"
 		}));
 
-		var CURRENT_PAGE = 1;
+		let CURRENT_PAGE = 1;
 
 		const changeAllListPage = async (page, {
 			showCount = 10
@@ -684,7 +689,9 @@
 			await scanItem({
 				sortBy: firstScanSetup.sortBy,
 				pageCount: firstScanSetup.scanPage,
+				listLimit: firstScanSetup.fetchCount,
 				saleFilter: firstScanSetup.saleFilter,
+				priceFilter: firstScanSetup.priceFilter,
 				doSort: false,
 				itemHandler: async (item) => {
 					if (itemList.list[item.id] && (itemList.list[item.id].price <= item.price || itemList.list[item.id].sale >= item.sale))

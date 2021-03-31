@@ -3,6 +3,6 @@
     "description": "Tìm item giá lỗi của cửa hàng và tự động đặt mua",
     "site": "tiki.vn/",
     "match": "*",
-    "version": 6,
+    "version": 7,
     "hide": true
 }

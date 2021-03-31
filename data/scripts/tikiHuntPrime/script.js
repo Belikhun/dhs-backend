@@ -506,17 +506,17 @@
 				required: false,
 				list: [
 					{ name: `Tên`, color: "blue", value: "name" },
-					{ name: `Mức Giảm Giá`, color: "pink", value: "sale", checked: true },
+					{ name: `Mã Giảm Giá`, color: "pink", value: "sale", checked: true },
 					{ name: `Có Mã Giảm Giá`, color: "blue", value: "haveCoupon" },
-					{ name: `Giá từ thấp đến cao (<)`, color: "blue", value: "priceUp" },
-					{ name: `Giá từ cao đến thấp (>)`, color: "blue", value: "priceDown" }
+					{ name: `Giá (tăng dần)`, color: "blue", value: "priceUp" },
+					{ name: `Giá (giảm dần)`, color: "blue", value: "priceDown" }
 				]
 			},
 			scanPage: { type: "number", label: "Số trang quét", value: 1 },
 			itemPerPage: { type: "number", label: "Số item mỗi trang", value: 48 },
 			scanSort: { type: "text", label: "Sắp xếp", value: "discount_percent,desc" },
 			aggregations: { type: "checkbox", label: "Tổng hợp", value: true },
-			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 0 },
+			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn (%)", value: 0 },
 			blackList: { type: "textarea", label: "Danh Sách Đen", height: "180px", value: blackList.join(";"), save: false }
 		}, { confirm: "Tiếp", saveKey: "preSetup" })
 
