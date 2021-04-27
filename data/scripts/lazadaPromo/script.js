@@ -374,11 +374,6 @@
 		// Container Element Init
 		let container = document.createElement("div");
 
-		let title = document.createElement("t");
-		title.classList.add("title");
-		title.innerText = "Danh sách Item";
-		container.appendChild(title);
-
 		//? All List Box
 		let allList = document.createElement("div");
 		allList.classList.add("container", "changed");

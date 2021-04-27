@@ -49,18 +49,22 @@
 
 					for (let tagI = 0; tagI < selectedTags.length; tagI++) {
 						let tag = selectedTags[tagI];
-						log(`🍭 Tag: ${tag.name}`);
+						log(` 🍭 Tag: ${tag.name}`);
 
 						let pageTotal = null;
 						let perPage = null;
 						let maxPage = null;
 						let page = 1;
 
+						let pageLogE = document.createElement("content");
+						pageLogE.innerText = `  📃 TRANG ?/?`;
+						log(pageLogE);
+
 						while (true) {
 							if (pageTotal && page > maxPage)
 								break;
 
-							log(` 📃 TRANG ${page}/${maxPage || "?"}`);
+							pageLogE.innerText = `  📃 TRANG ${page}/${maxPage || "?"}`;
 							let current = await myajax({
 								url: `${HOSTADDRESS}/api/v2/widget/deals/collection`,
 								method: "GET",
@@ -77,7 +81,7 @@
 								perPage = current.paging.per_page;
 								maxPage = Math.ceil(pageTotal / perPage);
 
-								log(`🔎 ${pageTotal} Item (${maxPage} trang)`);
+								log(` 🔎 ${pageTotal} Item (${maxPage} trang)`);
 							}
 
 							let p1 = (tagI / selectedTags.length) + (1 / selectedTags.length) * (page / maxPage);
@@ -87,6 +91,7 @@
 								now: page,
 								end: maxPage,
 								progress: p2 * 100,
+								progWarn: false,
 								itemStatus: `TRANG ${page}`,
 								itemStatusColor: "yellow",
 								dataType: "time",
@@ -106,11 +111,15 @@
 				let maxPage = null;
 				let page = 1;
 
+				let pageLogE = document.createElement("content");
+				pageLogE.innerText = ` 📃 TRANG ?/?`;
+				log(pageLogE);
+
 				while (true) {
 					if (pageTotal && page > maxPage)
 						break;
 
-					log(` 📃 TRANG ${page}/${maxPage || "?"}`);
+					pageLogE.innerText = ` 📃 TRANG ${page}/${maxPage || "?"}`;
 					let current = await myajax({
 						url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
 						method: "GET",
@@ -154,6 +163,7 @@
 						now: page,
 						end: maxPage,
 						progress: (page / maxPage) * 100,
+						progWarn: false,
 						itemStatus: `TRANG ${page}`,
 						itemStatusColor: "yellow",
 						dataType: "time",
@@ -328,11 +338,6 @@
 
 		// Container Element Init
 		let container = document.createElement("div");
-
-		let title = document.createElement("t");
-		title.classList.add("title");
-		title.innerText = "Danh sách Item";
-		container.appendChild(title);
 
 		//? All List Box
 		let allList = document.createElement("div");
