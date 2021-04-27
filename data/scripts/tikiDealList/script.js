@@ -32,62 +32,85 @@
 			let sortedList = []
 
 			heartbeat();
-			log(` + Đang lấy danh sách item`);
-			log(`   + typeMix    = ${typeMix}`);
-			log(`   + sortBy     = ${sortBy}`);
-			log(`   + pageCount  = ${pageCount}`);
-			log(`   + saleFilter = ${saleFilter}`);
-			runInfo({
-				end: pageCount,
-				dataType: "time"
-			});
+			log(`📃 Đang lấy danh sách item`);
+			log(` + typeMix    = ${typeMix}`);
+			log(` + sortBy     = ${sortBy}`);
+			log(` + saleFilter = ${saleFilter}`);
 
-			for (let page = 1; page <= pageCount; page++) {
-				heartbeat({ color: "yellow" });
-				log(`📃 TRANG ${page}`);
+			heartbeat({ color: "yellow" });
 
-				let start = time();
-				let result = []
+			let start = time();
+			let result = []
 
-				if (typeMix) {
-					let times = (await myajax({
-						url: `${HOSTADDRESS}/api/v2/widget/deals/mix`,
-						method: "GET",
-						query: {
-							categories: 1,
-							page: 1
-						}
-					})).filters.times.values;
+			if (typeMix) {
+				for (let timeI = 0; timeI < dealTime.length; timeI++) {
+					let time = dealTime[timeI];
+					log(`🍿 TimeID: ${time.query_value} >> 🕗 ${time.display}`);
 
-					for (let timeI = 0; timeI < times.length; timeI++) {
-						let time = times[timeI];
-						log(`🍿 TimeID: ${time.query_value} >> 🕗 ${time.display}`);
+					for (let tagI = 0; tagI < selectedTags.length; tagI++) {
+						let tag = selectedTags[tagI];
+						log(`🍭 Tag: ${tag.name}`);
 
-						for (let tag = 1; tag <= 6; tag++) {
-							log(`🍭 TagID: ${tag}`);
+						let pageTotal = null;
+						let perPage = null;
+						let maxPage = null;
+						let page = 1;
+
+						while (true) {
+							if (pageTotal && page > maxPage)
+								break;
+
+							log(` 📃 TRANG ${page}/${maxPage || "?"}`);
 							let current = await myajax({
-								url: `${HOSTADDRESS}/api/v2/widget/deals/mix`,
+								url: `${HOSTADDRESS}/api/v2/widget/deals/collection`,
 								method: "GET",
 								query: {
 									categories: 1,
-									page: page,
-									tag_id: tag,
+									page,
+									tag_id: tag.query_value,
 									time_id: time.query_value
 								}
 							});
 
+							if (!pageTotal) {
+								pageTotal = current.paging.total;
+								perPage = current.paging.per_page;
+								maxPage = Math.ceil(pageTotal / perPage);
+
+								log(`🔎 ${pageTotal} Item (${maxPage} trang)`);
+							}
+
+							let p1 = (tagI / selectedTags.length) + (1 / selectedTags.length) * (page / maxPage);
+							let p2 = (timeI / dealTime.length) + (1 / dealTime.length) * p1;
+
 							runInfo({
 								now: page,
-								progress: ((page / pageCount) + ((page + 1) / pageCount - (page / pageCount)) * (timeI / (times.length - 1)) * (tag / 6)) * 100,
+								end: maxPage,
+								progress: p2 * 100,
 								itemStatus: `TRANG ${page}`,
 								itemStatusColor: "yellow",
-								dataType: "time"
+								dataType: "time",
+								current: time.display,
+								target: tag.name,
+								checkDetail: "Đang Quét"
 							});
 	
+							page++;
 							result = [...result, ...current.data];
 						}
 					}
-				} else {
+				}
+			} else {
+				let pageTotal = null;
+				let perPage = null;
+				let maxPage = null;
+				let page = 1;
+
+				while (true) {
+					if (pageTotal && page > maxPage)
+						break;
+
+					log(` 📃 TRANG ${page}/${maxPage || "?"}`);
 					let current = await myajax({
 						url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
 						method: "GET",
@@ -118,55 +141,74 @@
 	
 							next.data = [...next.data, ...response.data]
 						}
-	
-					result = [...current.data, ...next.data]
-				}
 
-				heartbeat();
+					if (!pageTotal) {
+						pageTotal = current.paging.total;
+						perPage = current.paging.per_page;
+						maxPage = Math.ceil(pageTotal / perPage);
 
-				for (let item of result) {
-					if (list[item.product.id])
-						continue;
-
-					let link = "https://tiki.vn/" + item.product.url_path;
-					let thumbnail = item.product.thumbnail_url;
-
-					let price = item.product.price;
-					let oldPrice = item.product.list_price;
-					let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
-
-					if (priceSale < saleFilter)
-						continue;
-
-					list[item.product.id] = {
-						id: item.product.id,
-						title: item.product.name,
-						link: link,
-						price,
-						priceSale,
-						thumbnail,
-						oldPrice,
-						sale: priceSale,
-						open: item.special_from_date,
-						progress: item.progress
+						log(`🔎 ${pageTotal} Item (${maxPage} trang)`);
 					}
 
-					sortedList.push(list[item.product.id]);
+					runInfo({
+						now: page,
+						end: maxPage,
+						progress: (page / maxPage) * 100,
+						itemStatus: `TRANG ${page}`,
+						itemStatusColor: "yellow",
+						dataType: "time",
+						checkDetail: "Đang Quét"
+					});
+
+					page++;
+					result = [...current.data, ...next.data]
 				}
-
-				log(`⏱ Thời gian: ${(time() - start).toFixed(2)}s`);
-
-				runInfo({
-					current: sortedList.length,
-					target: result.length,
-					saved: - (sortedList.length / result.length) * 100,
-					dataType: "time"
-				})
 			}
 
-			log(`   + Lấy danh sách thành công`);
 			heartbeat();
-			log(`   + Đang sắp xếp dữ liệu`);
+
+			for (let item of result) {
+				if (list[item.product.id])
+					continue;
+
+				let link = "https://tiki.vn/" + item.product.url_path;
+				let thumbnail = item.product.thumbnail_url;
+
+				let price = item.product.price;
+				let oldPrice = item.product.list_price;
+				let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
+
+				if (priceSale < saleFilter)
+					continue;
+
+				list[item.product.id] = {
+					id: item.product.id,
+					title: item.product.name,
+					link: link,
+					price,
+					priceSale,
+					thumbnail,
+					oldPrice,
+					sale: priceSale,
+					open: item.special_from_date,
+					progress: item.progress
+				}
+
+				sortedList.push(list[item.product.id]);
+			}
+
+			log(`⏱ Thời gian: ${(time() - start).toFixed(2)}s`);
+
+			runInfo({
+				current: sortedList.length,
+				target: result.length,
+				saved: - (sortedList.length / result.length) * 100,
+				dataType: "time"
+			});
+
+			log(` + Lấy danh sách thành công`);
+			heartbeat();
+			log(` + Đang sắp xếp dữ liệu`);
 			switch (sortBy) {
 				case "sale":
 					sortedList.sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
@@ -192,7 +234,7 @@
 					break;
 			}
 
-			log(`   + Sắp xếp dữ liệu thành công!`);
+			log(` + Sắp xếp dữ liệu thành công!`);
 			return { list, sortedList }
 		}
 
@@ -344,6 +386,39 @@
 
 		this.subScreen.show(container, "dealHunt");
 
+		// Fetch initial data
+		let initalData = await myajax({
+			url: `${HOSTADDRESS}/api/v2/widget/deals/collection`,
+			method: "GET"
+		});
+
+		let dealTags = initalData.filters.tags.values;
+		let dealTime = initalData.filters.times.values;
+
+		log(`🕑 Các Mốc Thời Gian: `);
+		for (let item of dealTime)
+			log(` + ${item.query_value} ${item.display} ${(item.active) ? "ACT" : ""}`)
+
+		let tagsSettings = {}
+
+		for (let item of dealTags) {
+			tagsSettings[`tag_${item.query_value}`] = {
+				type: "checkbox",
+				label: `
+					<div style="display: flex; flex-direction: row; align-items: center;">
+						<img style="width: 24px; height: 24px; border-radius: 8px;" src="${item.thumbnail_url}">
+
+						<span style="padding-left: 5px;">
+							<b style="font-size: 15px">${item.name}</b>
+						</span>
+					</div>
+				`,
+				color: "blue",
+				depend: "typeMix",
+				value: true
+			}
+		}
+
 		let settings = await setup({
 			sortBy: {
 				type: "radio",
@@ -358,15 +433,21 @@
 				]
 			},
 
-			typeMix: { type: "checkbox", label: "Deal theo khung giờ", color: "blue", value: false },
-			scanPage: { type: "number", label: "Số trang quét", value: 1 },
+			typeMix: { type: "checkbox", label: "Deal theo khung giờ", color: "blue", value: true },
+			...tagsSettings,
+
 			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 }
 		}, { confirm: "Tiếp" })
 
 		log("PRE SETUP:");
 
 		for (let key of Object.keys(settings))
-			log(` + ` + pleft(key, 18, true) + ` = ${settings[key]}`);
+			log(` + ` + pleft(key, 26, true) + ` = ${settings[key]}`);
+
+		let selectedTags = []
+		for (let item of dealTags)
+			if (settings[`tag_${item.query_value}`] === true)
+				selectedTags.push(item);
 
 		log("Đang bắt đầu chạy...");
 		run();
@@ -387,13 +468,13 @@
 		let itemList = await scanItem({
 			typeMix: settings.typeMix,
 			sortBy: settings.sortBy,
-			pageCount: settings.scanPage,
 			saleFilter: settings.saleFilter
 		});
+
 		let CURRENT_PAGE = 1;
 
 		const changeAllListPage = async (page, {
-			showCount = 10
+			showCount = 20
 		} = {}) => {
 			let total = itemList.sortedList.length;
 			let maxPage = (showCount === 0) ? 1 : Math.max(1, Math.floor(total / showCount));
