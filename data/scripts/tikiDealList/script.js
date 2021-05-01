@@ -19,7 +19,7 @@
 		log(`|===========================|`);
 		log(`|  Tiki Upcoming Deal List  |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 22:05:55 24/09/2020  |`);
+		log(`|  LU: 12:05:52 01/05/2021  |`);
 		log(`|===========================|`);
 
 		const scanItem = async ({
@@ -61,22 +61,30 @@
 						log(pageLogE);
 
 						while (true) {
-							if (pageTotal && page > maxPage)
+							if (typeof pageTotal === "number" && page > maxPage)
 								break;
 
 							pageLogE.innerText = `  📃 TRANG ${page}/${maxPage || "?"}`;
-							let current = await myajax({
-								url: `${HOSTADDRESS}/api/v2/widget/deals/collection`,
-								method: "GET",
-								query: {
-									categories: 1,
-									page,
-									tag_id: tag.query_value,
-									time_id: time.query_value
-								}
-							});
+							let current;
 
-							if (!pageTotal) {
+							try {
+								current = await myajax({
+									url: `${HOSTADDRESS}/api/v2/widget/deals/collection`,
+									method: "GET",
+									query: {
+										categories: 1,
+										page,
+										tag_id: tag.query_value,
+										time_id: time.query_value
+									}
+								});
+							} catch(error) {
+								let e = parseException(error);
+								log(`  📃 TRANG ${page}: [${e.code}] ${e.description}`);
+								continue;
+							}
+
+							if (typeof pageTotal !== "number") {
 								pageTotal = current.paging.total;
 								perPage = current.paging.per_page;
 								maxPage = Math.ceil(pageTotal / perPage);
@@ -116,18 +124,26 @@
 				log(pageLogE);
 
 				while (true) {
-					if (pageTotal && page > maxPage)
+					if (typeof pageTotal === "number" && page > maxPage)
 						break;
 
 					pageLogE.innerText = ` 📃 TRANG ${page}/${maxPage || "?"}`;
-					let current = await myajax({
-						url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
-						method: "GET",
-						query: {
-							categories: 1,
-							page: page
-						}
-					});
+					let current;
+
+					try {
+						current = await myajax({
+							url: `${HOSTADDRESS}/api/v2/widget/deals/hot`,
+							method: "GET",
+							query: {
+								categories: 1,
+								page: page
+							}
+						});
+					} catch(error) {
+						let e = parseException(error);
+						log(` 📃 TRANG ${page}: [${e.code}] ${e.description}`);
+						continue;
+					}
 	
 					let next = { data: [] }
 					
@@ -327,8 +343,6 @@
 
 			return box;
 		}
-
-		const deleteNode = (node) => node.parentElement.removeChild(node);
 
 		//* ==============
 		//*   START HERE
