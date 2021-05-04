@@ -675,7 +675,7 @@
             coupon = "",
             delay = 200
         }) => {
-            let orderTimer = new stopClock();
+            let orderTimer = new StopClock();
             log("Đang thêm Item vào Giỏ Hàng");
             runInfo({ now: `Bước 1`, end: `Bước 4`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });
             heartbeat();

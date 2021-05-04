@@ -25,7 +25,6 @@
 		const scanItem = async ({
 			typeMix = false,
 			sortBy = "sale",
-			pageCount = 1,
 			saleFilter = 0
 		} = {}) => {
 			let list = {}

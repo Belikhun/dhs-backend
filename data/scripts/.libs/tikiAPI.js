@@ -286,7 +286,7 @@ const __switchAccount = async ({
 	if (!username || !password)
 		throw { code: -1, description: "Tên đăng nhập hoặc mật khẩu bị thiếu" }
 
-	let loginTimer = new stopClock();
+	let loginTimer = new StopClock();
 
 	heartbeat();
 
@@ -416,7 +416,7 @@ const __doOrder = async ({
 	myajax = window.myajax
 }) => {
 	sounds.notification();
-	let orderTimer = new stopClock();
+	let orderTimer = new StopClock();
 
 	if (!token)
 		throw { code: -1, description: "Chưa Xác Định Access Token" }

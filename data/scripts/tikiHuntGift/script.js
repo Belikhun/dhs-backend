@@ -970,7 +970,7 @@
 			username = null,
 			password = null
 		} = {}) => {
-			let loginTimer = new stopClock();
+			let loginTimer = new StopClock();
 
 			heartbeat();
 			log(`📤 Đang đăng xuất`);
@@ -1090,7 +1090,7 @@
 			isInjectedAccount = false
 		}) => {
 			sounds.notification();
-			let orderTimer = new stopClock();
+			let orderTimer = new StopClock();
 
 			if (itemInit) {
 				runInfo({ now: `Bước 1`, end: `Bước 4`, progress: 0, checkDetail: "Đang thêm Item vào Giỏ Hàng" });

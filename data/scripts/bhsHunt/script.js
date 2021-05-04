@@ -801,7 +801,7 @@
 			count = 1,
 			coupon = "",
 		}) => {
-			let orderTimer = new stopClock();
+			let orderTimer = new StopClock();
 
 			log(` + Thời gian   : ${orderTimer.stop}s`);
 		}

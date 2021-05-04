@@ -404,7 +404,7 @@
         }
         
         const __doOrder = async () => {
-            let orderTimer = new stopClock();
+            let orderTimer = new StopClock();
             sounds.notification();
 
             log("Đang bắt đầu đặt mua Item");
