@@ -687,7 +687,7 @@
 
 					if (typeof currentPrice === "number" && (info.invalid_message_code === 0)) {
 						log(`ACP> ${settings.coupon}: ${info.voucher_info.error || "Mã Hợp Lệ"}`);
-						let orderTimer = new stopClock();
+						let orderTimer = new StopClock();
 						doCheck = false;
 						
 						order();
@@ -805,7 +805,7 @@
 
 					if (typeof currentPrice === "number" && currentPrice < settings.orderPrice && stock > 0) {
 						log(`NP: ${priceFormat(itemInitPrice)} -> ${priceFormat(currentPrice)}`);
-						let orderTimer = new stopClock();
+						let orderTimer = new StopClock();
 
 						doCheck = false;
 						order();

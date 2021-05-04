@@ -10,7 +10,7 @@ const core = {
 
 	async init(set) {
         clog("info", "Initializing...");
-		var initTime = new stopClock();
+		var initTime = new StopClock();
 
         set(0, "Initializing: popup");
         popup.init();
@@ -52,7 +52,7 @@ const core = {
 	},
 
 	async getServerConfigAsync() {
-        let start = new stopClock();
+        let start = new StopClock();
         const response = await myajax({
             url: "/api/server",
             method: "GET",

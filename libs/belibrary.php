@@ -677,7 +677,7 @@
 		}
 	}
 
-	class stopClock {
+	class StopClock {
 		private $start;
 
 		public function __construct() {
@@ -729,5 +729,5 @@
 
 	//? START TIME
 	if (!isset($runtime))
-		$runtime = new stopClock();
+		$runtime = new StopClock();
 ?>
