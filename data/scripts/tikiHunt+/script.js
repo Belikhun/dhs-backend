@@ -773,7 +773,7 @@
 			autobuyRatio: { type: "number", label: "Tỉ lệ", value: 8.5, step: 0.01, depend: "autobuy" },
 			autobuyFrom: { type: "number", label: "Giá tối thiểu", value: 0, depend: "autobuy" },
 			autobuyCount: { type: "number", label: "Số Lượng Mua", value: 1, depend: "autobuy" },
-			autoRebuy: { type: "number", label: "Số Lần Mua Lại", value: 1, depend: "autobuy" },
+			autoRebuy: { type: "number", label: "Số Lần Mua", min: 1, value: 1, depend: "autobuy" },
 			paymentMethod: {
 				type: "radio",
 				label: "Phương Thức Thanh Toán",
@@ -906,7 +906,7 @@
 					runInfo({
 						checkDetail: `Item ID ${item.id}`,
 						dataType: "time"
-					})
+					});
 
 					let blackList = await getBlackList();
 					if (blackList.indexOf(item.id) !== -1) {
