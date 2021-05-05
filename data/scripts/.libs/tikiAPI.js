@@ -268,6 +268,7 @@ const __switchAccount = async ({
 			await myajax({
 				url: `${HOSTADDRESS}/api/v2/account/logout`,
 				method: "GET",
+				type: "text",
 				header: {
 					"X-Access-Token": await getToken()
 				}
@@ -278,8 +279,8 @@ const __switchAccount = async ({
 		} catch(e) {
 			clog("ERRR", `logout(${censor ? "" : username}): `, e);
 			log("📤 Không thể đăng xuất! Tool sẽ coi như đăng xuất thành công và tiếp tục chạy!");
-			log(` + Code: ${e.code}`);
-			log(` + MSG : ${e.description || "Không rõ"}`);
+
+			return;
 		}
 	}
 
