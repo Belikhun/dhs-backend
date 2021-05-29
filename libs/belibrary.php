@@ -1,16 +1,16 @@
 <?php
 	//? |-----------------------------------------------------------------------------------------------|
-	//? |  /libs/belibrary.php                                                                           |
+	//? |  /libs/belibrary.php                                                                          |
 	//? |                                                                                               |
-	//? |  Copyright (c) 2018-2020 Belikhun. All right reserved                                         |
+	//? |  Copyright (c) 2018-2021 Belikhun. All right reserved                                         |
 	//? |  Licensed under the MIT License. See LICENSE in the project root for license information.     |
 	//? |-----------------------------------------------------------------------------------------------|
 
-	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/logs.php";
+	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/logger.php";
 
 	setlocale(LC_TIME, "vi_VN.UTF-8");
 
-	if (session_status() === PHP_SESSION_NONE) {
+	if (session_status() !== PHP_SESSION_ACTIVE) {
 		if (isset($_POST["sessid"]))
 			session_id($_POST["sessid"]);
 		elseif (isset($_GET["sessid"]))
@@ -118,6 +118,9 @@
 				case "json":
 					return json_decode($rawData, true);
 				
+				case "form":
+					return $_POST;
+
 				default:
 					return $rawData;
 			}
@@ -148,9 +151,18 @@
 	 * @param	String	$type	Type of Data
 	 * @return	Mixed
 	 */
-	function reqType($data, $type = "string") {
+	function reqType($data, $type = "string", $id = null) {
+		if ($type === "boolean") {
+			$data = strtolower($data);
+
+			if ($data === "true" || $data === "false")
+				return $data === "true";
+			else
+				stop(3, "Type Mismatch! \"$data\" is not a $type" . (isset($id) ? " in $id" : ""), 400);
+		}
+
 		if (!settype($data, $type))
-			stop(3, "Type Mismatch! \"$data\" is not a $type", 400);
+			stop(3, "Type Mismatch! \"$data\" is not a $type" . (isset($id) ? " in $id" : ""), 400);
 		
 		return $data;
 	}
@@ -206,16 +218,51 @@
 	}
 
 	/**
-	 * Remove the directory and its content recursively (all files and subdirectories)
-	 * @param	String	Path to directory
+	 * Return the reference of the value in Object.
+	 * @param	Array					$object
+	 * @param	Array					$path
+	 * @param	Bool					$safe
+	 * @return	Array|String|Bool
 	 */
-	function rmrf($dir) {
+	function &objectValue(Array &$object, Array $path, $value = null, Bool $safe = false) {
+		if (!empty($path[0])) {
+			if (count($path) > 1) {
+				if (!isset($object[$path[0]]))
+					if ($safe)
+						$object[$path[0]] = Array();
+					else
+						throw new UndefinedIndex($path[0], $object);
+
+				return objectValue($object[$path[0]], array_slice($path, 1), $value, $safe);
+			}
+
+			if ($value !== null)
+				$object[$path[0]] = $value;
+
+			if (!isset($object[$path[0]]))
+				throw new UndefinedIndex($path[0], $object);
+			
+			return $object[$path[0]];
+		} else
+			throw new Error("objectValue(): Unknown Error!");
+	}
+
+	/**
+	 * Remove the directory and its content recursively\
+	 * (all files and subdirectories)
+	 * 
+	 * @param	String	$dir	Path to directory
+	 * @param	Int		$count	Deleted files counter
+	 */
+	function rmrf($dir, Int &$count = 0) {
 		foreach (glob($dir) as $file)
 			if (is_dir($file)) {
-				rmrf("$file/*");
+				rmrf("$file/*", $count);
 				rmdir($file);
-			} else
+			} else {
 				unlink($file);
+				$count++;
+			}
 	}
 
 	/**
@@ -303,10 +350,10 @@
 
 	/**
 	 * Generate Random Number
-	 * @param	Number	$min	Minimum Random Number
-	 * @param	Number	$max	Maximum Random Number
-	 * @param   Bool	$toInt	To return an Integer Value
-	 * @return	Number	Generated number
+	 * @param	int|float		$min		Minimum Random Number
+	 * @param	int|float		$max		Maximum Random Number
+	 * @param   Bool			$toInt		To return an Integer Value
+	 * @return	int|float		Generated number
 	 */
 	function randBetween($min, $max, Bool $toInt = true) {
 		$rand = (float)(mt_rand() / mt_getrandmax());
@@ -396,7 +443,24 @@
 	}
 
 	/**
-	 * belibrary.stop() friendly Exception
+	 * Return new path relative to webserver's
+	 * root path
+	 * 
+	 * @return	String
+	 */
+	function getRelativePath(String $fullPath, String $separator = "/") {
+		$search = preg_replace("/(\\\\|\/)/m", $separator, $_SERVER["DOCUMENT_ROOT"]);
+		$subject = preg_replace("/(\\\\|\/)/m", $separator, $fullPath);
+		return str_replace($search, "", $subject);
+	}
+
+	/**
+	 * `belibrary.stop()` friendly Exception
+	 * 
+	 * @copyright	`2018-2021` **Belikhun**
+	 * @license		**MIT**
+	 * @version		1.0
+	 * @return		BLibException
 	 */
 	class BLibException extends Exception {
 		public $code;
@@ -422,13 +486,41 @@
 
 			parent::__construct($description, $code, $previous);
 
-			$this -> data["file"] = parent::getFile();
+			$this -> data["file"] = getRelativePath(parent::getFile());
 			$this -> data["line"] = parent::getLine();
 			$this -> data["trace"] = parent::getTrace();
 		}
 		
 		public function __toString() {
-			return __CLASS__ . ": [HTTP {$this -> status}] [{$this -> code}]: {$this -> description} tại {$this -> data["file"]}:{$this -> data["line"]}";
+			return get_class($this) .": [HTTP {$this -> status}] [{$this -> code}]: {$this -> description}";
+		}
+	}
+
+	class FileNotFound extends BLibException {
+		public function __construct(String $path) {
+			parent::__construct(44, "File Not Found: {$path}", 500, Array( "path" => $path ));
+		}
+	}
+
+	class UndefinedIndex extends BLibException {
+		public function __construct(String $key, $data) {
+			parent::__construct(44, "Undefined Index: {$key}", 500, Array( "key" => $key, "data" => $data ));
+		}
+	}
+
+	class JSONDecodeError extends BLibException {
+		public function __construct(String $file, String $message, $data) {
+			$file = getRelativePath($file);
+			parent::__construct(47, "json_decode({$file}): {$message}", 500, Array( "file" => $file, "data" => $data ));
+		}
+	}
+
+	class UnserializeError extends BLibException {
+		public function __construct(String $file, String $message, $data) {
+			$file = getRelativePath($file);
+			$message = str_replace("unserialize(): ", "", $message);
+
+			parent::__construct(47, "unserialize({$file}): {$message}", 500, Array( "file" => $file, "data" => $data ));
 		}
 	}
 
@@ -519,13 +611,31 @@
 	}
 
 	function getClientIP() {
-		return getenv("HTTP_CLIENT_IP")
+		return
+			   $_SERVER["REMOTE_ADDR"]
+			?? $_SERVER["HTTP_CLIENT_IP"]
+			?? getenv("HTTP_CLIENT_IP")
 			?? getenv("HTTP_X_FORWARDED_FOR")
 			?? getenv("HTTP_X_FORWARDED")
 			?? getenv("HTTP_FORWARDED_FOR")
 			?? getenv("HTTP_FORWARDED")
 			?? getenv("REMOTE_ADDR")
 			?? "UNKNOWN";
+	}
+
+	/**
+	 * Check array is associative or sequential
+	 * 
+	 * Return `true` if the array is associative, else sequential
+	 * 
+	 * @param	Array	$array	Input Array
+	 * @return	Boolean
+	 */
+	function isAssoc(Array $array) {
+		if (array() === $array)
+			return false;
+
+    	return array_keys($array) !== range(0, count($array) - 1);
 	}
 
 	/**
@@ -537,23 +647,34 @@
 	 * @param	Array			$target				Target Object need to be merged
 	 * @param	Array			$object				Array Object need to merge
 	 * @param	Bool|Function	$typeSensitive		Do a type check before merging key
+	 * @param	Bool			$overWriteArray		Overwrite Array instead of merging
 	 * @param	Int				$counter			Number of merged keys
 	 * @return	Number			Number of merged keys
 	 *
 	 */
-	function mergeObjectRecursive(Array &$target, Array $object, $typeSensitive = true, Int &$counter = 0) {
+	function mergeObjectRecursive(Array &$target, Array $object, $typeSensitive = true, Bool $overWriteArray = true, Int &$counter = 0, String $__path = "") {
 		foreach ($target as $key => &$value)
 			if (array_key_exists($key, $object)) {
+				$path = $__path === ""
+					? $key
+					: $__path .".". $key;
+
 				if (is_callable($typeSensitive)) {
-					if (!$typeSensitive(gettype($value), gettype($object[$key]), $key))
+					if (!$typeSensitive(gettype($value), gettype($object[$key]), $path))
 						continue;
 				} else
-					if ($typeSensitive && (gettype($value) !== gettype($object[$key])))
+					if ($typeSensitive && $value !== null && (gettype($value) !== gettype($object[$key])))
 						continue;
 
-				if (gettype($object[$key]) === "array" && gettype($value) === "array")
-					mergeObjectRecursive($value, $object[$key], $typeSensitive, $counter);
-				else {
+				if (gettype($object[$key]) === "array" && gettype($value) === "array") {
+					if ($overWriteArray && !isAssoc($object[$key])) {
+						// Target is sequential array so we set new
+						// value to it directly
+						$value = $object[$key];
+						$counter++;
+					} else
+						mergeObjectRecursive($value, $object[$key], $typeSensitive, $overWriteArray, $counter, $path);
+				} else if ($value !== $object[$key]) {
 					$value = $object[$key];
 					$counter++;
 				}
@@ -562,6 +683,39 @@
 		return $counter;
 	}
 
+	/**
+	 * Safe JSON PArsing
+	 * 
+	 * This function will throw an error if there is problem
+	 * while parsing json data
+	 * 
+	 * @param	String	$json	JSON String
+	 * @param	String	$path	(Optional) Provide json file path to show in the error message
+	 * @throws	JSONDecodeError
+	 * @return	Array
+	 */
+	function safeJSONParsing(String $json, String $path = "") {
+		// Temporary disable `NOTICE` error reporting
+		// to try unserialize data without triggering `E_NOTICE`
+		error_reporting(E_ERROR);
+		$json = json_decode($json, true);
+		error_reporting(E_ALL);
+
+		if ($json === null)
+			throw new JSONDecodeError($path, json_last_error_msg(), Array(
+				"code" => json_last_error(),
+				"message" => json_last_error_msg()
+			));
+
+		return $json;
+	}
+
+	/**
+	 * Simple File Input/Output
+	 * 
+	 * @author	Belikhun
+	 * @version	2.1
+	 */
 	class fip {
 		private $maxTry = 20;
 		public $stream;
@@ -623,10 +777,25 @@
 
 			switch ($type) {
 				case "json":
-					return json_decode($data, true);
+					return safeJSONParsing($data, $this -> path);
 
 				case "serialize":
-					return unserialize($data);
+					// Temporary disable `NOTICE` error reporting
+					// to try unserialize data without triggering `E_NOTICE`
+					try {
+						error_reporting(0);
+						$data = unserialize($data);
+						error_reporting(E_ALL);
+					} catch(Throwable $e) {
+						// pass
+					}
+
+					if ($data === false || $data === serialize(false)) {
+						$e = error_get_last();
+						throw new UnserializeError($this -> path, $e["message"], $e);
+					}
+
+					return $data;
 				
 				default:
 					return $data;
@@ -689,16 +858,63 @@
 		}
 	}
 
-	function printErrorPage(Array $data, Bool $useIframe = false) {
+	function unserializeSessionData($sessionData) {
+		$method = ini_get("session.serialize_handler");
+
+		switch ($method) {
+			case "php": {
+				$returnData = array();
+				$offset = 0;
+
+				while ($offset < strlen($sessionData)) {
+					if (!strstr(substr($sessionData, $offset), "|"))
+						throw new BLibException(51, "unserializeSessionData(): Invalid Data, remaining: ". substr($sessionData, $offset), 500);
+					
+					$pos = strpos($sessionData, "|", $offset);
+					$num = $pos - $offset;
+					$varname = substr($sessionData, $offset, $num);
+					$offset += $num + 1;
+					$data = unserialize(substr($sessionData, $offset));
+					$returnData[$varname] = $data;
+					$offset += strlen(serialize($data));
+				}
+
+				return $returnData;
+			}
+				
+			case "php_binary": {
+				$returnData = array();
+				$offset = 0;
+
+				while ($offset < strlen($sessionData)) {
+					$num = ord($sessionData[$offset]);
+					$offset += 1;
+					$varname = substr($sessionData, $offset, $num);
+					$offset += $num;
+					$data = unserialize(substr($sessionData, $offset));
+					$returnData[$varname] = $data;
+					$offset += strlen(serialize($data));
+				}
+
+				return $returnData;
+				break;
+			}
+			
+			default:
+				throw new BLibException(-1, "Unsupported session.serialize_handler: { $method} Supported: php, php_binary", 500);
+		}
+	}
+
+	function printErrorPage(Array $data, Bool $redirect = false) {
 		$_SESSION["lastError"] = $data;
 		print "<!-- OUTPUT STOPPED HERE -->";
 		print "<!-- ERROR DETAILS: ". json_encode($data, JSON_PRETTY_PRINT) ." -->";
 		print "<!-- BEGIN ERROR PAGE -->";
 		
-		if ($useIframe)
-			print "<iframe src=\"/libs/error.php\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: unset; overflow: auto;\"></iframe>";
+		if ($redirect)
+			header("Location: /error.php?redirect=true");
 		else
-			require $_SERVER["DOCUMENT_ROOT"]. "/libs/error.php";
+			require $_SERVER["DOCUMENT_ROOT"]. "/lib/error.php";
 	}
 
 	//! Error Handler
@@ -706,28 +922,27 @@
 		$errorData = Array(
 			"code" => $code,
 			"description" => $text,
-			"file" => basename($file),
+			"file" => getRelativePath($file),
 			"line" => $line,
 		);
 		
 		if (function_exists("writeLog"))
-			writeLog("ERRR", "[$code] $text tại ". basename($file) .":". $line);
+			writeLog("ERRR", "[$code] $text tại ". getRelativePath($file) .":". $line);
 
 		stop(-1, "Error Occurred: ". $text, 500, $errorData);
 	}
 
 	//! Exception Handler
-	function exceptionHandler(Exception $e) {
-		if ($e -> __CLASS__ === "BLibException")
+	function exceptionHandler($e) {
+		if ($e instanceof BLibException)
 			stop($e -> code, $e, $e -> status, $e -> data);
 		else
-			stop(-1, "{$e -> __CLASS__} [{$e -> getCode()}]: {$e -> getMessage()} tại {$e -> getFile()}:{$e -> getLine()}");
+			stop(-1, get_class($e) ." [{$e -> getCode()}]: {$e -> getMessage()} tại {$e -> getFile()}:{$e -> getLine()}", 500);
 	}
 
-	set_error_handler("errorHandler", E_ALL);
 	set_exception_handler("exceptionHandler");
+	set_error_handler("errorHandler", E_ALL);
 
 	//? START TIME
 	if (!isset($runtime))
 		$runtime = new StopClock();
-?>

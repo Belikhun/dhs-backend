@@ -4,7 +4,7 @@ Allow from all
 Require all granted
 
 <IfModule headers_module>
-    Header set Access-Control-Allow-Origin "*"
+    Header setIfEmpty Access-Control-Allow-Origin "*"
 </IfModule>
 
 # Rewrite url
