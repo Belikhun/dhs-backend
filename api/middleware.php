@@ -11,7 +11,7 @@
 
 	$url = reqQuery("url");
 	$data = Array();
-	$headers = getallheaders();
+	$headers = getAllHeadersUC();
 	$craftedHeaders = Array();
 	$resHeaders = Array();
 	$ignHeaders = Array("content-length", "location", "pragma");
