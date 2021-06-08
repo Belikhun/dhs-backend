@@ -407,6 +407,7 @@ const __doOrder = async ({
 	shippingAddress = null,
 	isInjectedAccount = false,
 	stopIfHaveShippingFee = false,
+	doApplyAddress = false,
 	platform = "frontend-desktop",
 	accountDisabledHandler = async () => {},
 
@@ -418,6 +419,7 @@ const __doOrder = async ({
 }) => {
 	sounds.notification();
 	let orderTimer = new StopClock();
+	info({ end: `Bước 5`, progress: 0, checkDetail: "Bắt Đầu Đặt Mua" });
 
 	if (!token)
 		throw { code: -1, description: "Chưa Xác Định Access Token" }
@@ -478,69 +480,90 @@ const __doOrder = async ({
 	}
 	
 	heartbeat();
-	info({ now: `Bước 2`, progress: 30, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
-	log(`🏡 Đang chọn địa chỉ Giao Hàng`);
-	let shippingID = shippingAddress;
-
-	if (!shippingID) {
-		log(`🏡 Đang lấy thông tin địa chỉ`);
-		let addressBook = await myajax({
-			url: `${HOSTADDRESS}/api/v2/me/addresses`,
-			method: "GET",
-			header: {
-				"X-Access-Token": token,
-				apikey: null
-			},
-			query: {
-				page: 1,
-				limit: 30
-			}
-		})
-
-		if (addressBook.error) {
-			await panic("Lỗi khi lấy ID Địa Chỉ");
-			log("⚠ Tiki trả về mã lỗi");
-			log(` + Code : ${addressBook.error.code}`);
-			log(` + MSG  : ${addressBook.error.message}`);
-			throw { code: addressBook.error.code, description: addressBook.error.message, data: addressBook.error }
-		}
-
-		heartbeat();
-		info({ progress: 50, progWarn: false });
-		log(`🏡 Đang phân tích thông tin`);
-		
-		shippingID = addressBook.data.filter(i => (i.is_default && i.id));
-
-		if (!shippingID[0]) {
-			await panic("Lỗi khi lấy ID Địa Chỉ");
-			log("🏡 Không tìm thấy địa chỉ mặc định");
-			throw { code: -1, description: "Không tìm thấy địa chỉ mặc định", data: addressBook.data }
-		}
-
-		shippingID = shippingID[0].id;
-	} else
-		log(`🏡 Địa chỉ được định sẵn! Bỏ qua lấy thông tin địa chỉ`);
-
-	log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
-	heartbeat();
-
-	let applyAddress = await myajax({
-		url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_addresses/${shippingID}`,
+	info({ now: `Bước 2`, progress: 30, checkDetail: "Đang chọn toàn bộ sản phẩm trong giỏ hàng" });
+	let selectAll = await myajax({
+		url: `${HOSTADDRESS}/api/v2/intended_cart/items`,
 		method: "PUT",
 		header: {
 			"X-Access-Token": token
+		},
+		json: {
+			selected: true
 		}
-	})
-	
-	if (applyAddress.error) {
-		await panic("Lỗi khi áp dụng Địa Chỉ");
+	});
+
+	if (!selectAll.success) {
+		await panic("Lỗi khi chọn toàn bộ sản phẩm trong giỏ hàng");
 		log("⚠ Tiki trả về mã lỗi");
-		log(` + Code: ${applyAddress.error.code}`);
-		log(` + MSG : ${applyAddress.error.message || "Không Rõ"}`);
-		throw { code: -1, description: "Không thể chọn địa chỉ", data: applyAddress.error }
+		throw { code: -1, description: `Lỗi khi chọn toàn bộ sản phẩm trong giỏ hàng`, data: selectAll }
+	}
+	
+	if (doApplyAddress) {
+		heartbeat();
+		info({ now: `Bước 3`, progress: 30, checkDetail: "Đang chọn địa chỉ Giao Hàng" });
+		log(`🏡 Đang chọn địa chỉ Giao Hàng`);
+		let shippingID = shippingAddress;
+	
+		if (!shippingID) {
+			log(`🏡 Đang lấy thông tin địa chỉ`);
+			let addressBook = await myajax({
+				url: `${HOSTADDRESS}/api/v2/me/addresses`,
+				method: "GET",
+				header: {
+					"X-Access-Token": token,
+					apikey: null
+				},
+				query: {
+					page: 1,
+					limit: 30
+				}
+			})
+	
+			if (addressBook.error) {
+				await panic("Lỗi khi lấy ID Địa Chỉ");
+				log("⚠ Tiki trả về mã lỗi");
+				log(` + Code : ${addressBook.error.code}`);
+				log(` + MSG  : ${addressBook.error.message}`);
+				throw { code: addressBook.error.code, description: addressBook.error.message, data: addressBook.error }
+			}
+	
+			heartbeat();
+			info({ progress: 50, progWarn: false });
+			log(`🏡 Đang phân tích thông tin`);
+			
+			shippingID = addressBook.data.filter(i => (i.is_default && i.id));
+	
+			if (!shippingID[0]) {
+				await panic("Lỗi khi lấy ID Địa Chỉ");
+				log("🏡 Không tìm thấy địa chỉ mặc định");
+				throw { code: -1, description: "Không tìm thấy địa chỉ mặc định", data: addressBook.data }
+			}
+	
+			shippingID = shippingID[0].id;
+		} else
+			log(`🏡 Địa chỉ được định sẵn! Bỏ qua lấy thông tin địa chỉ`);
+	
+		log(`🏡 Đang chọn địa chỉ ID: ${shippingID}`);
+		heartbeat();
+	
+		let applyAddress = await myajax({
+			url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_addresses/${shippingID}`,
+			method: "PUT",
+			header: {
+				"X-Access-Token": token
+			}
+		})
+		
+		if (applyAddress.error) {
+			await panic("Lỗi khi áp dụng Địa Chỉ");
+			log("⚠ Tiki trả về mã lỗi");
+			log(` + Code: ${applyAddress.error.code}`);
+			log(` + MSG : ${applyAddress.error.message || "Không Rõ"}`);
+			throw { code: -1, description: "Không thể chọn địa chỉ", data: applyAddress.error }
+		}
 	}
 
-	info({ now: `Bước 3`, progress: 60, progWarn: false, checkDetail: "Thay đổi cài đặt thanh toán" });
+	info({ now: `Bước 4`, progress: 60, progWarn: false, checkDetail: "Thay đổi cài đặt thanh toán" });
 	log(`🛒 Đang lấy thông tin Thanh Toán`);
 	heartbeat();
 
@@ -735,7 +758,7 @@ const __doOrder = async ({
 		throw { code: -1, description: "Đơn hàng bị tính phí vận chuyển", data: { current: cartInfo.shipping_amount } }
 	}
 
-	info({ now: `Bước 4`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
+	info({ now: `Bước 5`, progress: 80, progWarn: false, checkDetail: "Bắt đầu đặt hàng" });
 	log(`🛒 Đang tiến hành đặt hàng`);
 	heartbeat();
 
@@ -751,7 +774,7 @@ const __doOrder = async ({
 			payment: { method: paymentMethod, option_id: null },
 			tax_info: null
 		}
-	})
+	});
 
 	if (placeOrder.error) {
 		await panic("Lỗi khi tiến hành Đặt Hàng");
