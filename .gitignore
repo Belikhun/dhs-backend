@@ -12,3 +12,6 @@ data/avatar/*
 __pycache__/
 *.py[cod]
 log.txt
+
+# Debug Script
+tikiDebug

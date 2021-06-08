@@ -854,19 +854,15 @@ const __clearCart = async ({
 	info({ now: `Bước 1`, end: `Bước 6`, progress: 0, checkDetail: "Đang lấy danh sách" });
 
 	let cartList = await myajax({
-		url: `${HOSTADDRESS}/api/v2/carts/mine`,
+		url: `${HOSTADDRESS}/api/v2/intended_cart/items`,
 		method: "GET",
 		header: {
 			"X-Access-Token": token
 		},
 		query: {
-			include: [
-				"items",
-				"badges",
-				"payment_method",
-				"messages",
-				"price_summary"
-			].join(",")
+			reset: true,
+			page: 1,
+			page_size: 15
 		}
 	});
 
@@ -881,33 +877,44 @@ const __clearCart = async ({
 	heartbeat();
 	log(`🛒 ${cartList.items.length} item hiện trong giỏ hàng`);
 
-	for (let item of cartList.items) {
-		log(`🛒 Đang xóa ${item.product_name} (${item.id})`);
+	let deleteList = []
+	for (let item of cartList.items)
+		deleteList.push({
+			item_id: item.id,
+			parent_item_id: item.parent_item_id || "",
+			product_id: item.product_id,
+			selected: item.selected,
+			seller_id: item.seller_id
+		});
 
-		try {
-			await myajax({
-				url: `${HOSTADDRESS}/api/v2/carts/mine/items/${item.id}`,
-				method: "DELETE",
-				header: {
-					"X-Access-Token": token
-				}
-			})
-		} catch(e) {
-			if (e.code !== 2) {
-				heartbeat({ color: "red" });
+	log(`🛒 Đang xóa giỏ hàng`);
 
-				log("🛒 Không thể xóa Item khỏi Giỏ");
-				log(` + ID  : ${item.id}`);
-				log(` + Code: ${e.code}`);
-				log(` + MSG : ${e.description || "Không rõ"}`);
-				log(` + Bỏ qua lỗi: true`);
+	try {
+		await myajax({
+			url: `${HOSTADDRESS}/api/v2/intended_cart/items/remove`,
+			method: "PUT",
+			header: {
+				"X-Access-Token": token
+			},
 
-				clog("ERRR", `Remove Cart ${item.id}`, e);
-				continue;
+			json: {
+				items: deleteList
 			}
-		}
+		})
+	} catch(e) {
+		if (e.code !== 2) {
+			heartbeat({ color: "red" });
 
-		heartbeat({ color: "blue" });
-		log(` + Xóa thành công`);
+			log("🛒 Không thể xóa Item khỏi Giỏ");
+			log(` + Code: ${e.code}`);
+			log(` + MSG : ${e.description || "Không rõ"}`);
+			log(` + Bỏ qua lỗi: true`);
+
+			clog("ERRR", `Remove Cart ${item.id}`, e);
+			return;
+		}
 	}
+
+	heartbeat({ color: "blue" });
+	log(` + Xóa thành công`);
 }
