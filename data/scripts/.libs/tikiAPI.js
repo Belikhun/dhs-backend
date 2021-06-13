@@ -407,7 +407,7 @@ const __doOrder = async ({
 	shippingAddress = null,
 	isInjectedAccount = false,
 	stopIfHaveShippingFee = false,
-	doApplyAddress = false,
+	doApplyAddress = true,
 	platform = "frontend-desktop",
 	accountDisabledHandler = async () => {},
 
