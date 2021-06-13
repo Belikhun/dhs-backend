@@ -22,27 +22,60 @@
 		log(`|  LU: 12:05:52 01/05/2021  |`);
 		log(`|===========================|`);
 
+		const __scanProcess = (result, saleFilter) => {
+			let list = {}
+			let arrayList = []
+
+			for (let item of result) {
+				if (list[item.product.id])
+					continue;
+
+				let link = "https://tiki.vn/" + item.product.url_path;
+				let thumbnail = item.product.thumbnail_url;
+
+				let price = item.product.price;
+				let oldPrice = item.product.list_price;
+				let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
+
+				if (priceSale < saleFilter)
+					continue;
+
+				list[item.product.id] = {
+					id: item.product.id,
+					title: item.product.name,
+					link: link,
+					price,
+					priceSale,
+					thumbnail,
+					oldPrice,
+					sale: priceSale,
+					open: item.special_from_date,
+					progress: item.progress
+				}
+
+				arrayList.push(list[item.product.id]);
+			}
+
+			return { list, arrayList }
+		}
+
 		const scanItem = async ({
 			typeMix = false,
-			sortBy = "sale",
-			saleFilter = 0
+			saleFilter = 0,
+			scanPage = 0,
+			tagHandler = () => {}
 		} = {}) => {
-			let list = {}
-			let sortedList = []
-
 			heartbeat();
 			log(`📃 Đang lấy danh sách item`);
 			log(` + typeMix    = ${typeMix}`);
-			log(` + sortBy     = ${sortBy}`);
 			log(` + saleFilter = ${saleFilter}`);
+			log(` + scanPage   = ${scanPage}`);
 
 			heartbeat({ color: "yellow" });
 
-			let start = time();
-			let result = []
-
 			if (typeMix) {
 				for (let timeI = 0; timeI < dealTime.length; timeI++) {
+					let data = [];
 					let time = dealTime[timeI];
 					log(`🍿 TimeID: ${time.query_value} >> 🕗 ${time.display}`);
 
@@ -53,17 +86,18 @@
 						let pageTotal = null;
 						let perPage = null;
 						let maxPage = null;
+						let runPage = (scanPage > 0) ? scanPage : maxPage;
 						let page = 1;
 
 						let pageLogE = document.createElement("content");
-						pageLogE.innerText = `  📃 TRANG ?/?`;
+						pageLogE.innerText = `  📃 TRANG ?/${runPage || "?"}`;
 						log(pageLogE);
 
 						while (true) {
-							if (typeof pageTotal === "number" && page > maxPage)
+							if (typeof pageTotal === "number" && page > runPage)
 								break;
 
-							pageLogE.innerText = `  📃 TRANG ${page}/${maxPage || "?"}`;
+							pageLogE.innerText = `  📃 TRANG ${page}/${runPage || "?"}`;
 							let current;
 
 							try {
@@ -91,12 +125,12 @@
 								log(` 🔎 ${pageTotal} Item (${maxPage} trang)`);
 							}
 
-							let p1 = (tagI / selectedTags.length) + (1 / selectedTags.length) * (page / maxPage);
+							let p1 = (tagI / selectedTags.length) + (1 / selectedTags.length) * (page / runPage);
 							let p2 = (timeI / dealTime.length) + (1 / dealTime.length) * p1;
 
 							runInfo({
 								now: page,
-								end: maxPage,
+								end: runPage,
 								progress: p2 * 100,
 								progWarn: false,
 								itemStatus: `TRANG ${page}`,
@@ -108,11 +142,15 @@
 							});
 	
 							page++;
-							result = [...result, ...current.data];
+							data = [...data, ...current.data];
 						}
 					}
+
+					data = __scanProcess(data, saleFilter);
+					tagHandler(data, `🕗 ${time.display}`);
 				}
 			} else {
+				let data = []
 				let pageTotal = null;
 				let perPage = null;
 				let maxPage = null;
@@ -186,81 +224,116 @@
 					});
 
 					page++;
-					result = [...current.data, ...next.data]
+					data = [...current.data, ...next.data]
 				}
+
+				data = __scanProcess(data, saleFilter);
+				tagHandler(data, "Toàn Bộ");
 			}
 
 			heartbeat();
+		}
 
-			for (let item of result) {
-				if (list[item.product.id])
-					continue;
-
-				let link = "https://tiki.vn/" + item.product.url_path;
-				let thumbnail = item.product.thumbnail_url;
-
-				let price = item.product.price;
-				let oldPrice = item.product.list_price;
-				let priceSale = ((oldPrice - price) / Math.max(oldPrice, 1)) * 100;
-
-				if (priceSale < saleFilter)
-					continue;
-
-				list[item.product.id] = {
-					id: item.product.id,
-					title: item.product.name,
-					link: link,
-					price,
-					priceSale,
-					thumbnail,
-					oldPrice,
-					sale: priceSale,
-					open: item.special_from_date,
-					progress: item.progress
-				}
-
-				sortedList.push(list[item.product.id]);
-			}
-
-			log(`⏱ Thời gian: ${(time() - start).toFixed(2)}s`);
-
-			runInfo({
-				current: sortedList.length,
-				target: result.length,
-				saved: - (sortedList.length / result.length) * 100,
-				dataType: "time"
-			});
-
-			log(` + Lấy danh sách thành công`);
-			heartbeat();
-			log(` + Đang sắp xếp dữ liệu`);
-			switch (sortBy) {
-				case "sale":
-					sortedList.sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
-					break;
+		let createItemGroup = (name) => {
+			let group = document.createElement("div");
+			group.classList.add("container", "changed");
+			group.style.maxHeight = "unset";
+			group.style.marginTop = "40px";
 			
-				case "openTime":
-					sortedList.sort((a, b) => (a.open < b.open) ? -1 : (a.open > b.open) ? 1 : 0);
-					break;
+			let header = document.createElement("div");
+			header.classList.add("header");
 
-				case "name":
-					sortedList.sort((a, b) => (a.title < b.title) ? 1 : (a.title > b.title) ? -1 : 0);
-					break;
+			let headerInfo = document.createElement("span");
+			headerInfo.classList.add("info");
+			headerInfo.innerText = name;
 
-				case "priceUp":
-					sortedList.sort((a, b) => (a.price < b.price) ? -1 : (a.price > b.price) ? 1 : 0);
-					break;
+			let headerPage = document.createElement("span");
+			headerPage.classList.add("buttonBox");
 
-				case "priceDown":
-					sortedList.sort((a, b) => (a.price < b.price) ? 1 : (a.price > b.price) ? -1 : 0);
-					break;
+			let headerPageForward = document.createElement("span");
+			headerPageForward.classList.add("forward");
+			headerPageForward.dataset.soundhover = "";
+			headerPageForward.dataset.soundselect = "";
+			sounds.applySound(headerPageForward);
 
-				default:
-					break;
+			let headerPageNext = document.createElement("span");
+			headerPageNext.classList.add("next");
+			headerPageNext.dataset.soundhover = "";
+			headerPageNext.dataset.soundselect = "";
+			sounds.applySound(headerPageNext);
+
+			let headerPageCurrent = document.createElement("t");
+			headerPageCurrent.classList.add("current");
+
+			let headerPagePrev = document.createElement("span");
+			headerPagePrev.classList.add("prev");
+			headerPagePrev.dataset.soundhover = "";
+			headerPagePrev.dataset.soundselect = "";
+			sounds.applySound(headerPagePrev);
+
+			let headerPageBackward = document.createElement("span");
+			headerPageBackward.classList.add("backward");
+			headerPageBackward.dataset.soundhover = "";
+			headerPageBackward.dataset.soundselect = "";
+			sounds.applySound(headerPageBackward);
+
+			headerPage.append(headerPageBackward, headerPagePrev, headerPageCurrent, headerPageNext, headerPageForward);
+			header.append(headerInfo, headerPage);
+
+			let item = document.createElement("div");
+			item.classList.add("itemList");
+
+			group.append(header, item);
+
+			let CURRENT_PAGE = 1;
+			let list = []
+
+			const changePage = async (page, {
+				showCount = 20
+			} = {}) => {
+				let total = list.length;
+				let maxPage = (showCount === 0) ? 1 : Math.max(1, Math.floor(total / showCount));
+
+				if (page === "last")
+					page = maxPage;
+
+				let from = Math.max((page - 1) * showCount, 0);
+				let to = Math.min(page * showCount, total - 1);
+
+				if (page > maxPage || page < 1)
+					return;
+
+				emptyNode(item);
+				
+				for (let i = from; i < to; i++) {
+					item.appendChild(createItemBox(list[i], e => addToBlackList(e.target.getAttribute("item-id"))));
+					headerPageCurrent.innerText = `${from + 1}-${to + 1} ${page}/${maxPage}`;
+				}
+
+				CURRENT_PAGE = page;
+
+				delete total;
+				delete maxPage;
+				delete from;
+				delete to;
 			}
 
-			log(` + Sắp xếp dữ liệu thành công!`);
-			return { list, sortedList }
+			headerPageForward.addEventListener("mouseup", () => changePage("last"));
+			headerPageNext.addEventListener("mouseup", () => changePage(CURRENT_PAGE + 1));
+			headerPagePrev.addEventListener("mouseup", () => changePage(CURRENT_PAGE - 1));
+			headerPageBackward.addEventListener("mouseup", () => changePage(1));
+			
+			changePage(CURRENT_PAGE);
+
+			return {
+				container: group,
+				changePage,
+
+				setData: (data) => {
+					list = data;
+					changePage(CURRENT_PAGE);
+				}
+			}
 		}
 
 		const createItemBox = (itemData, onBlacklist = () => {}) => {
@@ -351,58 +424,8 @@
 
 		// Container Element Init
 		let container = document.createElement("div");
-
-		//? All List Box
-		let allList = document.createElement("div");
-		allList.classList.add("container", "changed");
-		
-		let allListHeader = document.createElement("div");
-		allListHeader.classList.add("header");
-
-		let allListHeaderInfo = document.createElement("span");
-		allListHeaderInfo.classList.add("info");
-		allListHeaderInfo.innerText = "Toàn Bộ";
-
-		let allListHeaderPage = document.createElement("span");
-		allListHeaderPage.classList.add("buttonBox");
-
-		let allListHeaderPageForward = document.createElement("span");
-		allListHeaderPageForward.classList.add("forward");
-		allListHeaderPageForward.dataset.soundhover = "";
-		allListHeaderPageForward.dataset.soundselect = "";
-		sounds.applySound(allListHeaderPageForward);
-
-		let allListHeaderPageNext = document.createElement("span");
-		allListHeaderPageNext.classList.add("next");
-		allListHeaderPageNext.dataset.soundhover = "";
-		allListHeaderPageNext.dataset.soundselect = "";
-		sounds.applySound(allListHeaderPageNext);
-
-		let allListHeaderPageCurrent = document.createElement("t");
-		allListHeaderPageCurrent.classList.add("current");
-
-		let allListHeaderPagePrev = document.createElement("span");
-		allListHeaderPagePrev.classList.add("prev");
-		allListHeaderPagePrev.dataset.soundhover = "";
-		allListHeaderPagePrev.dataset.soundselect = "";
-		sounds.applySound(allListHeaderPagePrev);
-
-		let allListHeaderPageBackward = document.createElement("span");
-		allListHeaderPageBackward.classList.add("backward");
-		allListHeaderPageBackward.dataset.soundhover = "";
-		allListHeaderPageBackward.dataset.soundselect = "";
-		sounds.applySound(allListHeaderPageBackward);
-
-		allListHeaderPage.append(allListHeaderPageBackward, allListHeaderPagePrev, allListHeaderPageCurrent, allListHeaderPageNext, allListHeaderPageForward);
-		allListHeader.append(allListHeaderInfo, allListHeaderPage);
-
-		let allListItem = document.createElement("div");
-		allListItem.classList.add("itemList");
-
-		allList.append(allListHeader, allListItem);
-		container.appendChild(allList);
-
 		this.subScreen.show(container, "dealHunt");
+		let subScreen = document.getElementById("subScreen");
 
 		// Fetch initial data
 		let initalData = await myajax({
@@ -454,7 +477,8 @@
 			typeMix: { type: "checkbox", label: "Deal theo khung giờ", color: "blue", value: true },
 			...tagsSettings,
 
-			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 }
+			saleFilter: { type: "number", label: "Lọc Item Có Sale Nhỏ Hơn", value: 70 },
+			scanPage: { type: "number", label: "Giới Hạn Số Trang Quét", value: 0 },
 		}, { confirm: "Tiếp" })
 
 		log("PRE SETUP:");
@@ -481,52 +505,54 @@
 		}, 60);
 
 		log("Bắt đầu chạy");
+		let group = {}
+		let list = {}
 
 		// Start Scanning Item
-		let itemList = await scanItem({
+		await scanItem({
 			typeMix: settings.typeMix,
-			sortBy: settings.sortBy,
-			saleFilter: settings.saleFilter
-		});
+			saleFilter: settings.saleFilter,
+			scanPage: settings.scanPage,
+			tagHandler: (data, label) => {
+				if (!group[label]) {
+					list[label] = []
+					group[label] = createItemGroup(label);
+					subScreen.appendChild(group[label].container);
+				}
 
-		let CURRENT_PAGE = 1;
+				list[label] = [ ...list[label], ...data.arrayList ]
 
-		const changeAllListPage = async (page, {
-			showCount = 20
-		} = {}) => {
-			let total = itemList.sortedList.length;
-			let maxPage = (showCount === 0) ? 1 : Math.max(1, Math.floor(total / showCount));
+				log(` + Đang sắp xếp dữ liệu`);
+				switch (settings.sortBy) {
+					case "sale":
+						list[label].sort((a, b) => (a.sale < b.sale) ? 1 : (a.sale > b.sale) ? -1 : 0);
+						break;
+				
+					case "openTime":
+						list[label].sort((a, b) => (a.open < b.open) ? -1 : (a.open > b.open) ? 1 : 0);
+						break;
 
-			if (page === "last")
-				page = maxPage;
+					case "name":
+						list[label].sort((a, b) => (a.title < b.title) ? 1 : (a.title > b.title) ? -1 : 0);
+						break;
 
-			let from = Math.max((page - 1) * showCount, 0);
-			let to = Math.min(page * showCount, total - 1);
+					case "priceUp":
+						list[label].sort((a, b) => (a.price < b.price) ? -1 : (a.price > b.price) ? 1 : 0);
+						break;
 
-			if (page > maxPage || page < 1)
-				return;
+					case "priceDown":
+						list[label].sort((a, b) => (a.price < b.price) ? 1 : (a.price > b.price) ? -1 : 0);
+						break;
 
-			emptyNode(allListItem);
-			
-			for (let i = from; i < to; i++) {
-				allListItem.appendChild(createItemBox(itemList.sortedList[i], e => addToBlackList(e.target.getAttribute("item-id"))));
-				allListHeaderPageCurrent.innerText = `${from + 1}-${to + 1} ${page}/${maxPage}`;
+					default:
+						break;
+				}
+
+				log(` + Sắp xếp dữ liệu thành công!`);
+
+				group[label].setData(list[label]);
 			}
-
-			CURRENT_PAGE = page;
-
-			delete total;
-			delete maxPage;
-			delete from;
-			delete to;
-		}
-
-		allListHeaderPageForward.addEventListener("mouseup", e => changeAllListPage("last"));
-		allListHeaderPageNext.addEventListener("mouseup", e => changeAllListPage(CURRENT_PAGE + 1));
-		allListHeaderPagePrev.addEventListener("mouseup", e => changeAllListPage(CURRENT_PAGE - 1));
-		allListHeaderPageBackward.addEventListener("mouseup", e => changeAllListPage(1));
-		
-		changeAllListPage(CURRENT_PAGE);
+		});
 
 		runInfo({ checkDetail: "Đã Chạy Xong", dataType: "time" })
 		await complete();
