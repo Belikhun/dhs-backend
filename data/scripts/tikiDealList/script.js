@@ -19,7 +19,7 @@
 		log(`|===========================|`);
 		log(`|  Tiki Upcoming Deal List  |`);
 		log(`|          Belikhun         |`);
-		log(`|  LU: 12:05:52 01/05/2021  |`);
+		log(`|  LU: 12:10:52 13/06/2021  |`);
 		log(`|===========================|`);
 
 		const __scanProcess = (result, saleFilter) => {
