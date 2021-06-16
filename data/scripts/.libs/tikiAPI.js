@@ -900,41 +900,39 @@ const __clearCart = async ({
 	heartbeat();
 	log(`🛒 ${cartList.items.length} item hiện trong giỏ hàng`);
 
-	let deleteList = []
-	for (let item of cartList.items)
-		deleteList.push({
-			item_id: item.id,
-			parent_item_id: item.parent_item_id || "",
-			product_id: item.product_id,
-			selected: item.selected,
-			seller_id: item.seller_id
-		});
+	for (let item of cartList.items) {
+		log(`🛒 Đang xóa ${item.product_name} (${item.id})`);
 
-	log(`🛒 Đang xóa giỏ hàng`);
-
-	try {
-		await myajax({
-			url: `${HOSTADDRESS}/api/v2/intended_cart/items/remove`,
-			method: "PUT",
-			header: {
-				"X-Access-Token": token
-			},
-
-			json: {
-				items: deleteList
+		try {
+			await myajax({
+				url: `${HOSTADDRESS}/api/v2/intended_cart/items/remove`,
+				method: "PUT",
+				header: {
+					"X-Access-Token": token
+				},
+	
+				json: {
+					items: [{
+						item_id: item.id,
+						parent_item_id: item.parent_item_id || "",
+						product_id: item.product_id,
+						selected: item.selected,
+						seller_id: item.seller_id
+					}]
+				}
+			})
+		} catch(e) {
+			if (e.code !== 2) {
+				heartbeat({ color: "red" });
+	
+				log("🛒 Không thể xóa Item khỏi Giỏ");
+				log(` + Code: ${e.code}`);
+				log(` + MSG : ${e.description || "Không rõ"}`);
+				log(` + Bỏ qua lỗi: true`);
+	
+				clog("ERRR", `Remove Cart ${item.id}`, e);
+				return;
 			}
-		})
-	} catch(e) {
-		if (e.code !== 2) {
-			heartbeat({ color: "red" });
-
-			log("🛒 Không thể xóa Item khỏi Giỏ");
-			log(` + Code: ${e.code}`);
-			log(` + MSG : ${e.description || "Không rõ"}`);
-			log(` + Bỏ qua lỗi: true`);
-
-			clog("ERRR", `Remove Cart ${item.id}`, e);
-			return;
 		}
 	}
 
