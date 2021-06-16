@@ -63,9 +63,12 @@
 			heartbeat();
 			if (printLog) {
 				log(`📃 Đang lấy danh sách item`);
-				log(` + sortBy    = ${sortBy}`);
-				log(` + pageCount = ${pageCount}`);
-				log(` + useProxy  = ${useProxy}`);
+				log(` + sortBy       = ${sortBy}`);
+				log(` + pageCount    = ${pageCount}`);
+				log(` + itemPerPage  = ${itemPerPage}`);
+				log(` + scanSort     = ${scanSort}`);
+				log(` + aggregations = ${aggregations ? "yes" : "no"}`);
+				log(` + useProxy     = ${useProxy ? "yes" : "no"}`);
 			}
 
 			const productsHandler = async (result) => {
