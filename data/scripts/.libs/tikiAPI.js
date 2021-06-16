@@ -397,6 +397,62 @@ const addIntoCart = async ({
 	log("🛒 Thêm vào giỏ thành công!");
 }
 
+const __shippingMethod = async ({
+	name = "TikiNOW",
+	item,
+	token,
+	onChange = () => {},
+
+	log = writeLog,
+	panic = errored,
+	myajax = window.myajax
+}) => {
+	if (typeof item !== "object")
+		throw { code: -1, description: `__shippingMethod(): invalid or undefined item` }
+
+	if (typeof token !== "string")
+		throw { code: -1, description: `__shippingMethod(): invalid or undefined token` }
+
+	log(` + Code: ${item.code}`);
+	log(` + Name: ${item.name}`);
+	log(` + Est : ${item.estimation_text}`);
+	log(` + Fee : ${item.shipping_fee}`);
+
+	if (item.is_selected !== true) {
+		log(`🕑 Đang chuyển sang ${name}`);
+		heartbeat();
+
+		let shipPlan = {}
+
+		try {
+			shipPlan = await myajax({
+				url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_plans/${item.id}`,
+				method: "PUT",
+				type: "text",
+				header: {
+					"X-Access-Token": token
+				}
+			})
+		} catch(e) {
+			await panic(`Lỗi khi chuyển sang ${name}`);
+			log(`⚠ Lỗi khi gửi yêu cầu`);
+			log(` + Code: ${e.code}`);
+			log(` + MSG : ${e.message || "Không Rõ"}`);
+			throw { code: -1, description: `Không thể chuyển sang ${name}`, data: e }
+		}
+
+		if (shipPlan.error) {
+			await panic(`Lỗi khi chuyển sang ${name}`);
+			log("⚠ Tiki trả về mã lỗi");
+			log(` + Code: ${shipPlan.error.code}`);
+			log(` + MSG : ${shipPlan.error.message || "Không Rõ"}`);
+			throw { code: -1, description: `Không thể chuyển sang ${name}`, data: shipPlan.error }
+		}
+
+		onChange(shipPlan);
+	}
+}
+
 const __doOrder = async ({
 	id = 0,
 	count = 0,
@@ -613,6 +669,46 @@ const __doOrder = async ({
 
 			throw { code: -1, description: "Lấy Giỏ Hàng có lỗi", data: item }
 		}
+
+	// First Pass for TikiPro
+	for (let item of cartInfo.shipping_methods)
+		if ([6].includes(item.id) && item.is_disabled === false) {
+			log(`🕑 Phát hiện TikiPRO!`);
+			await __shippingMethod({
+				name: "TikiPRO",
+				item,
+				token,
+				onChange: () => {
+					log("🧶 Đã áp dụng TikiPRO, chuyển phương thức thanh toán sang COD!");
+					paymentMethod = "cod";
+					doCartVerify = true;
+				},
+
+				log,
+				panic,
+				myajax
+			});
+		}
+
+	// Check if TikiPRO is applied, if not
+	// we will continue to check TikiNOW
+	if (!doCartVerify)
+		for (let item of cartInfo.shipping_methods)
+			if ([3, 5].includes(item.id) && item.is_disabled === false) {
+				log(`🕑 Phát hiện TikiNOW!`);
+				await __shippingMethod({
+					name: "TikiNOW",
+					item,
+					token,
+					onChange: () => doCartVerify = true,
+
+					log,
+					panic,
+					myajax
+				});
+
+				break;
+			}
 	
 	if (!cartInfo.last_payment_method || cartInfo.last_payment_method.method !== paymentMethod) {
 		log(`🛒 Đang chuyển sang: ${paymentMethod}`);
@@ -648,51 +744,6 @@ const __doOrder = async ({
 		doCartVerify = true;
 	} else
 		log(`🛒 Phương thức thanh toán: ${cartInfo.last_payment_method.method_name}`);
-
-	for (let item of cartInfo.shipping_methods)
-		if (item.id === 3 && item.is_disabled === false) {
-			log(`🕑 Phát hiện Tiki Now!`);
-			log(` + Code: ${item.code}`);
-			log(` + Name: ${item.name}`);
-			log(` + Est : ${item.estimation_text}`);
-			log(` + Fee : ${item.shipping_fee}`);
-
-			if (item.is_selected !== true) {
-				log(`🕑 Đang chuyển sang Tiki Now`);
-				heartbeat();
-
-				let shipPlan = {}
-
-				try {
-					shipPlan = await myajax({
-						url: `${HOSTADDRESS}/api/v2/carts/mine/shippings_plans/${item.id}`,
-						method: "PUT",
-						type: "text",
-						header: {
-							"X-Access-Token": token
-						}
-					})
-				} catch(e) {
-					await panic("Lỗi khi chuyển sang Tiki Now");
-					log(`⚠ Lỗi khi gửi yêu cầu`);
-					log(` + Code: ${e.code}`);
-					log(` + MSG : ${e.message || "Không Rõ"}`);
-					throw { code: -1, description: "Không thể chuyển sang Tiki Now", data: e }
-				}
-
-				if (shipPlan.error) {
-					await panic("Lỗi khi chuyển sang Tiki Now");
-					log("⚠ Tiki trả về mã lỗi");
-					log(` + Code: ${shipPlan.error.code}`);
-					log(` + MSG : ${shipPlan.error.message || "Không Rõ"}`);
-					throw { code: -1, description: "Không thể chuyển sang Tiki Now", data: shipPlan.error }
-				}
-
-				doCartVerify = true;
-			}
-
-			break;
-		}
 
 	log(`🛒 Đã Áp Dụng Cài Đặt`);
 	heartbeat({ color: "green" });
