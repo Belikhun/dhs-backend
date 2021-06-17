@@ -4,6 +4,7 @@
 	require_once $_SERVER["DOCUMENT_ROOT"] ."/libs/cache.php";
 
 	define("PAGE_TYPE", "API");
+	header("Access-Control-Allow-Origin: ". (isset($headers["Origin"]) ? $headers["Origin"] : "*"));
 
 	$default = Array(
         "global" => Array(
