@@ -463,7 +463,7 @@ const __doOrder = async ({
 	shippingAddress = null,
 	isInjectedAccount = false,
 	stopIfHaveShippingFee = false,
-	doApplyAddress = true,
+	doApplyAddress = false,
 	platform = "frontend-desktop",
 	accountDisabledHandler = async () => {},
 
