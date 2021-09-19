@@ -50,9 +50,11 @@
 		// READ CHUNKS
 		$orderChunks = glob(ORDERLOG_ROOT ."/chunk.*", GLOB_NOSORT);
 
-		while (count($orderList) < $showCount * $pageNth) {
-			foreach ($orderChunks as $chunk)
-				$orderList = array_merge($orderList, unserialize((new fip($chunk)) -> read()));
+		if (count($orderChunks) > 0) {
+			while (count($orderList) < $showCount * $pageNth) {
+				foreach ($orderChunks as $chunk)
+					$orderList = array_merge($orderList, unserialize((new fip($chunk)) -> read()));
+			}
 		}
 
 		// DATA PROCESS
