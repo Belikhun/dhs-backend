@@ -11,7 +11,7 @@
 	define("AUTHOR", "Team DHS");
 	define("VERSION", "0.9.3");
 	define("VERSION_TAG", "release");
-	define("REPO_ADDRESS", "https://github.com/belivipro9x99/dealHunterSuiteBackend");
+	define("REPO_ADDRESS", "https://github.com/Belikhun/dealHunterSuiteBackend");
 	define("REPORT_ERROR", REPO_ADDRESS . "/issues");
 	define("CONTACT_LINK", "http://m.me/HunterDealJustFun");
 	define("TRACK_ID", "UA-124598427-2");
