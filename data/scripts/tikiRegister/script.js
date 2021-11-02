@@ -26,11 +26,11 @@
 			{ type: "div", class: "header", name: "header", list: [
 				{ type: "t", class: "left", name: "left", text: "Tiki Account" },
 				{ type: "t", class: "right", name: "right", list: [
-					{ name: "exportList", node: createBtn("Xuất Danh Sách", "green", {
+					{ name: "exportList", node: createButton("Xuất Danh Sách", "green", {
 						icon: "list"
 					}) },
 
-					{ name: "exportExcel", node: createBtn("Xuất EXCEL", "blue", {
+					{ name: "exportExcel", node: createButton("Xuất EXCEL", "blue", {
 						icon: "excel"
 					}) }
 				] }
