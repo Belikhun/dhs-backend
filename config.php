@@ -171,17 +171,6 @@
 				</div>
 			</div>
 
-			<div class="group cart">
-				<t class="title">Tiki Hunt</t>
-
-				<div class="item sound" data-soundhoversoft>
-					<div class="formGroup sound" data-color="blue" data-soundselectsoft>
-						<textarea id="tikiHunt_accountList" class="formField" style="height: 200px;" autocomplete="off" placeholder="Danh sách Tài Khoản"></textarea>
-						<label for="tikiHunt_accountList">Danh sách Tài Khoản</label>
-					</div>
-				</div>
-			</div>
-
 			<div class="group clock">
 				<t class="title">Thời gian</t>
 

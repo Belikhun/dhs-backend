@@ -24,8 +24,6 @@ var announcement = {
     message: $("#announcementMessage")
 }
 
-var tikiHuntAccountList = $("#tikiHunt_accountList")
-
 var time = {
     zone: $("#time_zone"),
 }
@@ -85,7 +83,6 @@ function update() {
         announcement.enabled.checked = data.announcement.enabled;
         announcement.level.value = data.announcement.level;
         announcement.message.value = data.announcement.message;
-        tikiHuntAccountList.value = data.tikiHuntAccountList.join("\n");
         time.zone.value = data.time.zone;
         pageTitle.value = data.pageTitle;
         allowRegister.checked = data.allowRegister;
@@ -211,7 +208,6 @@ $("#formContainer").addEventListener("submit", e => {
             "announcement.enabled": announcement.enabled.checked,
             "announcement.level": announcement.level.value,
             "announcement.message": announcement.message.value,
-            "tikiHuntAccountList": JSON.stringify(tikiHuntAccountList.value.split("\n")),
             "time.zone": time.zone.value,
             "pageTitle": pageTitle.value,
             "allowRegister": allowRegister.checked,

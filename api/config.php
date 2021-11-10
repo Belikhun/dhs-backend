@@ -84,7 +84,6 @@
 	setting("app_description"			, $rawConfig["app"]["description"]				, $TYPE_STRING);
 	setting("time_zone"					, $rawConfig["time"]["zone"]					, $TYPE_STRING);
 	setting("pageTitle"					, $rawConfig["pageTitle"]						, $TYPE_STRING);
-	setting("tikiHuntAccountList"		, $rawConfig["tikiHuntAccountList"]				, $TYPE_ARRAY );
 	setting("announcement_enabled"		, $rawConfig["announcement"]["enabled"]			, $TYPE_BOOL  );
 	setting("announcement_level"		, $rawConfig["announcement"]["level"]			, $TYPE_STRING);
 	setting("announcement_message"		, $rawConfig["announcement"]["message"]			, $TYPE_STRING);

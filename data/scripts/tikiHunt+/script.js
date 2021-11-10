@@ -804,40 +804,39 @@
 
 		let accountOrderCount = {}
 		
-		// INJECT CUSTOM ACCOUNT
 		let injectList = []
 		let injectPos = 0;
 
-		try {
-			let _ca = await myajax({
-				url: SERVER_ADDR() + API.server,
-				method: "GET"
-			})
+		// try {
+		// 	let _ca = await myajax({
+		// 		url: SERVER_ADDR() + API.server,
+		// 		method: "GET"
+		// 	})
 
-			_ca = _ca.data.config.accountList;
+		// 	_ca = _ca.data.config.accountList;
 
-			if (!_ca) {
-				rejectSetup("Phiên không hợp lệ! Vui lòng khởi động lại tool");
-				return;
-			}
+		// 	if (!_ca) {
+		// 		rejectSetup("Phiên không hợp lệ! Vui lòng khởi động lại tool");
+		// 		return;
+		// 	}
 
-			let _cad = CryptoJS.AES.decrypt(
-				{ ciphertext: CryptoJS.enc.Base64.parse(_ca.list) },
-				CryptoJS.HmacSHA256(this.session.keyData.key + _ca.iv, this.session.token),
-				{
-					mode: CryptoJS.mode.CBC,
-					padding: CryptoJS.pad.Pkcs7,
-					iv: CryptoJS.enc.Hex.parse(_ca.iv)
-				}
-			);
+		// 	let _cad = CryptoJS.AES.decrypt(
+		// 		{ ciphertext: CryptoJS.enc.Base64.parse(_ca.list) },
+		// 		CryptoJS.HmacSHA256(this.session.keyData.key + _ca.iv, this.session.token),
+		// 		{
+		// 			mode: CryptoJS.mode.CBC,
+		// 			padding: CryptoJS.pad.Pkcs7,
+		// 			iv: CryptoJS.enc.Hex.parse(_ca.iv)
+		// 		}
+		// 	);
 
-			injectList = JSON.parse(_cad.toString(CryptoJS.enc.Utf8))
-				.filter(String)
-				.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null, h: true } });
-		} catch(e) {
-			clog("ERRR", "accountList validate error", e);
-			throw e;
-		}
+		// 	injectList = JSON.parse(_cad.toString(CryptoJS.enc.Utf8))
+		// 		.filter(String)
+		// 		.map(a => { let i = a.split(":"); let c = i[1].split("@"); return { u: i[0], p: c[0], a: c[1] ? parseInt(c[1]) : null, h: true } });
+		// } catch(e) {
+		// 	clog("ERRR", "accountList validate error", e);
+		// 	throw e;
+		// }
 
 		log("🏃‍♂️ Đang bắt đầu chạy...");
 		run();
