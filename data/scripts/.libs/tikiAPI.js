@@ -19,6 +19,13 @@ const getToken = async (retry = true, guestTokenAsFallback = false) => {
 	if (at && at.value) {
 		apiToken = at.value;
 		return at.value;
+	}
+
+	let ct = await this.getCookie("https://tiki.vn", "TOKENS");
+	if (ct && ct.value) {
+		let o = JSON.parse(decodeURIComponent(ct.value));
+		apiToken = o.access_token;
+		return apiToken;
 	} else if (apiToken)
 		return apiToken;
 
@@ -813,19 +820,29 @@ const __doOrder = async ({
 	log(`🛒 Đang tiến hành đặt hàng`);
 	heartbeat();
 
-	let placeOrder = await myajax({
-		url: `${HOSTADDRESS}/api/v2/carts/mine/checkout`,
-		method: "POST",
-		header: {
-			"X-Access-Token": token,
-			"X-Platform": platform
-		},
-		json: {
-			cybersource_information: {},
-			payment: { method: paymentMethod, option_id: null },
-			tax_info: null
+	let placeOrder;
+	try {
+		placeOrder = await myajax({
+			url: `${HOSTADDRESS}/api/v2/carts/mine/checkout`,
+			method: "POST",
+			header: {
+				"X-Access-Token": token,
+				"X-Platform": platform
+			},
+			json: {
+				cybersource_information: {},
+				payment: { method: paymentMethod, option_id: null },
+				tax_info: null
+			}
+		});
+	} catch(e) {
+		if (e.data.error) {
+			await panic("Lỗi khi tiến hành Đặt Hàng");
+			log("⚠ Tiki trả về mã lỗi");
+			log(` + MSG : ${placeOrder.error.message || "Không Rõ"}`);
+			throw { code: -1, description: "Không thể tiến hành Order", data: placeOrder.error }
 		}
-	});
+	}
 
 	if (placeOrder.error) {
 		await panic("Lỗi khi tiến hành Đặt Hàng");
